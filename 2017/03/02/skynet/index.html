@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>skynet | 不可同日而语</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="skynet源码阅读及实践总结
+skynet是一个云风大大开源的一款基于c+lua的框架，架子由c语言编写完成,逻辑上用lua来实现的一个框架
+
+如果不关心框架的话，至少需要知道这框架里面有些什么东西，知道他的来龙去脉，由于工作原由断断续续的深入了解这个框架。由于日常开发没太在意底层实现原理，有时看下底层代码后当时知道了原理，之后再来看时基本忘记得差不多了。所以由此需要做一些笔记和深入的思考
+
+1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="skynet">
+<meta property="og:url" content="http://yoursite.com/2017/03/02/skynet/index.html">
+<meta property="og:site_name" content="不可同日而语">
+<meta property="og:description" content="skynet源码阅读及实践总结
+skynet是一个云风大大开源的一款基于c+lua的框架，架子由c语言编写完成,逻辑上用lua来实现的一个框架
+
+如果不关心框架的话，至少需要知道这框架里面有些什么东西，知道他的来龙去脉，由于工作原由断断续续的深入了解这个框架。由于日常开发没太在意底层实现原理，有时看下底层代码后当时知道了原理，之后再来看时基本忘记得差不多了。所以由此需要做一些笔记和深入的思考
+
+1">
+<meta property="og:updated_time" content="2017-03-02T03:26:05.780Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="skynet">
+<meta name="twitter:description" content="skynet源码阅读及实践总结
+skynet是一个云风大大开源的一款基于c+lua的框架，架子由c语言编写完成,逻辑上用lua来实现的一个框架
+
+如果不关心框架的话，至少需要知道这框架里面有些什么东西，知道他的来龙去脉，由于工作原由断断续续的深入了解这个框架。由于日常开发没太在意底层实现原理，有时看下底层代码后当时知道了原理，之后再来看时基本忘记得差不多了。所以由此需要做一些笔记和深入的思考
+
+1">
+  
+    <link rel="alternate" href="/atom.xml" title="不可同日而语" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    
+    <div id="header-inner" class="inner">
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">首页</a>
+        
+          <a class="main-nav-link" href="/archives">归档</a>
+        
+          <a class="main-nav-link" href="/">关于</a>
+        
+      </nav>
+      
+    </div>
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">不可同日而语</a>
+      </h1>
+      
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-skynet" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/03/02/skynet/" class="article-date">
+  <time datetime="2017-03-02T03:07:28.000Z" itemprop="datePublished">2017-03-02</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/源码分析/">源码分析</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      skynet
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <!-- Table of Contents -->
+        
+        <h2 id="skynet源码阅读及实践总结"><a href="#skynet源码阅读及实践总结" class="headerlink" title="skynet源码阅读及实践总结"></a>skynet源码阅读及实践总结</h2><blockquote>
+<p>skynet是一个云风大大开源的一款基于c+lua的框架，架子由c语言编写完成,逻辑上用lua来实现的一个框架</p>
+</blockquote>
+<p>如果不关心框架的话，至少需要知道这框架里面有些什么东西，知道他的来龙去脉，由于工作原由断断续续的深入了解这个框架。由于日常开发没太在意底层实现原理，有时看下底层代码后当时知道了原理，之后再来看时基本忘记得差不多了。所以由此需要做一些笔记和深入的思考</p>
+<hr>
+<h4 id="1-两个服务之间通信就必须知道消息发送方和消息接收方以及消息和消息的长度，skynet里面对发送一条消息的参数注释如下"><a href="#1-两个服务之间通信就必须知道消息发送方和消息接收方以及消息和消息的长度，skynet里面对发送一条消息的参数注释如下" class="headerlink" title="1. 两个服务之间通信就必须知道消息发送方和消息接收方以及消息和消息的长度，skynet里面对发送一条消息的参数注释如下:"></a>1. 两个服务之间通信就必须知道消息发送方和消息接收方以及消息和消息的长度，skynet里面对发送一条消息的参数注释如下:</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">uint32_t</span> address</div><div class="line"> <span class="built_in">string</span> address</div><div class="line"><span class="keyword">uint32_t</span> type</div><div class="line"><span class="keyword">uint32_t</span> session</div><div class="line"><span class="built_in">string</span> message</div><div class="line"> lightuserdata message_ptr</div><div class="line"> <span class="keyword">uint32_t</span> len</div></pre></td></tr></table></figure>
+<ul>
+<li>address 指目标接收方的服务，服务用一个<code>uint32</code>的值来标识，也可以为一个服务取一个<code>string</code>类型的名称来唯一</li>
+<li>type    指发送的消息的类型</li>
+<li>session 指消息发送方对此次发送这条消息的会话标识,默认传0，传空底层会为其生成一个</li>
+<li>message 指消息内容,消息内容有可能也是一个<code>message_ptr</code></li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> PTYPE_TAG_DONTCOPY 0x10000             <span class="comment">//用 type | PTYPE_TAG_DONTCOPY 来指定消息是否需要copy一份 </span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> PTYPE_TAG_ALLOCSESSION 0x20000         <span class="comment">//用 type | PTYPE_TAG_ALLOCSESSION 来指定是否需要创建session</span></span></div></pre></td></tr></table></figure>
+<p><strong>具体可看<code>skynet\lualib-src\lua-skynet.c ——&gt; _send(...)</code>函数实现</strong></p>
+<blockquote>
+<p>服务与服务之间实际传递的消息结构体如下:</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> skynet_message &#123;</div><div class="line">    <span class="keyword">uint32_t</span> source; <span class="comment">//来源哪个服务</span></div><div class="line">    <span class="keyword">int</span> session; <span class="comment">//发送方此次会话的标识,非阻塞值为0，阻塞调用为发送方递增的值</span></div><div class="line">    <span class="keyword">void</span> * data; <span class="comment">//发送的消息体</span></div><div class="line">    <span class="keyword">size_t</span> sz; <span class="comment">//发送的消息大小</span></div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MESSAGE_TYPE_MASK (SIZE_MAX &gt;&gt; 8)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MESSAGE_TYPE_SHIFT ((sizeof(size_t)-1) * 8)</span></div></pre></td></tr></table></figure>
+<p><strong>tips：</strong></p>
+<blockquote>
+<p>消息类型保存在 <code>sz |= (size_t)type &lt;&lt; MESSAGE_TYPE_SHIFT</code><br>拿回类型用 <code>sz &gt;&gt; MESSAGE_TYPE_SHIFT</code> 长度用<code>sz &amp; MESSAGE_TYPE_MASK</code></p>
+</blockquote>
+<p><em>type的值包括以下:</em></p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">local</span> skynet = &#123;</div><div class="line">    <span class="comment">-- read skynet.h</span></div><div class="line">    PTYPE_TEXT = <span class="number">0</span>,</div><div class="line">    PTYPE_RESPONSE = <span class="number">1</span>,</div><div class="line">    PTYPE_MULTICAST = <span class="number">2</span>,</div><div class="line">    PTYPE_CLIENT = <span class="number">3</span>,</div><div class="line">    PTYPE_SYSTEM = <span class="number">4</span>,</div><div class="line">    PTYPE_HARBOR = <span class="number">5</span>,</div><div class="line">    PTYPE_SOCKET = <span class="number">6</span>,</div><div class="line">    PTYPE_ERROR = <span class="number">7</span>,</div><div class="line">    PTYPE_QUEUE = <span class="number">8</span>,    <span class="comment">-- used in deprecated mqueue, use skynet.queue instead</span></div><div class="line">    PTYPE_DEBUG = <span class="number">9</span>,</div><div class="line">    PTYPE_LUA = <span class="number">10</span>,</div><div class="line">    PTYPE_SNAX = <span class="number">11</span>,</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<font color="red"><br>一直在想type的值的设置和取值为什么这样设计，也查阅了一些位操作方面的知识，还是不太知道，后问了下一老司机同事，他翻开云风大大博客对这样的设计已经给出了答案，阅读和思考后最终还是清楚了。<br><br>因为type的值是一个byte，取值范围也就是0-255，一个在服务内传递的消息的在16M(24个bit  2<sup>14</sup>*2<sup>10</sup>)以内，所以把type的值放在sz的最高位来保存。所以在取type值的时候sz的二进制左移MESSAGE_TYPE_SHIFT即可，<br>而sz的值的话只要取除去最高位再sz的二进制右移高位即MESSAGE_TYPE_MASK。<br></font>
+
+
+<h4 id="2-skynet里面是由各种lua服务来组成的，必然服务之间需要能信来往，当然也就包含阻塞发消息和非阻塞的方式"><a href="#2-skynet里面是由各种lua服务来组成的，必然服务之间需要能信来往，当然也就包含阻塞发消息和非阻塞的方式" class="headerlink" title="2. skynet里面是由各种lua服务来组成的，必然服务之间需要能信来往，当然也就包含阻塞发消息和非阻塞的方式"></a>2. skynet里面是由各种lua服务来组成的，必然服务之间需要能信来往，当然也就包含阻塞发消息和非阻塞的方式</h4><blockquote>
+<p>服务之间的消息流如下:</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Service A-&gt;Service B: Hello B,我发了一条消息给你嘞!</div><div class="line">Note right of Service B: Service B 可能会阻塞调用其它服务哦！</div><div class="line">Service B--&gt;Service A: Yes,我收到了,这是我回你的包！</div></pre></td></tr></table></figure>
+<blockquote>
+<p>虚线代表有些是不需要B回包的，此次调用可能是阻塞或非阻塞</p>
+</blockquote>
+<ul>
+<li><p>非阻塞调用</p>
+  <figure class="highlight lua"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">skynet.send</span><span class="params">(addr, typename, ...)</span></span></div><div class="line">    <span class="keyword">local</span> p = proto[typename]</div><div class="line">    <span class="keyword">return</span> c.send(addr, p.id, <span class="number">0</span> , p.pack(...))</div><div class="line"><span class="keyword">end</span></div></pre></td></tr></table></figure>
+</li>
+<li><p>阻塞调用</p>
+  <figure class="highlight lua"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">skynet.call</span><span class="params">(addr, typename, ...)</span></span></div><div class="line">    <span class="keyword">local</span> p = proto[typename]</div><div class="line">    <span class="keyword">local</span> session = c.send(addr, p.id , <span class="keyword">nil</span> , p.pack(...))</div><div class="line">    <span class="keyword">if</span> session == <span class="keyword">nil</span> <span class="keyword">then</span></div><div class="line">        <span class="built_in">error</span>(<span class="string">"call to invalid address "</span> .. skynet.address(addr))</div><div class="line">    <span class="keyword">end</span></div><div class="line">    <span class="keyword">return</span> p.<span class="built_in">unpack</span>(yield_call(addr, session))</div><div class="line"><span class="keyword">end</span></div></pre></td></tr></table></figure>
+</li>
+</ul>
+<ul>
+<li>阻塞与非阻塞的send函数的第三个参数分别为nil和0，nil意思就是session是由skynet分配来分配</li>
+<li><font color="red">阻塞调用，如果收到阻塞调用的服务再阻塞去调其它服务,所有阻塞调用的服务的当前coroutine都会进入睡眠状态，等待回包被唤醒，进入睡眠并不影响lua_Stat进行其它的任何工作。</font></li>
+<li><font color="red">如果服务的dispatch函数没有返回值则不能用call来调用此服务，否则call的coroutine会一直阻塞中</font>
+
+</li>
+</ul>
+<p><strong>代码实现在skynet\lualib\skynet.lua ——&gt; raw_dispatch_message(…)函数里面,实际此函数也是每个服务收到消息后的回调函数</strong></p>
+<p><strong><font color="red">消息的内存管理是由发送方申请，消息接收端在回调成功后释放掉</font></strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span></span></div><div class="line"><span class="title">dispatch_message</span><span class="params">(<span class="keyword">struct</span> skynet_context *ctx, <span class="keyword">struct</span> skynet_message *msg)</span> &#123;</div><div class="line">    assert(ctx-&gt;init);</div><div class="line">    CHECKCALLING_BEGIN(ctx)</div><div class="line">    pthread_setspecific(G_NODE.handle_key, (<span class="keyword">void</span> *)(<span class="keyword">uintptr_t</span>)(ctx-&gt;handle));</div><div class="line">    <span class="keyword">int</span> type = msg-&gt;sz &gt;&gt; MESSAGE_TYPE_SHIFT;</div><div class="line">    <span class="keyword">size_t</span> sz = msg-&gt;sz &amp; MESSAGE_TYPE_MASK;</div><div class="line">    <span class="keyword">if</span> (ctx-&gt;logfile) &#123;</div><div class="line">        skynet_log_output(ctx-&gt;logfile, msg-&gt;source, type, msg-&gt;session, msg-&gt;data, sz);</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span> (!ctx-&gt;cb(ctx, ctx-&gt;cb_ud, type, msg-&gt;session, msg-&gt;source, msg-&gt;data, sz)) &#123;</div><div class="line">        skynet_free(msg-&gt;data); <span class="comment">//内存释放</span></div><div class="line">    &#125; </div><div class="line">    CHECKCALLING_END(ctx)</div><div class="line">&#125;</div><div class="line"><span class="comment">//代码文件  `skynet\skynet-src\skynet_server.c`</span></div></pre></td></tr></table></figure>
+<hr>
+<h4 id="3-进程启动过程"><a href="#3-进程启动过程" class="headerlink" title="3. 进程启动过程"></a>3. 进程启动过程</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">void</span> </span></div><div class="line"><span class="title">skynet_start</span><span class="params">(<span class="keyword">struct</span> skynet_config * config)</span> &#123;</div><div class="line">    <span class="keyword">if</span> (config-&gt;daemon) &#123;</div><div class="line">        <span class="keyword">if</span> (daemon_init(config-&gt;daemon)) &#123;</div><div class="line">            <span class="built_in">exit</span>(<span class="number">1</span>);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    skynet_harbor_init(config-&gt;harbor); <span class="comment">//用于集群id初始化</span></div><div class="line">    skynet_handle_init(config-&gt;harbor); <span class="comment">//上面所说的进程内所有service的handle及保存service的名称</span></div><div class="line">    skynet_mq_init(); <span class="comment">//全局队列初始化</span></div><div class="line">    skynet_module_init(config-&gt;module_path); <span class="comment">//加载service-src下面的模块 logger harbor snlua</span></div><div class="line">    skynet_timer_init(); <span class="comment">//定时器初始化</span></div><div class="line">    skynet_socket_init(); <span class="comment">//套接字初始化</span></div><div class="line"></div><div class="line">    <span class="keyword">struct</span> skynet_context *ctx = skynet_context_new(config-&gt;logservice, config-&gt;logger);</div><div class="line">    <span class="keyword">if</span> (ctx == <span class="literal">NULL</span>) &#123;</div><div class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Can't launch %s service\n"</span>, config-&gt;logservice);</div><div class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">//lua脚本加载</span></div><div class="line">    bootstrap(ctx, config-&gt;bootstrap);</div><div class="line"></div><div class="line">    <span class="comment">//启动线程及监听相关</span></div><div class="line">    start(config-&gt;thread);</div><div class="line"></div><div class="line">    <span class="comment">// harbor_exit may call socket send, so it should exit before socket_free</span></div><div class="line">    skynet_harbor_exit();</div><div class="line">    skynet_socket_free();</div><div class="line">    <span class="keyword">if</span> (config-&gt;daemon) &#123;</div><div class="line">        daemon_exit(config-&gt;daemon);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>skynet启动进程主要与服务相关代码如上面</p>
+<p>每个lua服务都有自己的一个队列，并且创建后就会放到全局队列里面，有工作线程会去从全局队列里面去拿服务队列并处理完一条消息后若全局队列不为空再放到全局队列里去返回下个需要处理的部队。为空则返回自己服务的队列</p>
+<ol>
+<li>回调函数调用<br>在加载lua代码的时候<code>skynet.start(...)</code>函数里面注册了回调函数</li>
+</ol>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">skynet.start</span><span class="params">(start_func)</span></span></div><div class="line">    c.callback(skynet.dispatch_message)</div><div class="line">    skynet.timeout(<span class="number">0</span>, <span class="function"><span class="keyword">function</span><span class="params">()</span></span></div><div class="line">        skynet.init_service(start_func)</div><div class="line">    <span class="keyword">end</span>)</div><div class="line"><span class="keyword">end</span></div></pre></td></tr></table></figure>
+<h4 id="4-skynet服务"><a href="#4-skynet服务" class="headerlink" title="4. skynet服务"></a>4. skynet服务</h4><h5 id="4-1-服务标识"><a href="#4-1-服务标识" class="headerlink" title="4.1 服务标识"></a>4.1 服务标识</h5><ul>
+<li>skynet为了方便针记住某个服务，可以为每个独立的服务起一个名字，名字格式<code>.name</code></li>
+</ul>
+<blockquote>
+<p>一个服务的名字可以重复设置吗？(可以)<br>两个服务的名字可以相同吗？(不可以，已经有了这样一个名字直接返回空)</p>
+</blockquote>
+<hr>
+<h5 id="4-1-服务名字存储及handle的存储结构和服务相关的命令映射"><a href="#4-1-服务名字存储及handle的存储结构和服务相关的命令映射" class="headerlink" title="4.1 服务名字存储及handle的存储结构和服务相关的命令映射"></a>4.1 服务名字存储及handle的存储结构和服务相关的命令映射</h5><p>带着这些疑问就去翻阅代码去解决脑海里的疑点，首先从<code>skynet.name(&#39;.myservice&#39;)</code>的代码跟到他调用的c函数，所有处理针对服务的一些函数都在<code>skynet_server.c</code>文件里面，最后按参数找到最终处理名字的逻辑<code>skynet_handle.c</code>，大体看了下简单的实现,代码说明按自己的理解整理下。</p>
+<ul>
+<li>数据结构</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> handle_name &#123;</div><div class="line">    <span class="keyword">char</span> * name;</div><div class="line">    <span class="keyword">uint32_t</span> handle;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="keyword">struct</span> handle_storage &#123;</div><div class="line">    <span class="keyword">struct</span> rwlock lock;</div><div class="line"></div><div class="line">    <span class="keyword">uint32_t</span> harbor;</div><div class="line">    <span class="keyword">uint32_t</span> handle_index;</div><div class="line">    <span class="keyword">int</span> slot_size;</div><div class="line">    <span class="keyword">struct</span> skynet_context ** slot;</div><div class="line">    </div><div class="line">    <span class="keyword">int</span> name_cap;</div><div class="line">    <span class="keyword">int</span> name_count;</div><div class="line">    <span class="keyword">struct</span> handle_name *name;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="comment">//handle_storage所存一个skynet进程下面所有lua服务的handle和所有为服务设置了名称的handle_name</span></div></pre></td></tr></table></figure>
+<ul>
+<li>命令映入结构<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">struct</span> command_func cmd_funcs[] = &#123;</div><div class="line">    &#123; <span class="string">"TIMEOUT"</span>, cmd_timeout &#125;,</div><div class="line">    &#123; <span class="string">"REG"</span>, cmd_reg &#125;,</div><div class="line">    &#123; <span class="string">"QUERY"</span>, cmd_query &#125;,</div><div class="line">    &#123; <span class="string">"NAME"</span>, cmd_name &#125;,</div><div class="line">    &#123; <span class="string">"EXIT"</span>, cmd_exit &#125;,</div><div class="line">    &#123; <span class="string">"KILL"</span>, cmd_kill &#125;,</div><div class="line">    &#123; <span class="string">"LAUNCH"</span>, cmd_launch &#125;,</div><div class="line">    &#123; <span class="string">"GETENV"</span>, cmd_getenv &#125;,</div><div class="line">    &#123; <span class="string">"SETENV"</span>, cmd_setenv &#125;,</div><div class="line">    &#123; <span class="string">"STARTTIME"</span>, cmd_starttime &#125;,</div><div class="line">    &#123; <span class="string">"ENDLESS"</span>, cmd_endless &#125;,</div><div class="line">    &#123; <span class="string">"ABORT"</span>, cmd_abort &#125;,</div><div class="line">    &#123; <span class="string">"MONITOR"</span>, cmd_monitor &#125;,</div><div class="line">    &#123; <span class="string">"MQLEN"</span>, cmd_mqlen &#125;,</div><div class="line">    &#123; <span class="string">"LOGON"</span>, cmd_logon &#125;,</div><div class="line">    &#123; <span class="string">"LOGOFF"</span>, cmd_logoff &#125;,</div><div class="line">    &#123; <span class="string">"SIGNAL"</span>, cmd_signal &#125;,</div><div class="line">    &#123; <span class="literal">NULL</span>, <span class="literal">NULL</span> &#125;,</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h5 id="4-2-服务名字代码说明下服务名set和get"><a href="#4-2-服务名字代码说明下服务名set和get" class="headerlink" title="4.2 服务名字代码说明下服务名set和get"></a>4.2 服务名字代码说明下服务名set和get</h5><ul>
+<li>服务名set</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">char</span> *</div><div class="line">_insert_name(<span class="keyword">struct</span> handle_storage *s, <span class="keyword">const</span> <span class="keyword">char</span> * name, <span class="keyword">uint32_t</span> handle) &#123;</div><div class="line">    <span class="keyword">int</span> begin = <span class="number">0</span>;</div><div class="line">    <span class="keyword">int</span> end = s-&gt;name_count - <span class="number">1</span>;</div><div class="line">    <span class="keyword">while</span> (begin&lt;=end) &#123;</div><div class="line">        <span class="keyword">int</span> mid = (begin+end)/<span class="number">2</span>;</div><div class="line">        <span class="keyword">struct</span> handle_name *n = &amp;s-&gt;name[mid];</div><div class="line">        <span class="keyword">int</span> c = <span class="built_in">strcmp</span>(n-&gt;name, name);</div><div class="line">        <span class="keyword">if</span> (c==<span class="number">0</span>) &#123;</div><div class="line">            <span class="keyword">return</span> <span class="literal">NULL</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> (c&lt;<span class="number">0</span>) &#123;</div><div class="line">            begin = mid + <span class="number">1</span>;</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            end = mid - <span class="number">1</span>;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">char</span> * result = skynet_strdup(name);</div><div class="line"></div><div class="line">    _insert_name_before(s, result, handle, begin);</div><div class="line"></div><div class="line">    <span class="keyword">return</span> result;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">//用二分法遍历已经注册了名称的数组，如果找到同名的服务直接return(并不会报错，lua层只会得到nil最好用assert来处理),否则按字符串的大小插入合适的位置</span></div></pre></td></tr></table></figure>
+<ul>
+<li>服务名get</li>
+</ul>
+<blockquote>
+<p>通过服务名来找handle</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">uint32_t</span> </div><div class="line">skynet_handle_findname(<span class="keyword">const</span> <span class="keyword">char</span> * name) &#123;</div><div class="line">    <span class="keyword">struct</span> handle_storage *s = H;</div><div class="line"></div><div class="line">    rwlock_rlock(&amp;s-&gt;lock);</div><div class="line"></div><div class="line">    <span class="keyword">uint32_t</span> handle = <span class="number">0</span>;</div><div class="line"></div><div class="line">    <span class="keyword">int</span> begin = <span class="number">0</span>;</div><div class="line">    <span class="keyword">int</span> end = s-&gt;name_count - <span class="number">1</span>;</div><div class="line">    <span class="keyword">while</span> (begin&lt;=end) &#123;</div><div class="line">        <span class="keyword">int</span> mid = (begin+end)/<span class="number">2</span>;</div><div class="line">        <span class="keyword">struct</span> handle_name *n = &amp;s-&gt;name[mid];</div><div class="line">        <span class="keyword">int</span> c = <span class="built_in">strcmp</span>(n-&gt;name, name);</div><div class="line">        <span class="keyword">if</span> (c==<span class="number">0</span>) &#123;</div><div class="line">            handle = n-&gt;handle;</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> (c&lt;<span class="number">0</span>) &#123;</div><div class="line">            begin = mid + <span class="number">1</span>;</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            end = mid - <span class="number">1</span>;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    rwlock_runlock(&amp;s-&gt;lock);</div><div class="line"></div><div class="line">    <span class="keyword">return</span> handle;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">//同样也是二分法来查找已知的服务名</span></div></pre></td></tr></table></figure>
+<p><strong>服务的handle是怎么够用的？</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">uint32_t</span></div><div class="line">skynet_handle_register(<span class="keyword">struct</span> skynet_context *ctx) &#123;</div><div class="line">    <span class="keyword">struct</span> handle_storage *s = H;</div><div class="line"></div><div class="line">    rwlock_wlock(&amp;s-&gt;lock);</div><div class="line">    </div><div class="line">    <span class="keyword">for</span> (;;) &#123;</div><div class="line">        <span class="keyword">int</span> i;</div><div class="line">        <span class="keyword">for</span> (i=<span class="number">0</span>;i&lt;s-&gt;slot_size;i++) &#123;</div><div class="line">            <span class="keyword">uint32_t</span> handle = (i+s-&gt;handle_index) &amp; HANDLE_MASK;</div><div class="line">            <span class="keyword">int</span> hash = handle &amp; (s-&gt;slot_size<span class="number">-1</span>);</div><div class="line">            <span class="keyword">if</span> (s-&gt;slot[hash] == <span class="literal">NULL</span>) &#123;</div><div class="line">                s-&gt;slot[hash] = ctx;</div><div class="line">                s-&gt;handle_index = handle + <span class="number">1</span>;</div><div class="line"></div><div class="line">                rwlock_wunlock(&amp;s-&gt;lock);</div><div class="line"></div><div class="line">                handle |= s-&gt;harbor;</div><div class="line">                <span class="keyword">return</span> handle;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        assert((s-&gt;slot_size*<span class="number">2</span> - <span class="number">1</span>) &lt;= HANDLE_MASK);</div><div class="line">        <span class="keyword">struct</span> skynet_context ** new_slot = skynet_malloc(s-&gt;slot_size * <span class="number">2</span> * <span class="keyword">sizeof</span>(<span class="keyword">struct</span> skynet_context *));</div><div class="line">        <span class="built_in">memset</span>(new_slot, <span class="number">0</span>, s-&gt;slot_size * <span class="number">2</span> * <span class="keyword">sizeof</span>(<span class="keyword">struct</span> skynet_context *));</div><div class="line">        <span class="keyword">for</span> (i=<span class="number">0</span>;i&lt;s-&gt;slot_size;i++) &#123;</div><div class="line">f type then</div><div class="line">                MSG[type](...)</div><div class="line">            end</div><div class="line">        end</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<pre><code>poll
+
+    pipe命令读取
+                _________
+                |   L      Listen继续处理poll事件
+    1           |   S      退出poll事件，返回SOCKET_OPEN
+                |   B      
+                |   O
+
+    socket事件处理
+
+    2           events
+                    accepte
+                    connect
+                    data
+
+poll后再返回给指定的service去处理消息
+</code></pre><ul>
+<li>接着是start这个fd,实际是记录到socket_server这个里面去</li>
+</ul>
+<p>这两步就是创建一个listen的fd了，接下来只需要accepte客户端连接了</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">/*</div><div class="line">    The first byte is TYPE</div><div class="line"></div><div class="line">    S Start socket</div><div class="line">    B Bind socket</div><div class="line">    L Listen socket</div><div class="line">    K Close socket</div><div class="line">    O Connect to (Open)</div><div class="line">    X Exit</div><div class="line">    D Send package (high)</div><div class="line">    P Send package (low)</div><div class="line">    A Send UDP package</div><div class="line">    T Set opt</div><div class="line">    U Create UDP socket</div><div class="line">    C set udp address</div><div class="line"> */</div><div class="line">struct request_package &#123;</div><div class="line">    uint8_t header[8];  // 6 bytes dummy</div><div class="line">    union &#123;</div><div class="line">        char buffer[256];</div><div class="line">        struct request_open open;</div><div class="line">        struct request_send send;</div><div class="line">        struct request_send_udp send_udp;</div><div class="line">        struct request_close close;</div><div class="line">        struct request_listen listen;</div><div class="line">        struct request_bind bind;</div><div class="line">        struct request_start start;</div><div class="line">        struct request_setopt setopt;</div><div class="line">        struct request_udp udp;</div><div class="line">        struct request_setudp set_udp;</div><div class="line">    &#125; u;</div><div class="line">    uint8_t dummy[256];</div><div class="line">&#125;;</div><div class="line"></div><div class="line">/*</div><div class="line">header[6] header[7] 两个字节+len(union)结构体</div><div class="line">write(fd, &amp;header[6], len+2)</div><div class="line">*/</div><div class="line"></div><div class="line"></div><div class="line">struct socket_server &#123;</div><div class="line">    int recvctrl_fd;</div><div class="line">    int sendctrl_fd;</div><div class="line">    int checkctrl;</div><div class="line">    poll_fd event_fd;</div><div class="line">    int alloc_id;</div><div class="line">    int event_n;</div><div class="line">    int event_index;</div><div class="line">    struct socket_object_interface soi;</div><div class="line">    struct event ev[MAX_EVENT];</div><div class="line">    struct socket slot[MAX_SOCKET];</div><div class="line">    char buffer[MAX_INFO];</div><div class="line">    uint8_t udpbuffer[MAX_UDP_PACKAGE];</div><div class="line">    fd_set rfds;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h4 id="tcp包处理"><a href="#tcp包处理" class="headerlink" title="tcp包处理"></a>tcp包处理</h4><p>收到包如何通知gateserver?<br>包大小？一个没没读玩又来了另一个包怎么处理？</p>
+<p>tcp网络上实际传输的是字节流，所以我们在处理自定义的网络数据包的时候一般都是 len+data来作为一个数字包在tcp上传送，skynet框架是两个字节的长度，</p>
+<p>skynet io是读指定长度的包再抛到上面来，处理包的完整性在<code>lua-netpack.c</code>,socket的消息描述如下:</p>
+<blockquote>
+<p>参考<code>socket_server.c : function forward_message</code></p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">struct</span> skynet_socket_message &#123;</div><div class="line">    <span class="keyword">int</span> type;</div><div class="line">    <span class="keyword">int</span> id;</div><div class="line">    <span class="keyword">int</span> ud;</div><div class="line">    <span class="keyword">char</span> * buffer;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"></div><div class="line"><span class="comment">/*</span></div><div class="line">    Each package is uint16 + data , uint16 (serialized in big-endian) is the number of bytes comprising the data .</div><div class="line"> */</div><div class="line"></div><div class="line"><span class="keyword">struct</span> netpack &#123;</div><div class="line">    <span class="keyword">int</span> id;           <span class="comment">// 收包的fd</span></div><div class="line">    <span class="keyword">int</span> size;         <span class="comment">// 包的大小</span></div><div class="line">    <span class="keyword">void</span> * buffer;    <span class="comment">// 包的具体内容</span></div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="keyword">struct</span> uncomplete &#123;                 </div><div class="line">    <span class="keyword">struct</span> netpack pack;            <span class="comment">// 已经从fd上读取的消息</span></div><div class="line">    <span class="keyword">struct</span> uncomplete * next;       <span class="comment">// 下一条消息</span></div><div class="line">    <span class="keyword">int</span> read;                       <span class="comment">// 不完整的包已经读取的长度</span></div><div class="line">    <span class="keyword">int</span> header;                     <span class="comment">// 用来存取第一个包只有一个字节的时候用</span></div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="keyword">struct</span> <span class="built_in">queue</span> &#123;</div><div class="line">    <span class="keyword">int</span> cap;                                <span class="comment">// 队列的容量</span></div><div class="line">    <span class="keyword">int</span> head;                               <span class="comment">// 队列头从0开始pop后++   </span></div><div class="line">    <span class="keyword">int</span> tail;                               <span class="comment">// 队列尾从0开始push后++</span></div><div class="line">    <span class="keyword">struct</span> uncomplete * hash[HASHSIZE];     <span class="comment">// 不完整包根据fd然后hash存取</span></div><div class="line">    <span class="keyword">struct</span> netpack <span class="built_in">queue</span>[QUEUESIZE];        <span class="comment">// 完整包的数组</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>放到skyknet里面的service回调函数处理这个包，其它的不多说了，直接看<code>lua-netpack.c : lfilter(...)</code>里面的源码</p>
+<h4 id="7-sample架子理解"><a href="#7-sample架子理解" class="headerlink" title="7. sample架子理解"></a>7. sample架子理解</h4><p>把下面的关系弄清楚</p>
+<p>client</p>
+<p>login</p>
+<p>gateserver</p>
+<p>agent</p>
+<p>client  是客户端发起登录的对象<br>login   是处理client登录请求，成功后告知gateserver<br>gateserver  类似agent的一房门。主要负责管理网络这块的事件传递到agent<br>agent   是消息实际处理者，也就是操作fd连接的</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/03/02/skynet/" data-id="cizrtx0zj0001wdpvwe6cyksu" class="article-share-link">分享</a>
+      
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/skynet-lua/">skynet lua</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/03/02/hello-world/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">关于我</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+           
+    <aside id="sidebar">
+  
+    
+
+  
+    
+    <div class="widget-wrap">
+    
+      <div class="widget" id="toc-widget-fixed">
+      
+        <strong class="toc-title">文章目录</strong>
+        <div class="toc-widget-list">
+              <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#skynet源码阅读及实践总结"><span class="toc-number">1.</span> <span class="toc-text">skynet源码阅读及实践总结</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-两个服务之间通信就必须知道消息发送方和消息接收方以及消息和消息的长度，skynet里面对发送一条消息的参数注释如下"><span class="toc-number">1.0.1.</span> <span class="toc-text">1. 两个服务之间通信就必须知道消息发送方和消息接收方以及消息和消息的长度，skynet里面对发送一条消息的参数注释如下:</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-skynet里面是由各种lua服务来组成的，必然服务之间需要能信来往，当然也就包含阻塞发消息和非阻塞的方式"><span class="toc-number">1.0.2.</span> <span class="toc-text">2. skynet里面是由各种lua服务来组成的，必然服务之间需要能信来往，当然也就包含阻塞发消息和非阻塞的方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-进程启动过程"><span class="toc-number">1.0.3.</span> <span class="toc-text">3. 进程启动过程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-skynet服务"><span class="toc-number">1.0.4.</span> <span class="toc-text">4. skynet服务</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#4-1-服务标识"><span class="toc-number">1.0.4.1.</span> <span class="toc-text">4.1 服务标识</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4-1-服务名字存储及handle的存储结构和服务相关的命令映射"><span class="toc-number">1.0.4.2.</span> <span class="toc-text">4.1 服务名字存储及handle的存储结构和服务相关的命令映射</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4-2-服务名字代码说明下服务名set和get"><span class="toc-number">1.0.4.3.</span> <span class="toc-text">4.2 服务名字代码说明下服务名set和get</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#tcp包处理"><span class="toc-number">1.0.5.</span> <span class="toc-text">tcp包处理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-sample架子理解"><span class="toc-number">1.0.6.</span> <span class="toc-text">7. sample架子理解</span></a></li></ol></li></ol></li></ol>
+          </div>
+      </div>
+    </div>
+
+  
+    
+
+  
+    
+  
+    
+  
+    
+
+  
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-left">
+      &copy; 2014 - 2017 Oscan&nbsp;|&nbsp;
+      主题 <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
+    </div>
+     <div id="footer-right">
+      联系方式&nbsp;|&nbsp;8493978933@qq.com
+    </div>
+  </div>
+</footer>
+ <script src="/jquery/jquery.min.js"></script>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">首页</a>
+  
+    <a href="/archives" class="mobile-nav-link">归档</a>
+  
+    <a href="/" class="mobile-nav-link">关于</a>
+  
+</nav>
+    <img class="back-to-top-btn" src="/images/fly-to-top.png"/>
+<script>
+// Elevator script included on the page, already.
+window.onload = function() {
+  var elevator = new Elevator({
+    selector:'.back-to-top-btn',
+    element: document.querySelector('.back-to-top-btn'),
+    duration: 1000 // milliseconds
+  });
+}
+</script>
+    
+
+
+
+ <script src="/js/is.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/elevator.js"></script>
+  </div>
+</body>
+</html>
