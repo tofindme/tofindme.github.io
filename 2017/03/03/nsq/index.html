@@ -6,34 +6,34 @@
   <title>NSQ | 不可同日而语</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="NSQ说明NSQ是一个分布式的实时的消息队列,基于GO语言开发,它的分布式是无中心节点的结构,据说是高可用,上亿的消息毫无压力，并且部署非常简单，之前项目里也有用，没详细读过代码，下面来说下NSQ的结构和实现
-1. NSQ的组成部分主要由以下三个daemon进程组成。
+NSQ的组成部分主要由以下三个daemon进程组成。
 
 lookupd
 
-维护nsqd节点以及他的topic和channel,方便client可以获取nsqd,也就是nsq里面的Pro">
+维护nsqd节点以及他的topic和channel,方便client可以获取nsqd,也就是nsq里面的Produc">
 <meta property="og:type" content="article">
 <meta property="og:title" content="NSQ">
 <meta property="og:url" content="http://yoursite.com/2017/03/03/nsq/index.html">
 <meta property="og:site_name" content="不可同日而语">
 <meta property="og:description" content="NSQ说明NSQ是一个分布式的实时的消息队列,基于GO语言开发,它的分布式是无中心节点的结构,据说是高可用,上亿的消息毫无压力，并且部署非常简单，之前项目里也有用，没详细读过代码，下面来说下NSQ的结构和实现
-1. NSQ的组成部分主要由以下三个daemon进程组成。
+NSQ的组成部分主要由以下三个daemon进程组成。
 
 lookupd
 
-维护nsqd节点以及他的topic和channel,方便client可以获取nsqd,也就是nsq里面的Pro">
+维护nsqd节点以及他的topic和channel,方便client可以获取nsqd,也就是nsq里面的Produc">
 <meta property="og:image" content="http://yoursite.com/../../../../images/flow.png">
 <meta property="og:image" content="https://f.cloud.github.com/assets/187441/1700696/f1434dc8-6029-11e3-8a66-18ca4ea10aca.gif">
 <meta property="og:image" content="http://nsq.io/static/img/nsqadmin_screenshot.png">
 <meta property="og:image" content="https://f.cloud.github.com/assets/187441/1698990/682fc358-5f76-11e3-9b05-3d5baba67f13.png">
-<meta property="og:updated_time" content="2017-03-06T04:38:42.088Z">
+<meta property="og:updated_time" content="2017-03-06T09:24:36.997Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="NSQ">
 <meta name="twitter:description" content="NSQ说明NSQ是一个分布式的实时的消息队列,基于GO语言开发,它的分布式是无中心节点的结构,据说是高可用,上亿的消息毫无压力，并且部署非常简单，之前项目里也有用，没详细读过代码，下面来说下NSQ的结构和实现
-1. NSQ的组成部分主要由以下三个daemon进程组成。
+NSQ的组成部分主要由以下三个daemon进程组成。
 
 lookupd
 
-维护nsqd节点以及他的topic和channel,方便client可以获取nsqd,也就是nsq里面的Pro">
+维护nsqd节点以及他的topic和channel,方便client可以获取nsqd,也就是nsq里面的Produc">
 <meta name="twitter:image" content="http://yoursite.com/../../../../images/flow.png">
   
     <link rel="alternate" href="/atom.xml" title="不可同日而语" type="application/atom+xml">
@@ -116,7 +116,7 @@ lookupd
         <!-- Table of Contents -->
         
         <h2 id="NSQ说明"><a href="#NSQ说明" class="headerlink" title="NSQ说明"></a>NSQ说明</h2><p>NSQ是一个分布式的实时的消息队列,基于GO语言开发,它的分布式是无中心节点的结构,据说是高可用,上亿的消息毫无压力，并且部署非常简单，之前项目里也有用，没详细读过代码，下面来说下NSQ的结构和实现</p>
-<h3 id="1-NSQ的组成部分"><a href="#1-NSQ的组成部分" class="headerlink" title="1. NSQ的组成部分"></a>1. NSQ的组成部分</h3><p>主要由以下三个daemon进程组成。</p>
+<h3 id="NSQ的组成部分"><a href="#NSQ的组成部分" class="headerlink" title="NSQ的组成部分"></a>NSQ的组成部分</h3><p>主要由以下三个daemon进程组成。</p>
 <ul>
 <li><strong>lookupd</strong></li>
 </ul>
@@ -137,7 +137,7 @@ lookupd
 </ul>
 <p>基于web的一个可视化的监控页面，可以实时查看队列消息以及各节点信息</p>
 <p><img src="http://nsq.io/static/img/nsqadmin_screenshot.png" alt="nsqadmin"></p>
-<h3 id="2-NSQ消息流向"><a href="#2-NSQ消息流向" class="headerlink" title="2. NSQ消息流向"></a>2. NSQ消息流向</h3><blockquote>
+<h3 id="NSQ消息流向"><a href="#NSQ消息流向" class="headerlink" title="NSQ消息流向"></a>NSQ消息流向</h3><blockquote>
 <p>类似这种有GC的语言不用管理内存一般的程序不用关心内存这个问题相对来说轻松了许多。不过尽量还是要关注下这块，及时释放掉对向对内存的持有</p>
 </blockquote>
 <p><img src="https://f.cloud.github.com/assets/187441/1698990/682fc358-5f76-11e3-9b05-3d5baba67f13.png" alt="msgflow"></p>
@@ -148,7 +148,7 @@ lookupd
 <li><p>发送给<code>consumer</code>的消息也分为两种，一种是<code>in-flight</code>(在处理中,已经发送给consumer)和<code>deferred</code>(延迟消息,还有一个优先级)消息。消息保存在以消息<code>id</code>为<code>key</code>的<code>map</code>里,在和<code>consumer</code>交互的时候都是有ACK(“OK”)回包,所以收到ACK包后会从in-flight字典中移除，同样延迟消息到时后同样会被移除掉</p>
 </li>
 </ul>
-<h3 id="3-通信协议"><a href="#3-通信协议" class="headerlink" title="3. 通信协议"></a>3. 通信协议</h3><p>说下<code>nsqd</code>和<code>lookupd</code>和<code>consumer</code>之间的通信的消息格式,每个服务都监听两个端口，一个用来支持短链接http，另一个是长链接tcp实现通信需求</p>
+<h3 id="通信协议"><a href="#通信协议" class="headerlink" title="通信协议"></a>通信协议</h3><p>说下<code>nsqd</code>和<code>lookupd</code>和<code>consumer</code>之间的通信的消息格式,每个服务都监听两个端口，一个用来支持短链接http，另一个是长链接tcp实现通信需求</p>
 <ul>
 <li><strong>http</strong></li>
 </ul>
@@ -167,7 +167,7 @@ lookupd
 <figure class="highlight golang"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> (</div><div class="line">    frameTypeResponse <span class="keyword">int32</span> = <span class="number">0</span></div><div class="line">    frameTypeError    <span class="keyword">int32</span> = <span class="number">1</span></div><div class="line">    frameTypeMessage  <span class="keyword">int32</span> = <span class="number">2</span></div><div class="line">)</div></pre></td></tr></table></figure>
 </li>
 <li><p><strong>lookupd to nsqd</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">[x][x][x][x]][x][x][x]...</div><div class="line">|  (int32) || (binary)</div><div class="line">|  4-byte  ||  N-byte</div><div class="line">----------------------</div><div class="line">    size      data</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">[x][x][x][x][x][x][x]...</div><div class="line">|  (int32) || (binary)</div><div class="line">|  4-byte  ||  N-byte</div><div class="line">----------------------</div><div class="line">    size      data</div></pre></td></tr></table></figure>
 </li>
 </ul>
 </li>
@@ -176,7 +176,7 @@ lookupd
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/03/nsq/" data-id="cizxtv4130001gvpv0bxmses7" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/03/nsq/" data-id="cizxwhhdk0001v5pvkipydrxy" class="article-share-link">分享</a>
       
       
       
@@ -214,7 +214,7 @@ lookupd
       
         <strong class="toc-title">文章目录</strong>
         <div class="toc-widget-list">
-              <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#NSQ说明"><span class="toc-number">1.</span> <span class="toc-text">NSQ说明</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-NSQ的组成部分"><span class="toc-number">1.1.</span> <span class="toc-text">1. NSQ的组成部分</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-NSQ消息流向"><span class="toc-number">1.2.</span> <span class="toc-text">2. NSQ消息流向</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-通信协议"><span class="toc-number">1.3.</span> <span class="toc-text">3. 通信协议</span></a></li></ol></li></ol>
+              <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#NSQ说明"><span class="toc-number">1.</span> <span class="toc-text">NSQ说明</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#NSQ的组成部分"><span class="toc-number">1.1.</span> <span class="toc-text">NSQ的组成部分</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NSQ消息流向"><span class="toc-number">1.2.</span> <span class="toc-text">NSQ消息流向</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#通信协议"><span class="toc-number">1.3.</span> <span class="toc-text">通信协议</span></a></li></ol></li></ol>
           </div>
       </div>
     </div>
