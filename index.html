@@ -65,12 +65,16 @@
       <div class="outer">
         <section id="main">
   
-    <article id="post-NSQ" class="article article-type-post" itemscope itemprop="blogPost">
+    <article id="post-nsq" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2017/03/02/NSQ/" class="article-date">
-  <time datetime="2017-03-02T03:32:46.000Z" itemprop="datePublished">2017-03-02</time>
+    <a href="/2017/03/03/nsq/" class="article-date">
+  <time datetime="2017-03-03T03:07:28.000Z" itemprop="datePublished">2017-03-03</time>
 </a>
     
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/源码分析/">源码分析</a>
+  </div>
+
   </div>
   <div class="article-inner">
     
@@ -79,7 +83,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2017/03/02/NSQ/">NSQ</a>
+      <a class="article-title" href="/2017/03/03/nsq/">NSQ</a>
     </h1>
   
 
@@ -89,14 +93,40 @@
       
         <!-- Table of Contents -->
         
-        
+        <h2 id="NSQ说明"><a href="#NSQ说明" class="headerlink" title="NSQ说明"></a>NSQ说明</h2><p>NSQ是一个分布式的实时的消息队列,基于GO语言开发,它的分布式是无中心节点的结构,据说是高可用,上亿的消息毫无压力，并且部署非常简单，之前项目里也有用，没详细读过代码，下面来说下NSQ的结构和实现</p>
+<h3 id="1-NSQ的组成部分"><a href="#1-NSQ的组成部分" class="headerlink" title="1. NSQ的组成部分"></a>1. NSQ的组成部分</h3><p>主要由以下三个daemon进程组成。</p>
+<ul>
+<li><strong>lookupd</strong></li>
+</ul>
+<p>维护nsqd节点以及他的topic和channel,方便client可以获取nsqd,也就是nsq里面的Producer</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">type</span> RegistrationDB <span class="keyword">struct</span> &#123;</div><div class="line">    sync.RWMutex</div><div class="line">    registrationMap <span class="keyword">map</span>[Registration]Producers</div><div class="line">&#125;</div><div class="line"><span class="keyword">type</span> Registration <span class="keyword">struct</span> &#123;</div><div class="line">    Category <span class="keyword">string</span></div><div class="line">    Key      <span class="keyword">string</span></div><div class="line">    SubKey   <span class="keyword">string</span></div><div class="line">&#125;</div><div class="line"><span class="keyword">type</span> Registrations []Registration</div><div class="line"><span class="keyword">type</span> PeerInfo <span class="keyword">struct</span> &#123;</div><div class="line">    lastUpdate       <span class="keyword">int64</span></div><div class="line">    id               <span class="keyword">string</span></div><div class="line">    RemoteAddress    <span class="keyword">string</span> <span class="string">`json:"remote_address"`</span></div><div class="line">    Hostname         <span class="keyword">string</span> <span class="string">`json:"hostname"`</span></div><div class="line">    BroadcastAddress <span class="keyword">string</span> <span class="string">`json:"broadcast_address"`</span></div><div class="line">    TCPPort          <span class="keyword">int</span>    <span class="string">`json:"tcp_port"`</span></div><div class="line">    HTTPPort         <span class="keyword">int</span>    <span class="string">`json:"http_port"`</span></div><div class="line">    Version          <span class="keyword">string</span> <span class="string">`json:"version"`</span></div><div class="line">&#125;</div><div class="line"><span class="keyword">type</span> Producer <span class="keyword">struct</span> &#123;</div><div class="line">    peerInfo     *PeerInfo</div><div class="line">    tombstoned   <span class="keyword">bool</span></div><div class="line">    tombstonedAt time.Time</div><div class="line">&#125;</div><div class="line"><span class="keyword">type</span> Producers []*Producer</div></pre></td></tr></table></figure>
+<p><img src="images/flow.png" alt="flow"></p>
+<blockquote>
+<p>这是自己阅读源码理解画的流程图~</p>
+</blockquote>
+<p><code>lookupd</code>里面的db是代表<code>RegistrationDB</code>的一个结构，代表所有<code>nsqd</code>节点上的<code>topic</code>和<code>channel</code>。在<code>nsqd</code>上面创建的<code>topic</code>和<code>channel</code>都会同步到<code>lookupd</code>的这个结构里面。大意可以通过理解下流程图</p>
+<ul>
+<li><strong>nsqd</strong></li>
+</ul>
+<p><img src="https://f.cloud.github.com/assets/187441/1700696/f1434dc8-6029-11e3-8a66-18ca4ea10aca.gif" alt="nsqd"></p>
+<ul>
+<li><strong>nsqadmin</strong></li>
+</ul>
+<p>基于web的一个可视化的监控页面，可以实时查看队列消息以及各节点信息</p>
+<p><img src="http://nsq.io/static/img/nsqadmin_screenshot.png" alt="nsqadmin"></p>
+<h3 id="2-NSQ消息流向"><a href="#2-NSQ消息流向" class="headerlink" title="2. NSQ消息流向"></a>2. NSQ消息流向</h3><p><img src="https://f.cloud.github.com/assets/187441/1698990/682fc358-5f76-11e3-9b05-3d5baba67f13.png" alt="msgflow"></p>
+<p>这是一个消息从<code>topic</code>到<code>consumer</code>的一个消息流向图。</p>
+<h3 id="3-通信协议"><a href="#3-通信协议" class="headerlink" title="3. 通信协议"></a>3. 通信协议</h3><p>说下<code>nsqd</code>和<code>lookupd</code>和<code>consumer</code>之间的通信的消息格式</p>
+
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/02/NSQ/" data-id="cizrw4qzx00007bpv76cv20gk" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/03/nsq/" data-id="cizxgeaiv0001y8pv46u96ot5" class="article-share-link">分享</a>
       
       
       
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/golang-nsq/">golang nsq</a></li></ul>
+
     </footer>
   </div>
   
@@ -262,7 +292,7 @@ poll后再返回给指定的service去处理消息
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/02/skynet/" data-id="cizrw4r0500027bpv64ogyv9w" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/02/skynet/" data-id="cizxgeaix0002y8pvhcce6d0r" class="article-share-link">分享</a>
       
       
       
@@ -308,7 +338,7 @@ poll后再返回给指定的service去处理消息
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/02/hello-world/" data-id="cizrw4r0100017bpvjy2xtwm6" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/02/hello-world/" data-id="cizxgeaiq0000y8pvko1d6339" class="article-share-link">分享</a>
       
       
       
@@ -353,7 +383,7 @@ poll后再返回给指定的service去处理消息
   <div class="widget-wrap">
     <h3 class="widget-title categories">分类</h3>
     <div class="widget" id="categories">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/源码分析/">源码分析</a><span class="category-list-count">1</span></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/源码分析/">源码分析</a><span class="category-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -363,7 +393,7 @@ poll后再返回给指定的service去处理消息
   <div class="widget-wrap">
     <h3 class="widget-title tagcloud">标签云</h3>
     <div class="widget tagcloud">
-      <a href="/tags/skynet-lua/" style="font-size: 10px;">skynet lua</a>
+      <a href="/tags/golang-nsq/" style="font-size: 10px;">golang nsq</a> <a href="/tags/skynet-lua/" style="font-size: 10px;">skynet lua</a>
     </div>
   </div>
 
@@ -375,7 +405,7 @@ poll后再返回给指定的service去处理消息
       <ul>
         
           <li>
-            <a href="/2017/03/02/NSQ/">NSQ</a>
+            <a href="/2017/03/03/nsq/">NSQ</a>
           </li>
         
           <li>
