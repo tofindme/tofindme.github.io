@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>kubernete | 不可同日而语</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="这个世界最伟大的就是思想，人这一特种对这世界的改造都取决于他们独有的思想，他们用思想来创造或改造这个世界。而思想的优越之处在于把事物抽象化，技术的实现就是对现实世界的抽象。人真是太聪明了
+kubernete容器化技术在最近一两年可谓是风生水起,自从docker出世以来就爱到程序界的追棒，而去年google家亲生的kubernete也是更受亲耐，下面通过官网的手来学习记录。
+“    Product">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kubernete">
+<meta property="og:url" content="http://yoursite.com/2017/03/07/kurbenete/index.html">
+<meta property="og:site_name" content="不可同日而语">
+<meta property="og:description" content="这个世界最伟大的就是思想，人这一特种对这世界的改造都取决于他们独有的思想，他们用思想来创造或改造这个世界。而思想的优越之处在于把事物抽象化，技术的实现就是对现实世界的抽象。人真是太聪明了
+kubernete容器化技术在最近一两年可谓是风生水起,自从docker出世以来就爱到程序界的追棒，而去年google家亲生的kubernete也是更受亲耐，下面通过官网的手来学习记录。
+“    Product">
+<meta property="og:image" content="https://kubernetes.io/docs/tutorials/kubernetes-basics/public/images/module_01_cluster.svg">
+<meta property="og:image" content="https://kubernetes.io/docs/tutorials/kubernetes-basics/public/images/module_03_nodes.svg">
+<meta property="og:updated_time" content="2017-03-07T09:21:28.979Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="kubernete">
+<meta name="twitter:description" content="这个世界最伟大的就是思想，人这一特种对这世界的改造都取决于他们独有的思想，他们用思想来创造或改造这个世界。而思想的优越之处在于把事物抽象化，技术的实现就是对现实世界的抽象。人真是太聪明了
+kubernete容器化技术在最近一两年可谓是风生水起,自从docker出世以来就爱到程序界的追棒，而去年google家亲生的kubernete也是更受亲耐，下面通过官网的手来学习记录。
+“    Product">
+<meta name="twitter:image" content="https://kubernetes.io/docs/tutorials/kubernetes-basics/public/images/module_01_cluster.svg">
+  
+    <link rel="alternate" href="/atom.xml" title="不可同日而语" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    
+    <div id="header-inner" class="inner">
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">首页</a>
+        
+          <a class="main-nav-link" href="/archives">归档</a>
+        
+          <a class="main-nav-link" href="/">关于</a>
+        
+      </nav>
+      
+    </div>
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">不可同日而语</a>
+      </h1>
+      
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-kurbenete" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/03/07/kurbenete/" class="article-date">
+  <time datetime="2017-03-07T01:34:22.000Z" itemprop="datePublished">2017-03-07</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/容器/">容器</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      kubernete
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <!-- Table of Contents -->
+        
+        <p>这个世界最伟大的就是思想，人这一特种对这世界的改造都取决于他们独有的思想，他们用思想来创造或改造这个世界。而思想的优越之处在于把事物抽象化，技术的实现就是对现实世界的抽象。人真是太聪明了</p>
+<h3 id="kubernete"><a href="#kubernete" class="headerlink" title="kubernete"></a>kubernete</h3><p>容器化技术在最近一两年可谓是风生水起,自从docker出世以来就爱到程序界的追棒，而去年google家亲生的kubernete也是更受亲耐，下面通过官网的手来学习记录。</p>
+<p>“<br>    Production-Grade Container Orchestration<br>Automated container deployment, scaling, and management<br>“</p>
+<p>这是官网的标语.<code>生产级别的容器编排，自动化进行容器部署、平衡、管理</code></p>
+<p>通俗的说kubernete就是一个容器管理系统,我们的app就运行在这些容器上，官网上说google在kubernete一周运行了上亿的容器。管理这么多的容器，要是传统的模式这么多台服务器该怎么管理呀，真是太解放了。</p>
+<h4 id="kubernete集群"><a href="#kubernete集群" class="headerlink" title="kubernete集群"></a>kubernete集群</h4><p><code>kubernete</code>集群是把多台机器抽象成一个独立的单元，并保证集群的高可用性。这样一来我们发布我们的应用的时候不需要指定到某一机器，只要把我们的应用容器化就可以部署在集群中，并不需要关心部署在某台机器上。<br><code>kubernete</code>会以高效的方式在集群中发布和调度这些容器</p>
+<p>一个集群概念包含两种类型的资源:</p>
+<ul>
+<li><strong>Master</strong>  用来协调各个<code>Node</code>节点</li>
+<li><strong>Node</strong> 运行我们的应用</li>
+</ul>
+<p><img src="https://kubernetes.io/docs/tutorials/kubernetes-basics/public/images/module_01_cluster.svg" alt="kubernete cluster"></p>
+<p><strong>Master </strong> 通过API负责与<code>Node</code>间的交互<br><strong>Node</strong> Node可以是一台物理机或是一台虚拟机,每个集群节点上面有一个<code>Kurblet</code>的<code>agent</code>负责与<code>Master</code>的通信，节点上需要有负责处理容器操作的工具如：<code>Docker</code>或<code>rkt</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">kubectl cluster-info</div><div class="line">kubectl get nodes</div></pre></td></tr></table></figure>
+<p><img src="https://kubernetes.io/docs/tutorials/kubernetes-basics/public/images/module_03_nodes.svg" alt="Node"></p>
+<p>如果一个节点挂了，这个节点上的Pods会在其它可用的节点上创建</p>
+<h4 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h4><p><strong>Pod:</strong> Pod可以理解成docker里面的一个运行的容器<br><strong>ReplicatSet:</strong> 管理Pod的一个一个服务,保证Pod的个数<br><strong>Service:</strong> Pod对外的一个抽象概念,一用来为Pod分组，二用来集群外部访问内部Pod提供访问</p>
+<p>总的来说，kubernete是一个管理容器的一个平台。通过Master和各Node的节点kubelet通信，并在各节点上发布自己的应用，一个应用理解成<code>deployment</code>，然后它对应一个ReplicatSet，然后生成对应个数的Pod,ReplicatSet管理着Pod的个数,发布后可支持扩展和更新</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">kubectl describe pods</div><div class="line">kubectl get pod</div><div class="line">kubectl get node</div><div class="line">kubectl create</div><div class="line">kubectl delte</div><div class="line">kubectl expose</div><div class="line">kubectl help</div></pre></td></tr></table></figure>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/03/07/kurbenete/" data-id="cizza7nng00010npvod8tt1ua" class="article-share-link">分享</a>
+      
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/容器-kurbenet-docker/">容器 kurbenet docker</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/03/03/nsq/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">NSQ</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+           
+    <aside id="sidebar">
+  
+    
+
+  
+    
+    <div class="widget-wrap">
+    
+      <div class="widget" id="toc-widget-fixed">
+      
+        <strong class="toc-title">文章目录</strong>
+        <div class="toc-widget-list">
+              <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#kubernete"><span class="toc-number">1.</span> <span class="toc-text">kubernete</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#kubernete集群"><span class="toc-number">1.1.</span> <span class="toc-text">kubernete集群</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#概念"><span class="toc-number">1.2.</span> <span class="toc-text">概念</span></a></li></ol></li></ol>
+          </div>
+      </div>
+    </div>
+
+  
+    
+
+  
+    
+  
+    
+  
+    
+
+  
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-left">
+      &copy; 2014 - 2017 Oscan&nbsp;|&nbsp;
+      主题 <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
+    </div>
+     <div id="footer-right">
+      联系方式&nbsp;|&nbsp;8493978933@qq.com
+    </div>
+  </div>
+</footer>
+ <script src="/jquery/jquery.min.js"></script>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">首页</a>
+  
+    <a href="/archives" class="mobile-nav-link">归档</a>
+  
+    <a href="/" class="mobile-nav-link">关于</a>
+  
+</nav>
+    <img class="back-to-top-btn" src="/images/fly-to-top.png"/>
+<script>
+// Elevator script included on the page, already.
+window.onload = function() {
+  var elevator = new Elevator({
+    selector:'.back-to-top-btn',
+    element: document.querySelector('.back-to-top-btn'),
+    duration: 1000 // milliseconds
+  });
+}
+</script>
+    
+
+
+
+ <script src="/js/is.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/elevator.js"></script>
+  </div>
+</body>
+</html>

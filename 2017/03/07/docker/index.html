@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>docker.md | 不可同日而语</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="docker介绍
+docker是用google开源语言golang开发的一款类似vm这样的管理容器的开源软件，他的优势在于不像vm一样启动一个虚拟机需要等待漫长的时间，而对docker而言只需要简单的启动一个image就相当于运行一个独立的container。各个container是相互独立的。启停一个container也是相对方便和快速的
+
+此笔记记录阅读docker官网及博客并实践操作所记">
+<meta property="og:type" content="article">
+<meta property="og:title" content="docker.md">
+<meta property="og:url" content="http://yoursite.com/2017/03/07/docker/index.html">
+<meta property="og:site_name" content="不可同日而语">
+<meta property="og:description" content="docker介绍
+docker是用google开源语言golang开发的一款类似vm这样的管理容器的开源软件，他的优势在于不像vm一样启动一个虚拟机需要等待漫长的时间，而对docker而言只需要简单的启动一个image就相当于运行一个独立的container。各个container是相互独立的。启停一个container也是相对方便和快速的
+
+此笔记记录阅读docker官网及博客并实践操作所记">
+<meta property="og:image" content="http://yoursite.com/logo.png">
+<meta property="og:image" content="http://yoursite.com/truck.png">
+<meta property="og:image" content="http://yoursite.com/docker_engin.png">
+<meta property="og:image" content="http://yoursite.com/architecture.png">
+<meta property="og:image" content="http://yoursite.com/diff_vm.png">
+<meta property="og:image" content="http://yoursite.com/diff-docker.png">
+<meta property="og:image" content="http://yoursite.com/container_explainer.png">
+<meta property="og:updated_time" content="2017-03-07T09:27:21.596Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="docker.md">
+<meta name="twitter:description" content="docker介绍
+docker是用google开源语言golang开发的一款类似vm这样的管理容器的开源软件，他的优势在于不像vm一样启动一个虚拟机需要等待漫长的时间，而对docker而言只需要简单的启动一个image就相当于运行一个独立的container。各个container是相互独立的。启停一个container也是相对方便和快速的
+
+此笔记记录阅读docker官网及博客并实践操作所记">
+<meta name="twitter:image" content="http://yoursite.com/logo.png">
+  
+    <link rel="alternate" href="/atom.xml" title="不可同日而语" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    
+    <div id="header-inner" class="inner">
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">首页</a>
+        
+          <a class="main-nav-link" href="/archives">归档</a>
+        
+          <a class="main-nav-link" href="/">关于</a>
+        
+      </nav>
+      
+    </div>
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">不可同日而语</a>
+      </h1>
+      
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-docker" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/03/07/docker/" class="article-date">
+  <time datetime="2017-03-07T09:25:11.000Z" itemprop="datePublished">2017-03-07</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/容器/">容器</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      docker.md
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <!-- Table of Contents -->
+        
+        <h1 id="docker介绍"><a href="#docker介绍" class="headerlink" title="docker介绍"></a>docker介绍</h1><blockquote>
+<p>docker是用google开源语言golang开发的一款类似vm这样的管理容器的开源软件，他的优势在于不像vm一样启动一个虚拟机需要等待漫长的时间，而对docker而言只需要简单的启动一个image就相当于运行一个独立的container。各个container是相互独立的。启停一个container也是相对方便和快速的</p>
+</blockquote>
+<p><em>此笔记记录阅读docker官网及博客并实践操作所记</em></p>
+<ul>
+<li>docker是个什么东西</li>
+<li>docker和vm的区别</li>
+<li>docker实践讲解</li>
+</ul>
+<h3 id="1-什么是docker"><a href="#1-什么是docker" class="headerlink" title="1. 什么是docker"></a>1. 什么是docker</h3><blockquote>
+<p>dokcer的英文是叫码头工人，这个很有趣，然而它所做的一切也正像码头工人所干的事一样。docker是一个软件集合，帮你做了码头的活，所有的东西都用我的容器来打包，你可以在你的容器里面运行你自己的东西。</p>
+</blockquote>
+<div><br><br><br><br>&nbsp;&nbsp;&nbsp;<img src="logo.png" align="middle"><br><br><br><img src="truck.png"><br><img src="docker_engin.png"><br></div>
+
+<div><br><img src="architecture.png"><br></div>
+
+
+<h3 id="2-和通常我们说的vm的区别"><a href="#2-和通常我们说的vm的区别" class="headerlink" title="2. 和通常我们说的vm的区别"></a>2. 和通常我们说的vm的区别</h3><blockquote>
+<p>docker的容器就类似我们vm的安装的iso镜像，只是vm和docker已经把环境的各种依赖的工作都准备好了。docker非常方便的廉价的运行多个container。 container实际是是独立于操作系统上的一个独立的进程，这个进程实现了资源和环境的隔离。它拥有自己的ipc、network、user及pid等</p>
+</blockquote>
+<div><br><br><img src="diff_vm.png" width="300" height="400"><br>&nbsp; &nbsp; &nbsp; &nbsp;<br><br><img src="diff-docker.png" width="300" height="400"><br><br></div>
+
+
+<h3 id="3-docker实践"><a href="#3-docker实践" class="headerlink" title="3. docker实践"></a>3. docker实践</h3><ul>
+<li>安装环境</li>
+<li>docker组成部分的一些概念</li>
+<li>网络</li>
+<li>构建属于自己image的</li>
+<li>docker生态</li>
+</ul>
+<h4 id="3-1-环境准备"><a href="#3-1-环境准备" class="headerlink" title="3.1 环境准备"></a>3.1 环境准备</h4><ul>
+<li>下载安装centos7.2镜像虚拟机</li>
+<li><a href="https://docs.docker.com/engine/installation/linux/centos/" target="_blank" rel="external">安装docker</a></li>
+<li>启动docker <code>systemctl start docker</code></li>
+</ul>
+<blockquote>
+<p>docker版本现在到了1.11了，需要linux 3.10的内核，所以下载的centos7来操作</p>
+</blockquote>
+<p><strong>服务启动脚本在 <code>/usr/lib/systemd/system</code> 目录下</strong></p>
+<h4 id="3-2-Concept"><a href="#3-2-Concept" class="headerlink" title="3.2 Concept"></a>3.2 Concept</h4><ul>
+<li><a href="https://docs.docker.com/linux/step_two/" target="_blank" rel="external">Understand images &amp; container</a></li>
+<li><a href="http://cloud.51cto.com/art/201501/463143.htm" target="_blank" rel="external">Docker Volume</a></li>
+</ul>
+<blockquote>
+<p>image和container区别是image就相当于一个编译好的软件，container就好比这个软件的实例，实例可以有多个。image是静态的，container是一个image的运行态。</p>
+<p>volume是一个container的独立于UFS系统的一个存储单元，通常用于挂载宿主的一个目录</p>
+</blockquote>
+<p><img src="container_explainer.png"></p>
+<hr>
+<a id="more"></a>
+<h4 id="3-3-Network"><a href="#3-3-Network" class="headerlink" title="3.3 Network"></a>3.3 Network</h4><ul>
+<li><a href="https://docs.docker.com/engine/userguide/networking/dockernetworks/" target="_blank" rel="external">container网络配置</a></li>
+<li><a href="http://www.cnblogs.com/feisky/p/4063162.html" target="_blank" rel="external">container独立ip配置</a></li>
+</ul>
+<p>docker启动的容器的网络默认是桥接虚拟的docker0网卡，它桥接到主机，与主机共享网络，而且默认的ip地址段是虚拟的docker0网卡得出来以172.17.0开头的。虽然容器可以通过桥接访问到外部主机，但是外部主机想要访问我docker里面的容器是不可到达的，只能访问到docker的宿主机,这样在多个容器需要与其它机器通信的时候，我需要个容器的ip地址不同，端口相同。后台到go群里头问了下相关解决方案，之前看了下snat和dnat原理，以及听建议宿主机配多个ip,然后用dnat映射到容器里的ip，后来建议容器启动的时候用–net=host，程序listen的时候配置宿主ip即可。好了，赶紧动手试一下^_^</p>
+<p>实践操作了一天，最终此方案还是不行，还是要想方法通过-p来映射宿主机的不同的ip地址段到不同的容器，可以设置多个。</p>
+<p>步骤:</p>
+<ol>
+<li>在宿主机上创建多个需要的ip地址</li>
+<li>创建的容器以-p ip:port:port方式运行，ip是宿主机上的ip地址</li>
+</ol>
+<h4 id="3-3-1-主机配置多个ip"><a href="#3-3-1-主机配置多个ip" class="headerlink" title="3.3.1 主机配置多个ip"></a>3.3.1 主机配置多个ip</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">cd /etc/sysconfig/network-script</div><div class="line">cp ifcfg-eno ifcfg-eno:0</div></pre></td></tr></table></figure>
+<p><strong>example:</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">DEVICE=&quot;eno16777736:0&quot;</div><div class="line">BOOTPROTO=static</div><div class="line">ONBOOT=yes</div><div class="line">TYPE=&quot;Ethernet&quot;</div><div class="line">IPADDR=10.10.2.70</div><div class="line">NETMASK=255.255.255.0</div><div class="line">GATEWAY=10.10.2.1</div></pre></td></tr></table></figure>
+<p><strong>说明</strong></p>
+<blockquote>
+<p>DEVICE字段的名称需要和外面网卡的文件名称一致(去掉ifcfg-),BOOTPROTO改成静态的，IPADDR改成需要的地址即可，NETMASK是子网掩码，GATEWAY是网关地址。实践操作的系统是centos7以上的，里面看到的内容可能不同，直接用这个替换掉就可</p>
+</blockquote>
+<h4 id="3-3-2-启动一个容器"><a href="#3-3-2-启动一个容器" class="headerlink" title="3.3.2 启动一个容器"></a>3.3.2 启动一个容器</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">docker run -it --name test1 imageid</div><div class="line">docker run -it -p 10.10.2.62:6379:6379 -v /home/yibin/DockerData/qq:/data --name container_qq 778a53015523</div><div class="line">docker run -it -p 10.10.2.70:6379:6379 -v /home/yibin/DockerData/wx:/data --name container_wx 778a53015523</div></pre></td></tr></table></figure>
+<p>–net参数是容器指定网络连接方式，默认的话就是桥接</p>
+<p>安装net-tools工具<br>yum install net-tools -y</p>
+<h4 id="3-4-搭建游戏服务器的基础image"><a href="#3-4-搭建游戏服务器的基础image" class="headerlink" title="3.4 搭建游戏服务器的基础image"></a>3.4 搭建游戏服务器的基础image</h4><ol>
+<li>新建一个容器</li>
+<li>安装gcc g++ vim net-tools gcc-c++等工具</li>
+<li>源码安装redis及yum安装mysql</li>
+<li>build一个新的image</li>
+</ol>
+<h5 id="3-4-1-centos7下面安装yum-安装mysql"><a href="#3-4-1-centos7下面安装yum-安装mysql" class="headerlink" title="3.4.1 centos7下面安装yum 安装mysql"></a>3.4.1 centos7下面安装yum 安装mysql</h5><ol>
+<li><code>只需在/etc/yum.repos.d/目录下添加以下文件mysql-community.repo文件，内容如下:</code></li>
+</ol>
+<ul>
+<li><p>5.6对应的配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"># Enable to use MySQL 5.6 </div><div class="line">[mysql56-community] </div><div class="line">name=MySQL 5.6 Community Server </div><div class="line">baseurl=http://repo.mysql.com/yum/mysql-5.6-community/el/5/$basearch/ </div><div class="line">enabled=1 </div><div class="line">gpgcheck=1 </div><div class="line">gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-mysql</div></pre></td></tr></table></figure>
+</li>
+<li><p>5.7对应的配置</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"># Note: MySQL 5.7 is currently in development. For use at your own risk. </div><div class="line"># Please read with sub pages: https://dev.mysql.com/doc/relnotes/mysql/5.7/en/ </div><div class="line">[mysql57-community-dmr] </div><div class="line">name=MySQL 5.7 Community Server Development Milestone Release </div><div class="line">baseurl=http://repo.mysql.com/yum/mysql-5.7-community/el/6/$basearch/ </div><div class="line">enabled=1 </div><div class="line">gpgcheck=1 </div><div class="line">gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-mysql</div></pre></td></tr></table></figure>
+<ol>
+<li><code>最后执行yum install mysql-community-server即可</code></li>
+</ol>
+<h5 id="3-4-2-容器里面不能用systemctl"><a href="#3-4-2-容器里面不能用systemctl" class="headerlink" title="3.4.2 容器里面不能用systemctl"></a>3.4.2 容器里面不能用systemctl</h5><p>因为systemctl是系统启动的时候的一个进程，容器启动的时候并没有启动它，所以不能用它来启动.</p>
+<p>docker run -itd –privileged=true -p 10.10.2.62:3306:3306 -p 10.10.2.62:6379:6379 –name test1.com</p>
+<p><a href="https://forums.docker.com/t/systemctl-status-is-not-working-in-my-docker-container/9075" target="_blank" rel="external">refer to</a></p>
+<h5 id="3-4-3-通过Dockerfile新建一个image"><a href="#3-4-3-通过Dockerfile新建一个image" class="headerlink" title="3.4.3 通过Dockerfile新建一个image"></a>3.4.3 通过Dockerfile新建一个image</h5><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> fgame:base</div><div class="line"></div><div class="line"><span class="keyword">MAINTAINER</span> tofindme <span class="number">849397833</span>@qq.com</div><div class="line"></div><div class="line"><span class="keyword">ENTRYPOINT</span> ["/usr/sbin/init"]</div><div class="line"></div><div class="line"><span class="keyword">expose</span> <span class="number">3306</span> <span class="number">6379</span></div></pre></td></tr></table></figure>
+<p>指定初始进程为init<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> fgame:base</div><div class="line"><span class="keyword">MAINTAINER</span> tofindme <span class="number">849397833</span>@qq.com</div><div class="line"><span class="keyword">ENV</span> container docker</div><div class="line"><span class="keyword">RUN</span> (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \</div><div class="line">rm -f /lib/systemd/system/multi-user.target.wants/*;\</div><div class="line">rm -f /etc/systemd/system/*.wants/*;\</div><div class="line">rm -f /lib/systemd/system/local-fs.target.wants/*; \</div><div class="line">rm -f /lib/systemd/system/sockets.target.wants/*udev*; \</div><div class="line">rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \</div><div class="line">rm -f /lib/systemd/system/basic.target.wants/*;\</div><div class="line">rm -f /lib/systemd/system/anaconda.target.wants/*;</div><div class="line"><span class="keyword">VOLUME</span> [ "/sys/fs/cgroup" ]</div><div class="line"><span class="keyword">CMD</span> ["/usr/sbin/init"]</div><div class="line"><span class="keyword">expose</span> <span class="number">3306</span> <span class="number">6379</span></div></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">docker build -t fgame:v1.1 .</div><div class="line"></div><div class="line">docker run -itd --privileged=true -p 10.10.2.62:6379:6379 -p 10.10.2.62:3306:3306 -p 10.10.2.62:9000:9000 -p 10.10.2.62:9002:9002 -p 10.10.2.62:9003:9003 -p 10.10.2.62:9004:9004 -v /home/yibin/DockerData/test1.com:/fgame --name test1.com</div></pre></td></tr></table></figure>
+<p><strong>需要expose的端口</strong><br>9000 登录服<br>9004 逻辑服<br>3306 数据库<br>6379 redis<br>7602 网页</p>
+<p>在listen的时候本地端口就行，以及游戏逻辑服务下发给ip地址</p>
+<h4 id="3-5-docker生态"><a href="#3-5-docker生态" class="headerlink" title="3.5 docker生态"></a>3.5 docker生态</h4><blockquote>
+<p>围绕docker有着自己的生态，从单机docker到集群管理的docker三剑客(docker swarm compose)，以及docker官网有docker cloud、docker Hub等</p>
+<p><a href="http://www.tuicool.com/articles/jeEZ7rV" target="_blank" rel="external">docker隔离原理说明</a></p>
+<p><strong>参考: </strong></p>
+<ul>
+<li><a href="http://www.2cto.com/os/201306/223532.html" target="_blank" rel="external">网卡配置配置ip</a> </li>
+<li><a href="http://www.cnblogs.com/iceocean/articles/1616305.html" target="_blank" rel="external">snat和dnat说明</a></li>
+<li><a href="http://blog.csdn.net/u010397369/article/details/41045251" target="_blank" rel="external">进入容器说明</a></li>
+<li><a href="http://xiaorui.cc/2015/05/19/%E8%A7%A3%E5%86%B3docker%E7%BB%91%E5%AE%9A%E5%88%86%E9%85%8D%E9%9D%99%E6%80%81%E5%A4%96%E7%BD%91ip%E7%9A%84%E9%97%AE%E9%A2%98/" target="_blank" rel="external">静态ip</a></li>
+</ul>
+</blockquote>
+<h4 id="3-4-路由规则"><a href="#3-4-路由规则" class="headerlink" title="3.4 路由规则"></a>3.4 路由规则</h4><p><a href="http://gaodi2002.blog.163.com/blog/static/2320768200702115132683/" target="_blank" rel="external">PREROUTE&amp;POSTROUTE 说明</a><br>    POSTROUTE 是指源地址转换，PREROUTE是指目标地址转换<br><strong>这样就好理解了，我局域网需要访问外部主机，则需要把我局域网内的主机转换成可以与别人通信的地址。若局域网外的主机回包给局域网内的主机，则需要把目标地址转换一下，知道局域网外的主机发给是的局域网内哪台主机</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/03/07/docker/" data-id="cizzc19910000j0pvybjllzk4" class="article-share-link">分享</a>
+      
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/docker-容器/">docker 容器</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/03/07/kubernete/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">kubernete</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+           
+    <aside id="sidebar">
+  
+    
+
+  
+    
+    <div class="widget-wrap">
+    
+      <div class="widget" id="toc-widget-fixed">
+      
+        <strong class="toc-title">文章目录</strong>
+        <div class="toc-widget-list">
+              <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#docker介绍"><span class="toc-number">1.</span> <span class="toc-text">docker介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-什么是docker"><span class="toc-number">1.0.1.</span> <span class="toc-text">1. 什么是docker</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-和通常我们说的vm的区别"><span class="toc-number">1.0.2.</span> <span class="toc-text">2. 和通常我们说的vm的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-docker实践"><span class="toc-number">1.0.3.</span> <span class="toc-text">3. docker实践</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-环境准备"><span class="toc-number">1.0.3.1.</span> <span class="toc-text">3.1 环境准备</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-Concept"><span class="toc-number">1.0.3.2.</span> <span class="toc-text">3.2 Concept</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-Network"><span class="toc-number">1.0.3.3.</span> <span class="toc-text">3.3 Network</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-1-主机配置多个ip"><span class="toc-number">1.0.3.4.</span> <span class="toc-text">3.3.1 主机配置多个ip</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-2-启动一个容器"><span class="toc-number">1.0.3.5.</span> <span class="toc-text">3.3.2 启动一个容器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-4-搭建游戏服务器的基础image"><span class="toc-number">1.0.3.6.</span> <span class="toc-text">3.4 搭建游戏服务器的基础image</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#3-4-1-centos7下面安装yum-安装mysql"><span class="toc-number">1.0.3.6.1.</span> <span class="toc-text">3.4.1 centos7下面安装yum 安装mysql</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-4-2-容器里面不能用systemctl"><span class="toc-number">1.0.3.6.2.</span> <span class="toc-text">3.4.2 容器里面不能用systemctl</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-4-3-通过Dockerfile新建一个image"><span class="toc-number">1.0.3.6.3.</span> <span class="toc-text">3.4.3 通过Dockerfile新建一个image</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-5-docker生态"><span class="toc-number">1.0.3.7.</span> <span class="toc-text">3.5 docker生态</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-4-路由规则"><span class="toc-number">1.0.3.8.</span> <span class="toc-text">3.4 路由规则</span></a></li></ol></li></ol></li></ol></li></ol>
+          </div>
+      </div>
+    </div>
+
+  
+    
+
+  
+    
+  
+    
+  
+    
+
+  
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-left">
+      &copy; 2014 - 2017 Oscan&nbsp;|&nbsp;
+      主题 <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
+    </div>
+     <div id="footer-right">
+      联系方式&nbsp;|&nbsp;8493978933@qq.com
+    </div>
+  </div>
+</footer>
+ <script src="/jquery/jquery.min.js"></script>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">首页</a>
+  
+    <a href="/archives" class="mobile-nav-link">归档</a>
+  
+    <a href="/" class="mobile-nav-link">关于</a>
+  
+</nav>
+    <img class="back-to-top-btn" src="/images/fly-to-top.png"/>
+<script>
+// Elevator script included on the page, already.
+window.onload = function() {
+  var elevator = new Elevator({
+    selector:'.back-to-top-btn',
+    element: document.querySelector('.back-to-top-btn'),
+    duration: 1000 // milliseconds
+  });
+}
+</script>
+    
+
+
+
+ <script src="/js/is.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/elevator.js"></script>
+  </div>
+</body>
+</html>
