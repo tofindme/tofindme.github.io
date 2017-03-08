@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>最大可打开的文件数 | 不可同日而语</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="平常开发项目的时候会遇到进程下打开的最大fd超过默认设置，导致用户不能正常使用服务。linux是基于文件系统的一个操作系统,操作系统最基本的单元就是进程。最大可打开的文件描述符分为系统级别的和进程级别的。
+面向全系统的虽然操作系统是基于文件系统的，但它对整个系统中所打开的最大fd数目也是有限制的，默认的系统最大的fd在/proc/sys/fs/file-max文件里，记住proc目录只是一个虚拟的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="最大可打开的文件数">
+<meta property="og:url" content="http://yoursite.com/2017/03/08/max-open-file/index.html">
+<meta property="og:site_name" content="不可同日而语">
+<meta property="og:description" content="平常开发项目的时候会遇到进程下打开的最大fd超过默认设置，导致用户不能正常使用服务。linux是基于文件系统的一个操作系统,操作系统最基本的单元就是进程。最大可打开的文件描述符分为系统级别的和进程级别的。
+面向全系统的虽然操作系统是基于文件系统的，但它对整个系统中所打开的最大fd数目也是有限制的，默认的系统最大的fd在/proc/sys/fs/file-max文件里，记住proc目录只是一个虚拟的">
+<meta property="og:updated_time" content="2017-03-08T09:12:11.474Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="最大可打开的文件数">
+<meta name="twitter:description" content="平常开发项目的时候会遇到进程下打开的最大fd超过默认设置，导致用户不能正常使用服务。linux是基于文件系统的一个操作系统,操作系统最基本的单元就是进程。最大可打开的文件描述符分为系统级别的和进程级别的。
+面向全系统的虽然操作系统是基于文件系统的，但它对整个系统中所打开的最大fd数目也是有限制的，默认的系统最大的fd在/proc/sys/fs/file-max文件里，记住proc目录只是一个虚拟的">
+  
+    <link rel="alternate" href="/atom.xml" title="不可同日而语" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    
+    <div id="header-inner" class="inner">
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">首页</a>
+        
+          <a class="main-nav-link" href="/archives">归档</a>
+        
+          <a class="main-nav-link" href="/">关于</a>
+        
+      </nav>
+      
+    </div>
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">不可同日而语</a>
+      </h1>
+      
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-max-open-file" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/03/08/max-open-file/" class="article-date">
+  <time datetime="2017-03-08T07:21:28.000Z" itemprop="datePublished">2017-03-08</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      最大可打开的文件数
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <!-- Table of Contents -->
+        
+        <p>平常开发项目的时候会遇到进程下打开的最大fd超过默认设置，导致用户不能正常使用服务。<code>linux</code>是基于文件系统的一个操作系统,操作系统最基本的单元就是进程。最大可打开的文件描述符分为系统级别的和进程级别的。</p>
+<h5 id="面向全系统的"><a href="#面向全系统的" class="headerlink" title="面向全系统的"></a>面向全系统的</h5><p>虽然操作系统是基于文件系统的，但它对整个系统中所打开的最大fd数目也是有限制的，默认的系统最大的fd在<code>/proc/sys/fs/file-max</code>文件里，记住<code>proc</code>目录只是一个虚拟的，实际控制的值是在<code>/etc/sysctl.conf</code>里可通过以下方式修改:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">vim /etc/sysctl.conf #fs.file-max=795165把这个放到文件最后</div><div class="line">sysctl -w fs.file-max=795165</div></pre></td></tr></table></figure>
+<p>最后需要执行<code>sysctl -p</code>生效,再到<code>cat /proc/sys/fs/file-max</code>验证已经同步</p>
+<h5 id="面向进程"><a href="#面向进程" class="headerlink" title="面向进程"></a>面向进程</h5><p>我们知道<code>linux</code>系统是一个多用户多进程的多核操作系统,进程是属于具体某一个用户的，通过<code>xshell</code>等工具<code>ulimit</code>看到的东西是对这个用户的一些资源限制，默认的最大fd数是1024,这一般不能满足于我们的需求，所以需要我们手动修改<br>如果默认从终端(shell环境)启动的进程会继承这些参数，修改可以通过以下几种方式:</p>
+<ul>
+<li><p><code>/etc/profile /etc/bashrc ~/.bash_profile ~/.bashrc</code> 等脚本初始化地方加入<code>ulimit -n value</code></p>
+</li>
+<li><p><code>vim /etc/security/limits.conf</code> 按里面的说明还以为是对用户所有打开的fd有限制，经过测试并不是，对资源的限制还是针对进程的,只是用户登录shell会读取这个默认的值</p>
+</li>
+</ul>
+<p>ulimit -n value value值不能超过硬链接数 <code>ulimit -Hn</code>可以查看硬链数,最好在<code>/etc/security/limits.conf</code>设置自己想要的值</p>
+<p><a href="https://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/" target="_blank" rel="external">参考</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/03/08/max-open-file/" data-id="cj00ot2hp000500pv01lcy4g2" class="article-share-link">分享</a>
+      
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux-ulimit-openfile/">linux ulimit openfile</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/03/07/docker/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">docker.md</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+           
+    <aside id="sidebar">
+  
+    
+
+  
+    
+    <div class="widget-wrap">
+    
+      <div class="widget" id="toc-widget-fixed">
+      
+        <strong class="toc-title">文章目录</strong>
+        <div class="toc-widget-list">
+              <ol class="toc"><li class="toc-item toc-level-5"><a class="toc-link" href="#面向全系统的"><span class="toc-number">1.</span> <span class="toc-text">面向全系统的</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#面向进程"><span class="toc-number">2.</span> <span class="toc-text">面向进程</span></a></li></ol>
+          </div>
+      </div>
+    </div>
+
+  
+    
+
+  
+    
+  
+    
+  
+    
+
+  
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-left">
+      &copy; 2014 - 2017 Oscan&nbsp;|&nbsp;
+      主题 <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
+    </div>
+     <div id="footer-right">
+      联系方式&nbsp;|&nbsp;8493978933@qq.com
+    </div>
+  </div>
+</footer>
+ <script src="/jquery/jquery.min.js"></script>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">首页</a>
+  
+    <a href="/archives" class="mobile-nav-link">归档</a>
+  
+    <a href="/" class="mobile-nav-link">关于</a>
+  
+</nav>
+    <img class="back-to-top-btn" src="/images/fly-to-top.png"/>
+<script>
+// Elevator script included on the page, already.
+window.onload = function() {
+  var elevator = new Elevator({
+    selector:'.back-to-top-btn',
+    element: document.querySelector('.back-to-top-btn'),
+    duration: 1000 // milliseconds
+  });
+}
+</script>
+    
+
+
+
+ <script src="/js/is.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/elevator.js"></script>
+  </div>
+</body>
+</html>
