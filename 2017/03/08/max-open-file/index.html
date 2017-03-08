@@ -13,7 +13,7 @@
 <meta property="og:site_name" content="不可同日而语">
 <meta property="og:description" content="平常开发项目的时候会遇到进程下打开的最大fd超过默认设置，导致用户不能正常使用服务。linux是基于文件系统的一个操作系统,操作系统最基本的单元就是进程。最大可打开的文件描述符分为系统级别的和进程级别的。
 面向全系统的虽然操作系统是基于文件系统的，但它对整个系统中所打开的最大fd数目也是有限制的，默认的系统最大的fd在/proc/sys/fs/file-max文件里，记住proc目录只是一个虚拟的">
-<meta property="og:updated_time" content="2017-03-08T09:12:11.474Z">
+<meta property="og:updated_time" content="2017-03-08T09:14:03.651Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="最大可打开的文件数">
 <meta name="twitter:description" content="平常开发项目的时候会遇到进程下打开的最大fd超过默认设置，导致用户不能正常使用服务。linux是基于文件系统的一个操作系统,操作系统最基本的单元就是进程。最大可打开的文件描述符分为系统级别的和进程级别的。
@@ -102,6 +102,7 @@
 <h5 id="面向全系统的"><a href="#面向全系统的" class="headerlink" title="面向全系统的"></a>面向全系统的</h5><p>虽然操作系统是基于文件系统的，但它对整个系统中所打开的最大fd数目也是有限制的，默认的系统最大的fd在<code>/proc/sys/fs/file-max</code>文件里，记住<code>proc</code>目录只是一个虚拟的，实际控制的值是在<code>/etc/sysctl.conf</code>里可通过以下方式修改:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">vim /etc/sysctl.conf #fs.file-max=795165把这个放到文件最后</div><div class="line">sysctl -w fs.file-max=795165</div></pre></td></tr></table></figure>
 <p>最后需要执行<code>sysctl -p</code>生效,再到<code>cat /proc/sys/fs/file-max</code>验证已经同步</p>
+<p>&lt;! – more –&gt;</p>
 <h5 id="面向进程"><a href="#面向进程" class="headerlink" title="面向进程"></a>面向进程</h5><p>我们知道<code>linux</code>系统是一个多用户多进程的多核操作系统,进程是属于具体某一个用户的，通过<code>xshell</code>等工具<code>ulimit</code>看到的东西是对这个用户的一些资源限制，默认的最大fd数是1024,这一般不能满足于我们的需求，所以需要我们手动修改<br>如果默认从终端(shell环境)启动的进程会继承这些参数，修改可以通过以下几种方式:</p>
 <ul>
 <li><p><code>/etc/profile /etc/bashrc ~/.bash_profile ~/.bashrc</code> 等脚本初始化地方加入<code>ulimit -n value</code></p>
@@ -115,7 +116,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/08/max-open-file/" data-id="cj00ot2hp000500pv01lcy4g2" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/08/max-open-file/" data-id="cj00r8bc80005a6pv3bvpgnr5" class="article-share-link">分享</a>
       
       
       

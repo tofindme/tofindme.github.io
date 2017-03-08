@@ -97,6 +97,7 @@
 <h5 id="面向全系统的"><a href="#面向全系统的" class="headerlink" title="面向全系统的"></a>面向全系统的</h5><p>虽然操作系统是基于文件系统的，但它对整个系统中所打开的最大fd数目也是有限制的，默认的系统最大的fd在<code>/proc/sys/fs/file-max</code>文件里，记住<code>proc</code>目录只是一个虚拟的，实际控制的值是在<code>/etc/sysctl.conf</code>里可通过以下方式修改:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">vim /etc/sysctl.conf #fs.file-max=795165把这个放到文件最后</div><div class="line">sysctl -w fs.file-max=795165</div></pre></td></tr></table></figure>
 <p>最后需要执行<code>sysctl -p</code>生效,再到<code>cat /proc/sys/fs/file-max</code>验证已经同步</p>
+<p>&lt;! – more –&gt;</p>
 <h5 id="面向进程"><a href="#面向进程" class="headerlink" title="面向进程"></a>面向进程</h5><p>我们知道<code>linux</code>系统是一个多用户多进程的多核操作系统,进程是属于具体某一个用户的，通过<code>xshell</code>等工具<code>ulimit</code>看到的东西是对这个用户的一些资源限制，默认的最大fd数是1024,这一般不能满足于我们的需求，所以需要我们手动修改<br>如果默认从终端(shell环境)启动的进程会继承这些参数，修改可以通过以下几种方式:</p>
 <ul>
 <li><p><code>/etc/profile /etc/bashrc ~/.bash_profile ~/.bashrc</code> 等脚本初始化地方加入<code>ulimit -n value</code></p>
@@ -110,7 +111,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/08/max-open-file/" data-id="cj00ot2hp000500pv01lcy4g2" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/08/max-open-file/" data-id="cj00r8bc80005a6pv3bvpgnr5" class="article-share-link">分享</a>
       
       
       
@@ -155,50 +156,9 @@
 </blockquote>
 <p><em>此笔记记录阅读docker官网及博客并实践操作所记</em></p>
 <ul>
-<li>docker是个什么东西</li>
 <li>docker和vm的区别</li>
 <li>docker实践讲解</li>
 </ul>
-<h3 id="1-什么是docker"><a href="#1-什么是docker" class="headerlink" title="1. 什么是docker"></a>1. 什么是docker</h3><blockquote>
-<p>dokcer的英文是叫码头工人，这个很有趣，然而它所做的一切也正像码头工人所干的事一样。docker是一个软件集合，帮你做了码头的活，所有的东西都用我的容器来打包，你可以在你的容器里面运行你自己的东西。</p>
-</blockquote>
-<div><br></br></br><br>&nbsp;&nbsp;&nbsp;<img src='logo.png' align="middle"></img></br></br></br><img src="truck.png"></img><br><img src='docker_engin.png'></img><br></div>
-
-<div><br><img src="architecture.png"></img><br></div>
-
-
-<h3 id="2-和通常我们说的vm的区别"><a href="#2-和通常我们说的vm的区别" class="headerlink" title="2. 和通常我们说的vm的区别"></a>2. 和通常我们说的vm的区别</h3><blockquote>
-<p>docker的容器就类似我们vm的安装的iso镜像，只是vm和docker已经把环境的各种依赖的工作都准备好了。docker非常方便的廉价的运行多个container。 container实际是是独立于操作系统上的一个独立的进程，这个进程实现了资源和环境的隔离。它拥有自己的ipc、network、user及pid等</p>
-</blockquote>
-<div><br><br><img src='diff_vm.png' width="300" height="400" ></img><br>&nbsp; &nbsp; &nbsp; &nbsp;<br><br><img src='diff-docker.png' width="300" height="400"></img><br><br></div>
-
-
-<h3 id="3-docker实践"><a href="#3-docker实践" class="headerlink" title="3. docker实践"></a>3. docker实践</h3><ul>
-<li>安装环境</li>
-<li>docker组成部分的一些概念</li>
-<li>网络</li>
-<li>构建属于自己image的</li>
-<li>docker生态</li>
-</ul>
-<h4 id="3-1-环境准备"><a href="#3-1-环境准备" class="headerlink" title="3.1 环境准备"></a>3.1 环境准备</h4><ul>
-<li>下载安装centos7.2镜像虚拟机</li>
-<li><a href="https://docs.docker.com/engine/installation/linux/centos/">安装docker</a></li>
-<li>启动docker <code>systemctl start docker</code></li>
-</ul>
-<blockquote>
-<p>docker版本现在到了1.11了，需要linux 3.10的内核，所以下载的centos7来操作</p>
-</blockquote>
-<p><strong>服务启动脚本在 <code>/usr/lib/systemd/system</code> 目录下</strong></p>
-<h4 id="3-2-Concept"><a href="#3-2-Concept" class="headerlink" title="3.2 Concept"></a>3.2 Concept</h4><ul>
-<li><a href="https://docs.docker.com/linux/step_two/">Understand images &amp; container</a></li>
-<li><a href="http://cloud.51cto.com/art/201501/463143.htm">Docker Volume</a></li>
-</ul>
-<blockquote>
-<p>image和container区别是image就相当于一个编译好的软件，container就好比这个软件的实例，实例可以有多个。image是静态的，container是一个image的运行态。</p>
-<p>volume是一个container的独立于UFS系统的一个存储单元，通常用于挂载宿主的一个目录</p>
-</blockquote>
-<p><img src='container_explainer.png'></img></p>
-<hr>
         
           <p class="article-more-link">
             <a href="/2017/03/07/docker/#more">继续阅读全文 »</a>
@@ -207,7 +167,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/07/docker/" data-id="cj00ot2hf000000pvxoa60dr7" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/07/docker/" data-id="cj00r8bbt0000a6pv3c5v4gmz" class="article-share-link">分享</a>
       
       
       
@@ -267,7 +227,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/07/kubernete/" data-id="cj00ot2ho000400pvru28zy6i" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/07/kubernete/" data-id="cj00r8bc70004a6pvcwvm8d6g" class="article-share-link">分享</a>
       
       
       
@@ -322,7 +282,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/03/nsq/" data-id="cj00ot2hv000600pvo8jt5vnc" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/03/nsq/" data-id="cj00r8bce0006a6pvfiiffkaq" class="article-share-link">分享</a>
       
       
       
@@ -383,7 +343,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/02/skynet/" data-id="cj00ot2hz000a00pvav95zixm" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/02/skynet/" data-id="cj00r8bck000aa6pvwf6jrylq" class="article-share-link">分享</a>
       
       
       
@@ -429,7 +389,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/02/hello-world/" data-id="cj00ot2hj000100pvllxe1xoz" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/02/hello-world/" data-id="cj00r8bc10001a6pvr69btweu" class="article-share-link">分享</a>
       
       
       
