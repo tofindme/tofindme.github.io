@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>c和lua交互 | 不可同日而语</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="要理解Lua和C++交互，首先要理解Lua堆栈。
+简单来说，Lua和C/C++语言通信的主要方法是一个无处不在的虚拟栈。栈的特点是先进后出。
+在Lua中，Lua堆栈就是一个struct，堆栈索引的方式可是是正数也可以是负数，区别是：正数索引1永远表示栈底，负数索引-1永远表示栈顶。如图：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="c和lua交互">
+<meta property="og:url" content="http://yoursite.com/2017/03/13/c-lua/index.html">
+<meta property="og:site_name" content="不可同日而语">
+<meta property="og:description" content="要理解Lua和C++交互，首先要理解Lua堆栈。
+简单来说，Lua和C/C++语言通信的主要方法是一个无处不在的虚拟栈。栈的特点是先进后出。
+在Lua中，Lua堆栈就是一个struct，堆栈索引的方式可是是正数也可以是负数，区别是：正数索引1永远表示栈底，负数索引-1永远表示栈顶。如图：">
+<meta property="og:image" content="http://yoursite.com/../../../../images/stack.png">
+<meta property="og:updated_time" content="2017-03-13T04:13:28.138Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="c和lua交互">
+<meta name="twitter:description" content="要理解Lua和C++交互，首先要理解Lua堆栈。
+简单来说，Lua和C/C++语言通信的主要方法是一个无处不在的虚拟栈。栈的特点是先进后出。
+在Lua中，Lua堆栈就是一个struct，堆栈索引的方式可是是正数也可以是负数，区别是：正数索引1永远表示栈底，负数索引-1永远表示栈顶。如图：">
+<meta name="twitter:image" content="http://yoursite.com/../../../../images/stack.png">
+  
+    <link rel="alternate" href="/atom.xml" title="不可同日而语" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    
+    <div id="header-inner" class="inner">
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">首页</a>
+        
+          <a class="main-nav-link" href="/archives">归档</a>
+        
+          <a class="main-nav-link" href="/">关于</a>
+        
+      </nav>
+      
+    </div>
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">不可同日而语</a>
+      </h1>
+      
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-c-lua" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/03/13/c-lua/" class="article-date">
+  <time datetime="2017-03-13T01:59:28.000Z" itemprop="datePublished">2017-03-13</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/JustDo/">JustDo</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      c和lua交互
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <!-- Table of Contents -->
+        
+        <p>要理解Lua和C++交互，首先要理解Lua堆栈。</p>
+<p>简单来说，Lua和C/C++语言通信的主要方法是一个无处不在的虚拟栈。栈的特点是先进后出。</p>
+<p>在Lua中，Lua堆栈就是一个struct，<strong>堆栈索引的方式可是是正数也可以是负数，区别是：正数索引1永远表示栈底，负数索引-1永远表示栈顶。如图：</strong></p>
+<p><img src="../../../../images/stack.png" alt=""></p>
+<a id="more"></a>
+<p>栈的数据结构是<code>TValue *stack</code>,TValue代表lua里面的值类型.欲知是如何交互的，烦请详细阅读下面的代码和运行结果~~.</p>
+<p><strong>test.lua:</strong></p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">str=<span class="string">"hello,I am a lua value"</span></div><div class="line"></div><div class="line">tbl = &#123; name = <span class="string">"test"</span>, num = <span class="number">10</span> &#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">echo</span><span class="params">(name)</span></span></div><div class="line">    <span class="keyword">return</span> name</div><div class="line"><span class="keyword">end</span></div></pre></td></tr></table></figure>
+<p><strong>main.c:</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;lua.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;lauxlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;lualib.h&gt;</span></span></div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">stackTest</span><span class="params">(lua_State* L)</span></span>&#123;</div><div class="line">    <span class="keyword">char</span> str[] = <span class="string">"first one"</span>;</div><div class="line">    <span class="keyword">char</span> *ud = (<span class="keyword">char</span>*)<span class="built_in">malloc</span>(<span class="number">20</span>);</div><div class="line">    <span class="built_in">strcpy</span>(ud,<span class="string">"user data"</span>);</div><div class="line">    lua_pushstring(L, str);</div><div class="line">    <span class="comment">//lua_pushvalue(L, -1);</span></div><div class="line">    lua_pushnumber(L, <span class="number">20</span>);</div><div class="line">    lua_pushlightuserdata(L, ud);</div><div class="line"></div><div class="line">    <span class="comment">// 从栈底取值</span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *res = lua_tostring(L, <span class="number">1</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"addr: %p %p \n"</span>, res, str); <span class="comment">// pushstring是拷贝的一个副本</span></div><div class="line"></div><div class="line">    <span class="keyword">if</span> (<span class="built_in">strncmp</span>(res, str, <span class="built_in">strlen</span>(str))) &#123;</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"i need %s,but %s\n"</span>, str, res);</div><div class="line">        lua_pop(L, <span class="number">3</span>);</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// 取栈底第二个</span></div><div class="line">    <span class="keyword">int</span> num = lua_tonumber(L, <span class="number">2</span>);</div><div class="line">    <span class="keyword">if</span> (num != <span class="number">20</span>)&#123;</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"i need %d,but %d\n"</span>, <span class="number">20</span>, num);</div><div class="line">        lua_pop(L, <span class="number">3</span>);</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// 从栈顶取值</span></div><div class="line">    <span class="keyword">char</span>*ptr = lua_touserdata(L, <span class="number">-1</span>); <span class="comment">// 把c中的一个指针针转到lua中例用</span></div><div class="line">    <span class="keyword">if</span> (ptr != ud)&#123;</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"should be same ptr : %p ud %p\n "</span>, ptr, ud);</div><div class="line">        lua_pop(L, <span class="number">3</span>);</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="built_in">printf</span>(<span class="string">"位置1的值为 : %s\t 位置2的值为 : %d\n"</span>, res, num);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"栈元素的个数 : %d\n"</span>, lua_gettop(L));</div><div class="line"></div><div class="line">    <span class="comment">//清空栈</span></div><div class="line">    lua_pop(L, <span class="number">3</span>);</div><div class="line"></div><div class="line">    <span class="built_in">printf</span>(<span class="string">"弹出栈后的元素个数 : %d\n"</span>, lua_gettop(L));</div><div class="line"></div><div class="line">    <span class="built_in">printf</span>(<span class="string">"\n\n------------------------------------------------\n\n"</span>);</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">luaTest</span><span class="params">(lua_State* L)</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">int</span> res;</div><div class="line">    <span class="comment">//加载文件</span></div><div class="line">    res = luaL_loadfile(L, <span class="string">"test.lua"</span>);</div><div class="line">    <span class="keyword">if</span> (res)&#123;</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"load file failed\n"</span>);</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">//运行lua脚本</span></div><div class="line">    res = lua_pcall(L, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>);</div><div class="line">    <span class="keyword">if</span> (res)&#123;</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"test.lua语法错误"</span>);</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    lua_getglobal(L, <span class="string">"str"</span>); <span class="comment">// 得到test.lua里的全局变量str并push到栈上</span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *str = lua_tostring(L, <span class="number">-1</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"str : %s\t 栈元素个数 : %d\n"</span>, str, lua_gettop(L));</div><div class="line"></div><div class="line">    lua_getglobal(L, <span class="string">"tbl"</span>);</div><div class="line">    lua_getfield(L, <span class="number">-1</span>, <span class="string">"name"</span>); <span class="comment">// 得到tbl表name的值</span></div><div class="line">    str = lua_tostring(L, <span class="number">-1</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"lua tbl.name : %s\t 栈元素个数 : %d\n"</span>, str, lua_gettop(L));</div><div class="line"></div><div class="line">    lua_getglobal(L, <span class="string">"echo"</span>);</div><div class="line">    lua_pushstring(L, <span class="string">"hello,lua ~"</span>);</div><div class="line">    res = lua_pcall(L, <span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>); <span class="comment">// call后会把push进栈的全部pop出来</span></div><div class="line">    <span class="keyword">if</span> (res)&#123;</div><div class="line">        <span class="keyword">const</span> <span class="keyword">char</span> *errMsg = lua_tostring(L, <span class="number">-1</span>);</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"errMsg : %s\t 栈元素个数 : %d\n"</span>, errMsg, lua_gettop(L));</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">int</span> elements = lua_gettop(L);</div><div class="line">    <span class="keyword">if</span>(lua_isstring(L, <span class="number">-1</span>))&#123;</div><div class="line">        str = lua_tostring(L, <span class="number">-1</span>);</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"add返回值 : %s\t 栈元素个数 : %d\n"</span>, str, elements);</div><div class="line">    &#125;</div><div class="line">    lua_pop(L, elements);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"\n\n------------------------------------------------\n\n"</span>);</div><div class="line"></div><div class="line">    <span class="comment">//至此，栈中的情况是：</span></div><div class="line">    <span class="comment">//=================== 栈顶 ===================</span></div><div class="line">    <span class="comment">//  索引  类型      值</span></div><div class="line">    <span class="comment">//   4   string：   hello,lua ~</span></div><div class="line">    <span class="comment">//   3   string：   test</span></div><div class="line">    <span class="comment">//   2   table:     tbl</span></div><div class="line">    <span class="comment">//   1   string:    hello,I am a lua value</span></div><div class="line">    <span class="comment">//=================== 栈底 ===================</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">//rawset rawget不会触发表的元方法</span></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">save</span><span class="params">(lua_State* L, <span class="keyword">const</span> <span class="keyword">char</span>* f, <span class="keyword">const</span> <span class="keyword">char</span>* con)</span></span>&#123;</div><div class="line">    lua_pushstring(L, f);</div><div class="line">    lua_pushvalue(L, <span class="number">-1</span>); <span class="comment">//file1的副本push栈</span></div><div class="line">    lua_rawget(L, LUA_REGISTRYINDEX); <span class="comment">// 得到lua全局注册表,拿到栈顶的值然后在表里面取值,如:t["file1"],pop现有栈,再把t["file1"]push上去</span></div><div class="line"></div><div class="line">    <span class="built_in">printf</span>(<span class="string">"num is %d\n"</span>, lua_gettop(L));</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *p = lua_tostring(L, <span class="number">-1</span>);</div><div class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> == p)&#123;<span class="comment">//not exist</span></div><div class="line">        lua_pop(L,<span class="number">1</span>);</div><div class="line">        lua_pushstring(L, con);</div><div class="line">        lua_rawset(L, LUA_REGISTRYINDEX);<span class="comment">//以栈顶的值为value,栈顶下一个值为key设置表,栈顶的两个值都会pop</span></div><div class="line">        <span class="built_in">printf</span>(<span class="string">"文件名%s添加成功\n"</span>, f);</div><div class="line">    &#125;<span class="keyword">else</span>&#123;</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"文件名已经存在:%s\n"</span>, p);</div><div class="line">        lua_pop(L, <span class="number">2</span>);</div><div class="line">    &#125;</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"num is %d\n"</span>,lua_gettop(L));</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">load</span><span class="params">(lua_State* L,<span class="keyword">char</span> *name)</span></span>&#123;</div><div class="line">    lua_pushstring(L, name);</div><div class="line">    lua_rawget(L, LUA_REGISTRYINDEX);</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *p = lua_tostring(L, <span class="number">-1</span>);</div><div class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> != p)&#123;</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"%s的内容是%s\n"</span>, name, p);</div><div class="line">    &#125;<span class="keyword">else</span>&#123;</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"%s的内容不存在\n"</span>, name);</div><div class="line">    &#125;</div><div class="line">    lua_pop(L, <span class="number">1</span>);<span class="comment">// 把结果pop出来</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// 在lua注册表上保存一些东西(skynet的加载lua chunk就是这样实现的)</span></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">luaGlobalTbl</span><span class="params">(lua_State* L)</span></span>&#123;</div><div class="line">    save(L, <span class="string">"file1"</span>, <span class="string">"I am file 1"</span>);</div><div class="line">    save(L, <span class="string">"file2"</span>, <span class="string">"I am file 2"</span>);</div><div class="line">    save(L, <span class="string">"file2"</span>, <span class="string">"I am file 2"</span>);</div><div class="line"></div><div class="line">    <span class="built_in">printf</span>(<span class="string">"\n\n------------------------------------------------\n\n"</span>);</div><div class="line"></div><div class="line">    load(L, <span class="string">"file2"</span>);</div><div class="line">    load(L, <span class="string">"file1"</span>);</div><div class="line">    <span class="built_in">printf</span>(<span class="string">"\n\n"</span>);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span> <span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</div><div class="line">    <span class="comment">// 创建Lua状态</span></div><div class="line">    lua_State *L = luaL_newstate();</div><div class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> == L)&#123;</div><div class="line">        <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    stackTest(L);</div><div class="line"></div><div class="line">    luaTest(L);</div><div class="line"></div><div class="line">    luaGlobalTbl(L);</div><div class="line"></div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p><strong>运行结果:</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line">addr: 0x24f26c8 0x7ffc236ba870 </div><div class="line">位置1的值为 : first one 位置2的值为 : 20</div><div class="line">栈元素的个数 : 3</div><div class="line">弹出栈后的元素个数 : 0</div><div class="line"></div><div class="line"></div><div class="line">------------------------------------------------</div><div class="line"></div><div class="line">str : hello,I am a lua value 栈元素个数 : 1</div><div class="line">lua tbl.name : test 栈元素个数 : 3</div><div class="line">add返回值 : hello,lua ~ 栈元素个数 : 4</div><div class="line"></div><div class="line"></div><div class="line">------------------------------------------------</div><div class="line"></div><div class="line">num is 2</div><div class="line">文件名file1添加成功</div><div class="line">num is 0</div><div class="line">num is 2</div><div class="line">文件名file2添加成功</div><div class="line">num is 0</div><div class="line">num is 2</div><div class="line">文件名已经存在:I am file 2</div><div class="line">num is 0</div><div class="line"></div><div class="line"></div><div class="line">------------------------------------------------</div><div class="line"></div><div class="line">file2的内容是I am file 2</div><div class="line">file1的内容是I am file 1</div></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/03/13/c-lua/" data-id="cj07lcpgb0000zvpvlyh00fpa" class="article-share-link">分享</a>
+      
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/c-lua/">c lua</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/03/13/about-me/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          关于我
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/03/08/max-open-file/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">最大可打开的文件数</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+           
+    <aside id="sidebar">
+  
+    
+
+  
+    
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title recent-posts">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2017/03/13/about-me/">关于我</a>
+          </li>
+        
+          <li>
+            <a href="/2017/03/13/c-lua/">c和lua交互</a>
+          </li>
+        
+          <li>
+            <a href="/2017/03/08/max-open-file/">最大可打开的文件数</a>
+          </li>
+        
+          <li>
+            <a href="/2017/03/07/docker/">docker.md</a>
+          </li>
+        
+          <li>
+            <a href="/2017/03/07/kubernete/">kubernete</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+    
+
+  
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-left">
+      &copy; 2014 - 2017 Oscan&nbsp;|&nbsp;
+      主题 <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
+    </div>
+     <div id="footer-right">
+      联系方式&nbsp;|&nbsp;8493978933@qq.com
+    </div>
+  </div>
+</footer>
+ <script src="/jquery/jquery.min.js"></script>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">首页</a>
+  
+    <a href="/archives" class="mobile-nav-link">归档</a>
+  
+    <a href="/" class="mobile-nav-link">关于</a>
+  
+</nav>
+    <img class="back-to-top-btn" src="/images/fly-to-top.png"/>
+<script>
+// Elevator script included on the page, already.
+window.onload = function() {
+  var elevator = new Elevator({
+    selector:'.back-to-top-btn',
+    element: document.querySelector('.back-to-top-btn'),
+    duration: 1000 // milliseconds
+  });
+}
+</script>
+    
+
+
+
+ <script src="/js/is.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/elevator.js"></script>
+  </div>
+</body>
+</html>
