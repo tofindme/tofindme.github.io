@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>linux-io | 不可同日而语</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="少说句，多看代码，多思考，多动手
+io操作是一个程序必不可少的部分，io可以是对块设备的读写，文件的读写，基于网络上的io,这里通过内核select和epoll源码比较下这两种io的优劣。平常服务器需要处理客户端多个连接(基于tcp)的io事件。
+对io的读写是有阻塞和非阻塞之分的，对于tcp连接上的读写实际是基于它的读写缓存区，如果fd是阻塞的话,对读来说,缓冲区没数据,对写来说，缓冲区不足够装">
+<meta property="og:type" content="article">
+<meta property="og:title" content="linux-io">
+<meta property="og:url" content="http://yoursite.com/2017/03/14/linux-io/index.html">
+<meta property="og:site_name" content="不可同日而语">
+<meta property="og:description" content="少说句，多看代码，多思考，多动手
+io操作是一个程序必不可少的部分，io可以是对块设备的读写，文件的读写，基于网络上的io,这里通过内核select和epoll源码比较下这两种io的优劣。平常服务器需要处理客户端多个连接(基于tcp)的io事件。
+对io的读写是有阻塞和非阻塞之分的，对于tcp连接上的读写实际是基于它的读写缓存区，如果fd是阻塞的话,对读来说,缓冲区没数据,对写来说，缓冲区不足够装">
+<meta property="og:updated_time" content="2017-03-14T08:10:19.540Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="linux-io">
+<meta name="twitter:description" content="少说句，多看代码，多思考，多动手
+io操作是一个程序必不可少的部分，io可以是对块设备的读写，文件的读写，基于网络上的io,这里通过内核select和epoll源码比较下这两种io的优劣。平常服务器需要处理客户端多个连接(基于tcp)的io事件。
+对io的读写是有阻塞和非阻塞之分的，对于tcp连接上的读写实际是基于它的读写缓存区，如果fd是阻塞的话,对读来说,缓冲区没数据,对写来说，缓冲区不足够装">
+  
+    <link rel="alternate" href="/atom.xml" title="不可同日而语" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    
+    <div id="header-inner" class="inner">
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">首页</a>
+        
+          <a class="main-nav-link" href="/archives">归档</a>
+        
+          <a class="main-nav-link" href="/">关于</a>
+        
+      </nav>
+      
+    </div>
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">不可同日而语</a>
+      </h1>
+      
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linux-io" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/03/14/linux-io/" class="article-date">
+  <time datetime="2017-03-14T03:04:29.000Z" itemprop="datePublished">2017-03-14</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/JustDo/">JustDo</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      linux-io
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <!-- Table of Contents -->
+        
+        <p><strong>少说句，多看代码，多思考，多动手</strong></p>
+<p>io操作是一个程序必不可少的部分，io可以是对块设备的读写，文件的读写，基于网络上的io,这里通过内核select和epoll源码比较下这两种io的优劣。平常服务器需要处理客户端多个连接(基于tcp)的io事件。</p>
+<p>对io的读写是有阻塞和非阻塞之分的，对于tcp连接上的读写实际是基于它的读写缓存区，如果fd是阻塞的话,对读来说,缓冲区没数据,对写来说，缓冲区不足够装下需要写的数据或已经满了同样会阻塞。下面是一个阻塞和非阻塞读取标准输入的程序。</p>
+<a id="more"></a>
+<p><strong>阻塞:</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</div><div class="line">    <span class="keyword">char</span> buf[<span class="number">10</span>];</div><div class="line">    <span class="keyword">while</span>(<span class="number">1</span>)&#123;</div><div class="line">        <span class="keyword">int</span> len = read(STDIN_FILENO, buf, <span class="number">10</span>);</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"output len %d, %s\n"</span>, len, buf);</div><div class="line">        fflush(STDIN_FILENO);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p><strong>非阻塞:</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</div><div class="line">    <span class="keyword">int</span> hd = open(<span class="string">"test.txt"</span>, O_CREAT|O_RDONLY|O_NONBLOCK, <span class="number">0666</span>);</div><div class="line">    <span class="keyword">char</span> buf[<span class="number">5</span>];</div><div class="line">    <span class="keyword">while</span>(<span class="number">1</span>)&#123;</div><div class="line">        <span class="built_in">memset</span>(buf, <span class="number">0</span>, <span class="number">5</span>);</div><div class="line">        <span class="keyword">int</span> len = read(hd, buf, <span class="number">5</span>);</div><div class="line">        <span class="keyword">if</span> (<span class="number">0</span> == len)&#123;</div><div class="line">            <span class="keyword">continue</span>;</div><div class="line">        &#125;</div><div class="line">        sleep(<span class="number">1</span>);</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"read %d %s\n"</span>, len, buf);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p><code>echo &quot;123456&quot; &gt;&gt; test.txt</code></p>
+<p>在不用select或epoll接口时，如果程序需要处理客户端多个连接将会导致程序阻塞，不适合处理多个阻塞流，如果非阻塞流,就需要一直轮循，导至浪费cpu时间。有了系统的select和epoll接口后就不需要用户去查找哪些fd是需要处理的。所以调用select和epoll后我们可以拿到我们需要处理的fd。下面来分析下内核源码。</p>
+<h4 id="select"><a href="#select" class="headerlink" title="select"></a>select</h4><p>相关接口:<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">FD_ZERO(fd_set *fdset)  <span class="comment">//清空fd_set数组</span></div><div class="line">FD_SET(<span class="keyword">int</span> fd, fd_set *fdset)  <span class="comment">//保存在fd_set数组里</span></div><div class="line">FD_CLR(<span class="keyword">int</span> fd, fd_set *fdset)  <span class="comment">//从fd_set里移除</span></div><div class="line">FD_ISSET(<span class="keyword">int</span> fd, fdset *fdset)  <span class="comment">//检查fdset联系的文件句柄fd是否可读写，&gt;0表示可读写。</span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">select</span><span class="params">(<span class="keyword">int</span> nfds, fd_set *readfds, fd_set *writefds,</span></span></div><div class="line">                  fd_set *exceptfds, <span class="keyword">struct</span> timeval *timeout);</div><div class="line"></div><div class="line"><span class="comment">/*</span></div><div class="line">nfds : 最大的fd值+1, 一定要加上</div><div class="line">readfds :  用来监听可读的fd集合</div><div class="line">writefds :  可写</div><div class="line">exceptfds : 异常的</div><div class="line">timeout :  为0立即返回，如果传null将一直阻塞到有fd可用</div><div class="line">返回准备好的fd个数</div><div class="line">*/</div></pre></td></tr></table></figure></p>
+<p>内核代码:<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">do_select</span><span class="params">(<span class="keyword">int</span> n, fd_set_bits *fds, <span class="keyword">long</span> *timeout)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> poll_wqueues table;</div><div class="line">    poll_table *wait;</div><div class="line">    <span class="keyword">int</span> retval, i;</div><div class="line">    <span class="keyword">long</span> __timeout = *timeout;</div><div class="line"></div><div class="line">    spin_lock(&amp;current-&gt;files-&gt;file_lock);</div><div class="line">    retval = max_select_fd(n, fds);</div><div class="line">    spin_unlock(&amp;current-&gt;files-&gt;file_lock);</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</div><div class="line">        <span class="keyword">return</span> retval;</div><div class="line">    n = retval;</div><div class="line"></div><div class="line">    poll_initwait(&amp;table);</div><div class="line">    wait = &amp;table.pt;</div><div class="line">    <span class="keyword">if</span> (!__timeout)</div><div class="line">        wait = <span class="literal">NULL</span>;</div><div class="line">    retval = <span class="number">0</span>;</div><div class="line">    <span class="keyword">for</span> (;;) &#123;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">long</span> *rinp, *routp, *rexp, *inp, *outp, *<span class="built_in">exp</span>;</div><div class="line"></div><div class="line">        set_current_state(TASK_INTERRUPTIBLE);</div><div class="line"></div><div class="line">        inp = fds-&gt;in; outp = fds-&gt;out; <span class="built_in">exp</span> = fds-&gt;ex;</div><div class="line">        rinp = fds-&gt;res_in; routp = fds-&gt;res_out; rexp = fds-&gt;res_ex;</div><div class="line"></div><div class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; n; ++rinp, ++routp, ++rexp) &#123;</div><div class="line">            <span class="keyword">unsigned</span> <span class="keyword">long</span> in, out, ex, all_bits, bit = <span class="number">1</span>, mask, j;</div><div class="line">            <span class="keyword">unsigned</span> <span class="keyword">long</span> res_in = <span class="number">0</span>, res_out = <span class="number">0</span>, res_ex = <span class="number">0</span>;</div><div class="line">            <span class="keyword">struct</span> file_operations *f_op = <span class="literal">NULL</span>;</div><div class="line">            <span class="keyword">struct</span> file *file = <span class="literal">NULL</span>;</div><div class="line"></div><div class="line">            in = *inp++; out = *outp++; ex = *<span class="built_in">exp</span>++;</div><div class="line">            all_bits = in | out | ex;</div><div class="line">            <span class="keyword">if</span> (all_bits == <span class="number">0</span>) &#123;</div><div class="line">                i += __NFDBITS;</div><div class="line">                <span class="keyword">continue</span>;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; __NFDBITS; ++j, ++i, bit &lt;&lt;= <span class="number">1</span>) &#123;</div><div class="line">                <span class="keyword">if</span> (i &gt;= n)</div><div class="line">                    <span class="keyword">break</span>;</div><div class="line">                <span class="keyword">if</span> (!(bit &amp; all_bits))</div><div class="line">                    <span class="keyword">continue</span>;</div><div class="line">                file = fget(i);</div><div class="line">                <span class="keyword">if</span> (file) &#123;</div><div class="line">                    f_op = file-&gt;f_op;</div><div class="line">                    mask = DEFAULT_POLLMASK;</div><div class="line">                    <span class="keyword">if</span> (f_op &amp;&amp; f_op-&gt;poll)</div><div class="line">                        mask = (*f_op-&gt;poll)(file, retval ? <span class="literal">NULL</span> : wait);</div><div class="line">                    fput(file);</div><div class="line">                    <span class="keyword">if</span> ((mask &amp; POLLIN_SET) &amp;&amp; (in &amp; bit)) &#123;</div><div class="line">                        res_in |= bit;</div><div class="line">                        retval++;</div><div class="line">                    &#125;</div><div class="line">                    <span class="keyword">if</span> ((mask &amp; POLLOUT_SET) &amp;&amp; (out &amp; bit)) &#123;</div><div class="line">                        res_out |= bit;</div><div class="line">                        retval++;</div><div class="line">                    &#125;</div><div class="line">                    <span class="keyword">if</span> ((mask &amp; POLLEX_SET) &amp;&amp; (ex &amp; bit)) &#123;</div><div class="line">                        res_ex |= bit;</div><div class="line">                        retval++;</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">                cond_resched();</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">if</span> (res_in)</div><div class="line">                *rinp = res_in;</div><div class="line">            <span class="keyword">if</span> (res_out)</div><div class="line">                *routp = res_out;</div><div class="line">            <span class="keyword">if</span> (res_ex)</div><div class="line">                *rexp = res_ex;</div><div class="line">        &#125;</div><div class="line">        wait = <span class="literal">NULL</span>;</div><div class="line">        <span class="keyword">if</span> (retval || !__timeout || signal_pending(current))</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        <span class="keyword">if</span>(table.error) &#123;</div><div class="line">            retval = table.error;</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        &#125;</div><div class="line">        __timeout = schedule_timeout(__timeout);</div><div class="line">    &#125;</div><div class="line">    __set_current_state(TASK_RUNNING);</div><div class="line"></div><div class="line">    poll_freewait(&amp;table);</div><div class="line"></div><div class="line">    <span class="comment">/*</span></div><div class="line">     * Up-to-date the caller timeout.</div><div class="line">     */</div><div class="line">    *timeout = __timeout;</div><div class="line">    <span class="keyword">return</span> retval;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这个函数大概就是把传进来的读，写、异常的fd集合做了个遍历，返回了准备好的fd个数,用户需要在内核空间返回后再根据这个返回值做一次遍历。</p>
+<h4 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h4><p>相关接口:<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_create</span><span class="params">(<span class="keyword">int</span> size)</span></span>; <span class="comment">// 向内核请求创建一个epoll句柄,size大小在2.6.8以后已经不用了</span></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_ctl</span><span class="params">(<span class="keyword">int</span> epfd, <span class="keyword">int</span> op, <span class="keyword">int</span> fd, <span class="keyword">struct</span> epoll_event *event)</span></span>;</div><div class="line"><span class="comment">/*</span></div><div class="line">EPOLL_CTL_ADD  向epoll新增一个fd</div><div class="line">EPOLL_CTL_DEL  从epoll移除一个fd </div><div class="line">EPOLL_CTL_MOD  改变fd关联的event</div><div class="line">*/</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_wait</span><span class="params">(<span class="keyword">int</span> epfd, <span class="keyword">struct</span> epoll_event *events,</span></span></div><div class="line">                      <span class="keyword">int</span> maxevents, <span class="keyword">int</span> timeout);</div><div class="line"></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">union</span> epoll_data &#123;</div><div class="line">        <span class="keyword">void</span>    *ptr;</div><div class="line">        <span class="keyword">int</span>      fd;</div><div class="line">        <span class="keyword">uint32_t</span> u32;</div><div class="line">        <span class="keyword">uint64_t</span> u64;</div><div class="line">&#125; <span class="keyword">epoll_data_t</span>;</div><div class="line"></div><div class="line"><span class="keyword">struct</span> epoll_event &#123;</div><div class="line">    <span class="keyword">uint32_t</span>     events;    <span class="comment">/* Epoll events */</span></div><div class="line">    <span class="keyword">epoll_data_t</span> data;      <span class="comment">/* User data variable */</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p><strong>内核代码:</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*</span></div><div class="line"> * This structure is stored inside the "private_data" member of the file</div><div class="line"> * structure and rapresent the main data sructure for the eventpoll</div><div class="line"> * interface.</div><div class="line"> */</div><div class="line"><span class="keyword">struct</span> eventpoll &#123;</div><div class="line">    <span class="comment">/* Protect the this structure access */</span></div><div class="line">    <span class="keyword">rwlock_t</span> lock;</div><div class="line"></div><div class="line">    <span class="comment">/*</span></div><div class="line">     * This semaphore is used to ensure that files are not removed</div><div class="line">     * while epoll is using them. This is read-held during the event</div><div class="line">     * collection loop and it is write-held during the file cleanup</div><div class="line">     * path, the epoll file exit code and the ctl operations.</div><div class="line">     */</div><div class="line">    <span class="keyword">struct</span> rw_semaphore sem;</div><div class="line"></div><div class="line">    <span class="comment">/* Wait queue used by sys_epoll_wait() */</span></div><div class="line">    <span class="keyword">wait_queue_head_t</span> wq;</div><div class="line"></div><div class="line">    <span class="comment">/* Wait queue used by file-&gt;poll() */</span></div><div class="line">    <span class="keyword">wait_queue_head_t</span> poll_wait;</div><div class="line"></div><div class="line">    <span class="comment">/* List of ready file descriptors */</span></div><div class="line">    <span class="keyword">struct</span> list_head rdllist;</div><div class="line"></div><div class="line">    <span class="comment">/* RB-Tree root used to store monitored fd structs */</span></div><div class="line">    <span class="keyword">struct</span> rb_root rbr;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">ep_poll</span><span class="params">(<span class="keyword">struct</span> eventpoll *ep, <span class="keyword">struct</span> epoll_event __user *events,</span></span></div><div class="line">           <span class="keyword">int</span> maxevents, <span class="keyword">long</span> timeout)</div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> res, eavail;</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> flags;</div><div class="line">    <span class="keyword">long</span> jtimeout;</div><div class="line">    <span class="keyword">wait_queue_t</span> wait;</div><div class="line"></div><div class="line">    <span class="comment">/*</span></div><div class="line">     * Calculate the timeout by checking for the "infinite" value ( -1 )</div><div class="line">     * and the overflow condition. The passed timeout is in milliseconds,</div><div class="line">     * that why (t * HZ) / 1000.</div><div class="line">     */</div><div class="line">    jtimeout = timeout == <span class="number">-1</span> || timeout &gt; (MAX_SCHEDULE_TIMEOUT - <span class="number">1000</span>) / HZ ?</div><div class="line">        MAX_SCHEDULE_TIMEOUT: (timeout * HZ + <span class="number">999</span>) / <span class="number">1000</span>;</div><div class="line"></div><div class="line">retry:</div><div class="line">    write_lock_irqsave(&amp;ep-&gt;lock, flags);</div><div class="line"></div><div class="line">    res = <span class="number">0</span>;</div><div class="line">    <span class="keyword">if</span> (list_empty(&amp;ep-&gt;rdllist)) &#123;</div><div class="line">        <span class="comment">/*</span></div><div class="line">         * We don't have any available event to return to the caller.</div><div class="line">         * We need to sleep here, and we will be wake up by</div><div class="line">         * ep_poll_callback() when events will become available.</div><div class="line">         */</div><div class="line">        init_waitqueue_entry(&amp;wait, current);</div><div class="line">        add_wait_queue(&amp;ep-&gt;wq, &amp;wait);</div><div class="line"></div><div class="line">        <span class="keyword">for</span> (;;) &#123;</div><div class="line">            <span class="comment">/*</span></div><div class="line">             * We don't want to sleep if the ep_poll_callback() sends us</div><div class="line">             * a wakeup in between. That's why we set the task state</div><div class="line">             * to TASK_INTERRUPTIBLE before doing the checks.</div><div class="line">             */</div><div class="line">            set_current_state(TASK_INTERRUPTIBLE);</div><div class="line">            <span class="keyword">if</span> (!list_empty(&amp;ep-&gt;rdllist) || !jtimeout)</div><div class="line">                <span class="keyword">break</span>;</div><div class="line">            <span class="keyword">if</span> (signal_pending(current)) &#123;</div><div class="line">                res = -EINTR;</div><div class="line">                <span class="keyword">break</span>;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            write_unlock_irqrestore(&amp;ep-&gt;lock, flags);</div><div class="line">            jtimeout = schedule_timeout(jtimeout);</div><div class="line">            write_lock_irqsave(&amp;ep-&gt;lock, flags);</div><div class="line">        &#125;</div><div class="line">        remove_wait_queue(&amp;ep-&gt;wq, &amp;wait);</div><div class="line"></div><div class="line">        set_current_state(TASK_RUNNING);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/* Is it worth to try to dig for events ? */</span></div><div class="line">    eavail = !list_empty(&amp;ep-&gt;rdllist);</div><div class="line"></div><div class="line">    write_unlock_irqrestore(&amp;ep-&gt;lock, flags);</div><div class="line"></div><div class="line">    <span class="comment">/*</span></div><div class="line">     * Try to transfer events to user space. In case we get 0 events and</div><div class="line">     * there's still timeout left over, we go trying again in search of</div><div class="line">     * more luck.</div><div class="line">     */</div><div class="line">    <span class="keyword">if</span> (!res &amp;&amp; eavail &amp;&amp;</div><div class="line">        !(res = ep_events_transfer(ep, events, maxevents)) &amp;&amp; jtimeout)</div><div class="line">        <span class="keyword">goto</span> retry;</div><div class="line"></div><div class="line">    <span class="keyword">return</span> res;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>内核在获取多准备好的fd的时候是通过<code>ep_poll_callback(wait_queue_t *wait, unsigned mode, int sync, void *key);</code>回调函数放到准备好的队列,然后再把准备好的队列放到<code>epoll_wait</code>里面的events参数里面.</p>
+<p>epoll相比select的多路复用的机制监控的fd不受fd_set数组的限制,准备好的fd是通过回调(epoll_ctl新增时注册)放到rdlist里面然后再copy回用户空间,用户空间就不需要再像select那样去遍历数组去检查是否可读.</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/03/14/linux-io/" data-id="cj0995egg0000a6pvv4inchpu" class="article-share-link">分享</a>
+      
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/select-epoll-socket/">select epoll socket</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/03/13/about-me/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">关于我</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+           
+    <aside id="sidebar">
+  
+    
+
+  
+    
+    <div class="widget-wrap">
+    
+      <div class="widget" id="toc-widget-fixed">
+      
+        <strong class="toc-title">文章目录</strong>
+        <div class="toc-widget-list">
+              <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#select"><span class="toc-number">1.</span> <span class="toc-text">select</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#epoll"><span class="toc-number">2.</span> <span class="toc-text">epoll</span></a></li></ol>
+          </div>
+      </div>
+    </div>
+
+  
+    
+
+  
+    
+  
+    
+  
+    
+
+  
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-left">
+      &copy; 2014 - 2017 Oscan&nbsp;|&nbsp;
+      主题 <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
+    </div>
+     <div id="footer-right">
+      联系方式&nbsp;|&nbsp;8493978933@qq.com
+    </div>
+  </div>
+</footer>
+ <script src="/jquery/jquery.min.js"></script>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">首页</a>
+  
+    <a href="/archives" class="mobile-nav-link">归档</a>
+  
+    <a href="/" class="mobile-nav-link">关于</a>
+  
+</nav>
+    <img class="back-to-top-btn" src="/images/fly-to-top.png"/>
+<script>
+// Elevator script included on the page, already.
+window.onload = function() {
+  var elevator = new Elevator({
+    selector:'.back-to-top-btn',
+    element: document.querySelector('.back-to-top-btn'),
+    duration: 1000 // milliseconds
+  });
+}
+</script>
+    
+
+
+
+ <script src="/js/is.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/elevator.js"></script>
+  </div>
+</body>
+</html>

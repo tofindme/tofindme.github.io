@@ -65,6 +65,57 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-linux-io" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/03/14/linux-io/" class="article-date">
+  <time datetime="2017-03-14T03:04:29.000Z" itemprop="datePublished">2017-03-14</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/JustDo/">JustDo</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/03/14/linux-io/">linux-io</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><strong>少说句，多看代码，多思考，多动手</strong></p>
+<p>io操作是一个程序必不可少的部分，io可以是对块设备的读写，文件的读写，基于网络上的io,这里通过内核select和epoll源码比较下这两种io的优劣。平常服务器需要处理客户端多个连接(基于tcp)的io事件。</p>
+<p>对io的读写是有阻塞和非阻塞之分的，对于tcp连接上的读写实际是基于它的读写缓存区，如果fd是阻塞的话,对读来说,缓冲区没数据,对写来说，缓冲区不足够装下需要写的数据或已经满了同样会阻塞。下面是一个阻塞和非阻塞读取标准输入的程序。</p>
+        
+          <p class="article-more-link">
+            <a href="/2017/03/14/linux-io/#more">继续阅读全文 »</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/03/14/linux-io/" data-id="cj0995egg0000a6pvv4inchpu" class="article-share-link">分享</a>
+      
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/select-epoll-socket/">select epoll socket</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-about-me" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2017/03/13/about-me/" class="article-date">
@@ -97,7 +148,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/13/about-me/" data-id="cj07lcpgt0001zvpvpsat9p1p" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/13/about-me/" data-id="cj0995eib000fa6pvxtbpdrb6" class="article-share-link">分享</a>
       
       
       
@@ -147,7 +198,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/13/c-lua/" data-id="cj07lcpgb0000zvpvlyh00fpa" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/13/c-lua/" data-id="cj0995eic000ga6pvx1epnuer" class="article-share-link">分享</a>
       
       
       
@@ -207,7 +258,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/08/max-open-file/" data-id="cj07lcphf0006zvpvtj9aq01c" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/08/max-open-file/" data-id="cj0995eil000la6pvbjoqejct" class="article-share-link">分享</a>
       
       
       
@@ -263,7 +314,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/07/docker/" data-id="cj07lcpgz0004zvpvjfxzljfo" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/07/docker/" data-id="cj0995egs0001a6pveepf1kel" class="article-share-link">分享</a>
       
       
       
@@ -323,7 +374,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/07/kubernete/" data-id="cj07lcph10005zvpvm67krchz" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/07/kubernete/" data-id="cj0995eig000ja6pv4yzz7cc0" class="article-share-link">分享</a>
       
       
       
@@ -378,7 +429,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/03/nsq/" data-id="cj07lcphg000azvpvpooi4gc5" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/03/nsq/" data-id="cj0995eh40004a6pvhelztzkk" class="article-share-link">分享</a>
       
       
       
@@ -439,7 +490,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/02/skynet/" data-id="cj07lcphj000czvpvj3iejhm9" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/02/skynet/" data-id="cj0995eid000ha6pvcxg12d6v" class="article-share-link">分享</a>
       
       
       
@@ -486,7 +537,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title categories">分类</h3>
     <div class="widget" id="categories">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/JustDo/">JustDo</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/容器/">容器</a><span class="category-list-count">2</span></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/JustDo/">JustDo</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/容器/">容器</a><span class="category-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -496,7 +547,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title tagcloud">标签云</h3>
     <div class="widget tagcloud">
-      <a href="/tags/c-lua/" style="font-size: 10px;">c lua</a> <a href="/tags/docker-容器/" style="font-size: 10px;">docker 容器</a> <a href="/tags/golang-nsq/" style="font-size: 10px;">golang nsq</a> <a href="/tags/linux-ulimit-openfile/" style="font-size: 10px;">linux ulimit openfile</a> <a href="/tags/skynet-lua/" style="font-size: 10px;">skynet lua</a> <a href="/tags/容器-kurbenet-docker/" style="font-size: 10px;">容器 kurbenet docker</a>
+      <a href="/tags/c-lua/" style="font-size: 10px;">c lua</a> <a href="/tags/docker-容器/" style="font-size: 10px;">docker 容器</a> <a href="/tags/golang-nsq/" style="font-size: 10px;">golang nsq</a> <a href="/tags/linux-ulimit-openfile/" style="font-size: 10px;">linux ulimit openfile</a> <a href="/tags/select-epoll-socket/" style="font-size: 10px;">select epoll socket</a> <a href="/tags/skynet-lua/" style="font-size: 10px;">skynet lua</a> <a href="/tags/容器-kurbenet-docker/" style="font-size: 10px;">容器 kurbenet docker</a>
     </div>
   </div>
 
@@ -506,6 +557,10 @@
     <h3 class="widget-title recent-posts">最新文章</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2017/03/14/linux-io/">linux-io</a>
+          </li>
         
           <li>
             <a href="/2017/03/13/about-me/">关于我</a>
@@ -523,10 +578,6 @@
             <a href="/2017/03/07/docker/">docker.md</a>
           </li>
         
-          <li>
-            <a href="/2017/03/07/kubernete/">kubernete</a>
-          </li>
-        
       </ul>
     </div>
   </div>
@@ -536,7 +587,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title archive">归档</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">March 2017</a><span class="archive-list-count">7</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">March 2017</a><span class="archive-list-count">8</span></li></ul>
     </div>
   </div>
 
