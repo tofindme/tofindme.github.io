@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>lock | 不可同日而语</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="os是多任务操作系统,同一个进程下面是可以有多个线程(进程)同时运行的,线程实际也是一个进程,只是对父进程的一个copy,与父进程共享地址空间进程,所以对同一进程共享的资源需要进行同步,同步的方法包括mutex semaphore spinlock 条件变量
+很多东西如果只停留在概念层面远远是不够的，我们还是要不断的思考下面的实现机制和原理,下面说下同步的东西。
+semaphore12345678">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lock">
+<meta property="og:url" content="http://yoursite.com/2017/03/14/lock/index.html">
+<meta property="og:site_name" content="不可同日而语">
+<meta property="og:description" content="os是多任务操作系统,同一个进程下面是可以有多个线程(进程)同时运行的,线程实际也是一个进程,只是对父进程的一个copy,与父进程共享地址空间进程,所以对同一进程共享的资源需要进行同步,同步的方法包括mutex semaphore spinlock 条件变量
+很多东西如果只停留在概念层面远远是不够的，我们还是要不断的思考下面的实现机制和原理,下面说下同步的东西。
+semaphore12345678">
+<meta property="og:updated_time" content="2017-03-14T10:48:28.131Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="lock">
+<meta name="twitter:description" content="os是多任务操作系统,同一个进程下面是可以有多个线程(进程)同时运行的,线程实际也是一个进程,只是对父进程的一个copy,与父进程共享地址空间进程,所以对同一进程共享的资源需要进行同步,同步的方法包括mutex semaphore spinlock 条件变量
+很多东西如果只停留在概念层面远远是不够的，我们还是要不断的思考下面的实现机制和原理,下面说下同步的东西。
+semaphore12345678">
+  
+    <link rel="alternate" href="/atom.xml" title="不可同日而语" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    
+    <div id="header-inner" class="inner">
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">首页</a>
+        
+          <a class="main-nav-link" href="/archives">归档</a>
+        
+          <a class="main-nav-link" href="/">关于</a>
+        
+      </nav>
+      
+    </div>
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">不可同日而语</a>
+      </h1>
+      
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-lock" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/03/14/lock/" class="article-date">
+  <time datetime="2017-03-14T09:56:08.000Z" itemprop="datePublished">2017-03-14</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      lock
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <!-- Table of Contents -->
+        
+        <p>os是多任务操作系统,同一个进程下面是可以有多个线程(进程)同时运行的,线程实际也是一个进程,只是对父进程的一个copy,与父进程共享地址空间进程,所以对同一进程共享的资源需要进行同步,同步的方法包括<code>mutex semaphore spinlock 条件变量</code></p>
+<p>很多东西如果只停留在概念层面远远是不够的，我们还是要不断的思考下面的实现机制和原理,下面说下同步的东西。</p>
+<h4 id="semaphore"><a href="#semaphore" class="headerlink" title="semaphore"></a>semaphore</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> semaphore &#123;</div><div class="line">    <span class="keyword">atomic_t</span> count;</div><div class="line">    <span class="keyword">int</span> sleepers;</div><div class="line">    <span class="keyword">wait_queue_head_t</span> wait;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> &#123;</div><div class="line">    <span class="keyword">volatile</span> <span class="keyword">int</span> counter; </div><div class="line">&#125; <span class="keyword">atomic_t</span>;</div></pre></td></tr></table></figure>
+<a id="more"></a>
+<p>锁的实现原理其实就是通过上面一个结构实现的，通过对counter这个值的变化来实现锁的拥有和释放。上面的结构体的字段的意思言简意赅。</p>
+<p>信号量是可以用在进程间和同一进程的线程间的.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">sem_init</span><span class="params">(<span class="keyword">sem_t</span> *sem, <span class="keyword">int</span> pshared, <span class="keyword">unsigned</span> <span class="keyword">int</span> value)</span></span>;</div><div class="line"><span class="comment">// 初始化一个信号量</span></div><div class="line"><span class="comment">// sem 就是上面的结构</span></div><div class="line"><span class="comment">// pshared 0 代表线程间通信 非0 不同进程间</span></div><div class="line"><span class="comment">// value  初始化counter的值</span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">sem_wait</span><span class="params">(<span class="keyword">sem_t</span> *sem)</span></span>;</div><div class="line"><span class="comment">// 获取锁(得不到会放到等待队列)</span></div><div class="line"><span class="comment">// &gt; 0 获得锁,然后计数减少1</span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">sem_trywait</span><span class="params">(<span class="keyword">sem_t</span> *sem)</span></span>;</div><div class="line"><span class="comment">// 尝试获取锁(得不到会立即返回不会放到等待队列)</span></div><div class="line"><span class="comment">// 获取不到的时候会返回EAGAIN错误码</span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">sem_timedwait</span><span class="params">(<span class="keyword">sem_t</span> *sem, <span class="keyword">const</span> <span class="keyword">struct</span> timespec *abs_timeout)</span></span>;</div><div class="line"><span class="comment">//  过了指定时间尝试获取锁,得不到就返回ETIMEDOUT错误码</span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">sem_post</span><span class="params">(<span class="keyword">sem_t</span> *sem)</span></span>;</div><div class="line"><span class="comment">// 释放锁,然后计数增加1</span></div></pre></td></tr></table></figure>
+<p><strong>example:</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;semaphore.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;time.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;assert.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;errno.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;signal.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="keyword">sem_t</span> sem;</div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> handle_error(msg) \</span></div><div class="line">    do &#123; perror(msg); exit(EXIT_FAILURE); &#125; while (0)</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span></span></div><div class="line"><span class="title">handler</span><span class="params">(<span class="keyword">int</span> sig)</span></div><div class="line">&#123;</div><div class="line">    write(STDOUT_FILENO, <span class="string">"sem_post() from handler\n"</span>, <span class="number">24</span>);</div><div class="line">    <span class="keyword">if</span> (sem_post(&amp;sem) == <span class="number">-1</span>) &#123;</div><div class="line">        write(STDERR_FILENO, <span class="string">"sem_post() failed\n"</span>, <span class="number">18</span>);</div><div class="line">        _exit(EXIT_FAILURE);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span></span></div><div class="line"><span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> *argv[])</span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> sigaction sa;</div><div class="line">    <span class="keyword">struct</span> timespec ts;</div><div class="line">    <span class="keyword">int</span> s;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (argc != <span class="number">3</span>) &#123;</div><div class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Usage: %s &lt;alarm-secs&gt; &lt;wait-secs&gt;\n"</span>,</div><div class="line">                argv[<span class="number">0</span>]);</div><div class="line">        <span class="built_in">exit</span>(EXIT_FAILURE);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (sem_init(&amp;sem, <span class="number">0</span>, <span class="number">0</span>) == <span class="number">-1</span>)</div><div class="line">        handle_error(<span class="string">"sem_init"</span>);</div><div class="line"></div><div class="line">    <span class="comment">/* Establish SIGALRM handler; set alarm timer using argv[1] */</span></div><div class="line"></div><div class="line">    sa.sa_handler = handler;</div><div class="line">    sigemptyset(&amp;sa.sa_mask);</div><div class="line">    sa.sa_flags = <span class="number">0</span>;</div><div class="line">    <span class="keyword">if</span> (sigaction(SIGALRM, &amp;sa, <span class="literal">NULL</span>) == <span class="number">-1</span>)</div><div class="line">        handle_error(<span class="string">"sigaction"</span>);</div><div class="line"></div><div class="line">    alarm(atoi(argv[<span class="number">1</span>]));</div><div class="line"></div><div class="line">    <span class="comment">/* Calculate relative interval as current time plus</span></div><div class="line">       number of seconds given argv[2] */</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (clock_gettime(CLOCK_REALTIME, &amp;ts) == <span class="number">-1</span>)</div><div class="line">        handle_error(<span class="string">"clock_gettime"</span>);</div><div class="line"></div><div class="line">    ts.tv_sec += atoi(argv[<span class="number">2</span>]);</div><div class="line"></div><div class="line">    <span class="built_in">printf</span>(<span class="string">"main() about to call sem_timedwait()\n"</span>);</div><div class="line">    <span class="keyword">while</span> ((s = sem_timedwait(&amp;sem, &amp;ts)) == <span class="number">-1</span> &amp;&amp; errno == EINTR)</div><div class="line">        <span class="keyword">continue</span>;       <span class="comment">/* Restart if interrupted by handler */</span></div><div class="line"></div><div class="line">    <span class="comment">/* Check what happened */</span></div><div class="line"></div><div class="line">    <span class="keyword">if</span> (s == <span class="number">-1</span>) &#123;</div><div class="line">        <span class="keyword">if</span> (errno == ETIMEDOUT)</div><div class="line">            <span class="built_in">printf</span>(<span class="string">"sem_timedwait() timed out\n"</span>);</div><div class="line">        <span class="keyword">else</span></div><div class="line">            perror(<span class="string">"sem_timedwait"</span>);</div><div class="line">    &#125; <span class="keyword">else</span></div><div class="line">        <span class="built_in">printf</span>(<span class="string">"sem_timedwait() succeeded\n"</span>);</div><div class="line"></div><div class="line">    <span class="built_in">exit</span>((s == <span class="number">0</span>) ? EXIT_SUCCESS : EXIT_FAILURE);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ ./a.out 2 3</div><div class="line">About to call sem_timedwait()</div><div class="line">sem_post() from handler</div><div class="line">sem_getvalue() from handler; value = 1</div><div class="line">sem_timedwait() succeeded</div><div class="line">$ ./a.out 2 1</div><div class="line">About to call sem_timedwait()</div><div class="line">sem_timedwait() timed out</div></pre></td></tr></table></figure>
+<h4 id="mutex"><a href="#mutex" class="headerlink" title="mutex"></a>mutex</h4><p>互斥量实际是counter初始值为1的信号量,只是我们通常用于线程间来通信。互斥锁可以分为递归和非递归锁，同样可以为这mutex设置多种类型，下面有说明。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> semaphore    <span class="keyword">mutex_t</span>;</div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> mutex_init(lock, type, name)        sema_init(lock, 1)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> mutex_destroy(lock)         sema_init(lock, -99)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> mutex_lock(lock, num)           down(lock)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> mutex_trylock(lock)         (down_trylock(lock) ? 0 : 1)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> mutex_unlock(lock)          up(lock)</span></div></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">pthread_mutex_lock</span><span class="params">(<span class="keyword">pthread_mutex_t</span> *mutex)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">pthread_mutex_trylock</span><span class="params">(<span class="keyword">pthread_mutex_t</span> *mutex)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">pthread_mutex_unlock</span><span class="params">(<span class="keyword">pthread_mutex_t</span> *mutex)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">pthread_mutexattr_gettype</span><span class="params">(<span class="keyword">const</span> <span class="keyword">pthread_mutexattr_t</span> *<span class="keyword">restrict</span> attr,</span></span></div><div class="line">              <span class="keyword">int</span> *<span class="keyword">restrict</span> type);</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">pthread_mutexattr_settype</span><span class="params">(<span class="keyword">pthread_mutexattr_t</span> *attr, <span class="keyword">int</span> type)</span></span>;</div></pre></td></tr></table></figure>
+<h4 id="spinlock"><a href="#spinlock" class="headerlink" title="spinlock"></a>spinlock</h4>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/03/14/lock/" data-id="cj09ezbt90007ebpv8q8a9p3m" class="article-share-link">分享</a>
+      
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux-lock-mutex/">linux lock mutex</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/03/14/linux-io/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">linux-io</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+           
+    <aside id="sidebar">
+  
+    
+
+  
+    
+    <div class="widget-wrap">
+    
+      <div class="widget" id="toc-widget-fixed">
+      
+        <strong class="toc-title">文章目录</strong>
+        <div class="toc-widget-list">
+              <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#semaphore"><span class="toc-number">1.</span> <span class="toc-text">semaphore</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#mutex"><span class="toc-number">2.</span> <span class="toc-text">mutex</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#spinlock"><span class="toc-number">3.</span> <span class="toc-text">spinlock</span></a></li></ol>
+          </div>
+      </div>
+    </div>
+
+  
+    
+
+  
+    
+  
+    
+  
+    
+
+  
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-left">
+      &copy; 2014 - 2017 Oscan&nbsp;|&nbsp;
+      主题 <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
+    </div>
+     <div id="footer-right">
+      联系方式&nbsp;|&nbsp;8493978933@qq.com
+    </div>
+  </div>
+</footer>
+ <script src="/jquery/jquery.min.js"></script>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">首页</a>
+  
+    <a href="/archives" class="mobile-nav-link">归档</a>
+  
+    <a href="/" class="mobile-nav-link">关于</a>
+  
+</nav>
+    <img class="back-to-top-btn" src="/images/fly-to-top.png"/>
+<script>
+// Elevator script included on the page, already.
+window.onload = function() {
+  var elevator = new Elevator({
+    selector:'.back-to-top-btn',
+    element: document.querySelector('.back-to-top-btn'),
+    duration: 1000 // milliseconds
+  });
+}
+</script>
+    
+
+
+
+ <script src="/js/is.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/elevator.js"></script>
+  </div>
+</body>
+</html>
