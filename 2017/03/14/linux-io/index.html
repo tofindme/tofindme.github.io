@@ -5,20 +5,20 @@
   
   <title>linux-io | 不可同日而语</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="少说句，多看代码，多思考，多动手
+  <meta name="description" content="少说话，多看代码，多思考，多动手
 io操作是一个程序必不可少的部分，io可以是对块设备的读写，文件的读写，基于网络上的io,这里通过内核select和epoll源码比较下这两种io的优劣。平常服务器需要处理客户端多个连接(基于tcp)的io事件。
 对io的读写是有阻塞和非阻塞之分的，对于tcp连接上的读写实际是基于它的读写缓存区，如果fd是阻塞的话,对读来说,缓冲区没数据,对写来说，缓冲区不足够装">
 <meta property="og:type" content="article">
 <meta property="og:title" content="linux-io">
 <meta property="og:url" content="http://yoursite.com/2017/03/14/linux-io/index.html">
 <meta property="og:site_name" content="不可同日而语">
-<meta property="og:description" content="少说句，多看代码，多思考，多动手
+<meta property="og:description" content="少说话，多看代码，多思考，多动手
 io操作是一个程序必不可少的部分，io可以是对块设备的读写，文件的读写，基于网络上的io,这里通过内核select和epoll源码比较下这两种io的优劣。平常服务器需要处理客户端多个连接(基于tcp)的io事件。
 对io的读写是有阻塞和非阻塞之分的，对于tcp连接上的读写实际是基于它的读写缓存区，如果fd是阻塞的话,对读来说,缓冲区没数据,对写来说，缓冲区不足够装">
-<meta property="og:updated_time" content="2017-03-14T08:29:13.181Z">
+<meta property="og:updated_time" content="2017-03-14T08:32:20.475Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="linux-io">
-<meta name="twitter:description" content="少说句，多看代码，多思考，多动手
+<meta name="twitter:description" content="少说话，多看代码，多思考，多动手
 io操作是一个程序必不可少的部分，io可以是对块设备的读写，文件的读写，基于网络上的io,这里通过内核select和epoll源码比较下这两种io的优劣。平常服务器需要处理客户端多个连接(基于tcp)的io事件。
 对io的读写是有阻塞和非阻塞之分的，对于tcp连接上的读写实际是基于它的读写缓存区，如果fd是阻塞的话,对读来说,缓冲区没数据,对写来说，缓冲区不足够装">
   
@@ -101,7 +101,7 @@ io操作是一个程序必不可少的部分，io可以是对块设备的读写�
       
         <!-- Table of Contents -->
         
-        <p><strong>少说句，多看代码，多思考，多动手</strong></p>
+        <p><strong>少说话，多看代码，多思考，多动手</strong></p>
 <p>io操作是一个程序必不可少的部分，io可以是对块设备的读写，文件的读写，基于网络上的io,这里通过内核select和epoll源码比较下这两种io的优劣。平常服务器需要处理客户端多个连接(基于tcp)的io事件。</p>
 <p>对io的读写是有阻塞和非阻塞之分的，对于tcp连接上的读写实际是基于它的读写缓存区，如果fd是阻塞的话,对读来说,缓冲区没数据,对写来说，缓冲区不足够装下需要写的数据或已经满了同样会阻塞。下面是一个阻塞和非阻塞读取标准输入的程序。</p>
 <a id="more"></a>
@@ -120,7 +120,7 @@ io操作是一个程序必不可少的部分，io可以是对块设备的读写�
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/14/linux-io/" data-id="cj09a11no0006flpv62j085vn" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/14/linux-io/" data-id="cj09a492s0006hbpv8xz4p2va" class="article-share-link">分享</a>
       
       
       
