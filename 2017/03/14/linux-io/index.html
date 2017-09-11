@@ -15,7 +15,7 @@ io操作是一个程序必不可少的部分，io可以是对块设备的读写�
 <meta property="og:description" content="少说话，多看代码，多思考，多动手
 io操作是一个程序必不可少的部分，io可以是对块设备的读写，文件的读写，基于网络上的io,这里通过内核select和epoll源码比较下这两种io的优劣。平常服务器需要处理客户端多个连接(基于tcp)的io事件。
 对io的读写是有阻塞和非阻塞之分的，对于tcp连接上的读写实际是基于它的读写缓存区，如果fd是阻塞的话,对读来说,缓冲区没数据,对写来说，缓冲区不足够装">
-<meta property="og:updated_time" content="2017-03-14T08:32:20.475Z">
+<meta property="og:updated_time" content="2017-09-11T01:35:41.186Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="linux-io">
 <meta name="twitter:description" content="少说话，多看代码，多思考，多动手
@@ -47,7 +47,7 @@ io操作是一个程序必不可少的部分，io可以是对块设备的读写�
         
           <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
@@ -80,7 +80,7 @@ io操作是一个程序必不可少的部分，io可以是对块设备的读写�
 </a>
     
   <div class="article-category">
-    <a class="article-category-link" href="/categories/JustDo/">JustDo</a>
+    <a class="article-category-link" href="/categories/linux-c/">linux c</a>
   </div>
 
   </div>
@@ -120,11 +120,11 @@ io操作是一个程序必不可少的部分，io可以是对块设备的读写�
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/14/linux-io/" data-id="cj09ezbt60006ebpvgxlbufdb" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/14/linux-io/" data-id="cj7fzdgxt000rggq6osjmghe3" class="article-share-link">Share</a>
       
       
       
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/select-epoll-socket/">select epoll socket</a></li></ul>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/io-select-epoll-socket/">io select epoll socket</a></li></ul>
 
     </footer>
   </div>
@@ -133,7 +133,7 @@ io操作是一个程序必不可少的部分，io可以是对块设备的读写�
 <nav id="article-nav">
   
     <a href="/2017/03/14/lock/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">上一篇</strong>
+      <strong class="article-nav-caption">Newer</strong>
       <div class="article-nav-title">
         
           lock
@@ -142,9 +142,9 @@ io操作是一个程序必不可少的部分，io可以是对块设备的读写�
     </a>
   
   
-    <a href="/2017/03/13/about-me/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">下一篇</strong>
-      <div class="article-nav-title">关于我</div>
+    <a href="/2017/03/13/c-lua/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">c和lua交互</div>
     </a>
   
 </nav>
@@ -165,7 +165,7 @@ io操作是一个程序必不可少的部分，io可以是对块设备的读写�
     
       <div class="widget" id="toc-widget-fixed">
       
-        <strong class="toc-title">文章目录</strong>
+        <strong class="toc-title">Content</strong>
         <div class="toc-widget-list">
               <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#select"><span class="toc-number">1.</span> <span class="toc-text">select</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#epoll"><span class="toc-number">2.</span> <span class="toc-text">epoll</span></a></li></ol>
           </div>
@@ -191,10 +191,10 @@ io操作是一个程序必不可少的部分，io可以是对块设备的读写�
   <div class="outer">
     <div id="footer-left">
       &copy; 2014 - 2017 Oscan&nbsp;|&nbsp;
-      主题 <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
+      Theme by <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
     </div>
      <div id="footer-right">
-      联系方式&nbsp;|&nbsp;8493978933@qq.com
+      Contact&nbsp;|&nbsp;8493978933@qq.com
     </div>
   </div>
 </footer>

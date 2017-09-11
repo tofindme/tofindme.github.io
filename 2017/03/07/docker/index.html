@@ -18,7 +18,7 @@ docker是用google开源语言golang开发的一款类似vm这样的管理容器
 
 此笔记记录阅读docker官网及博客并实践操作所记">
 <meta property="og:image" content="http://yoursite.com/container_explainer.png">
-<meta property="og:updated_time" content="2017-03-08T09:20:15.650Z">
+<meta property="og:updated_time" content="2017-03-08T09:20:15.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="docker.md">
 <meta name="twitter:description" content="docker介绍
@@ -52,7 +52,7 @@ docker是用google开源语言golang开发的一款类似vm这样的管理容器
         
           <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
@@ -209,7 +209,7 @@ docker是用google开源语言golang开发的一款类似vm这样的管理容器
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/07/docker/" data-id="cj09ezbsw0002ebpv5qnqw6pv" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/07/docker/" data-id="cj7fzdgwp0000ggq6n4enpb0n" class="article-share-link">Share</a>
       
       
       
@@ -222,7 +222,7 @@ docker是用google开源语言golang开发的一款类似vm这样的管理容器
 <nav id="article-nav">
   
     <a href="/2017/03/08/max-open-file/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">上一篇</strong>
+      <strong class="article-nav-caption">Newer</strong>
       <div class="article-nav-title">
         
           最大可打开的文件数
@@ -232,7 +232,7 @@ docker是用google开源语言golang开发的一款类似vm这样的管理容器
   
   
     <a href="/2017/03/07/kubernete/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">下一篇</strong>
+      <strong class="article-nav-caption">Older</strong>
       <div class="article-nav-title">kubernete</div>
     </a>
   
@@ -254,7 +254,7 @@ docker是用google开源语言golang开发的一款类似vm这样的管理容器
     
       <div class="widget" id="toc-widget-fixed">
       
-        <strong class="toc-title">文章目录</strong>
+        <strong class="toc-title">Content</strong>
         <div class="toc-widget-list">
               <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#docker介绍"><span class="toc-number">1.</span> <span class="toc-text">docker介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#与vm的区别"><span class="toc-number">1.0.1.</span> <span class="toc-text">与vm的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#docker实践"><span class="toc-number">1.0.2.</span> <span class="toc-text">docker实践</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#环境准备"><span class="toc-number">1.0.2.1.</span> <span class="toc-text">环境准备</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Concept"><span class="toc-number">1.0.2.2.</span> <span class="toc-text">Concept</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Network"><span class="toc-number">1.0.2.3.</span> <span class="toc-text">Network</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#主机配置多个ip"><span class="toc-number">1.0.2.3.1.</span> <span class="toc-text">主机配置多个ip</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#启动一个容器"><span class="toc-number">1.0.2.4.</span> <span class="toc-text">启动一个容器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#搭建游戏服务器的基础image"><span class="toc-number">1.0.2.5.</span> <span class="toc-text">搭建游戏服务器的基础image</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#centos7下面安装yum-安装mysql"><span class="toc-number">1.0.2.5.1.</span> <span class="toc-text">centos7下面安装yum 安装mysql</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#容器里面不能用systemctl"><span class="toc-number">1.0.2.5.2.</span> <span class="toc-text">容器里面不能用systemctl</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#通过Dockerfile新建一个image"><span class="toc-number">1.0.2.5.3.</span> <span class="toc-text">通过Dockerfile新建一个image</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#docker生态"><span class="toc-number">1.0.2.6.</span> <span class="toc-text">docker生态</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#路由规则"><span class="toc-number">1.0.2.7.</span> <span class="toc-text">路由规则</span></a></li></ol></li></ol></li></ol></li></ol>
           </div>
@@ -280,10 +280,10 @@ docker是用google开源语言golang开发的一款类似vm这样的管理容器
   <div class="outer">
     <div id="footer-left">
       &copy; 2014 - 2017 Oscan&nbsp;|&nbsp;
-      主题 <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
+      Theme by <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
     </div>
      <div id="footer-right">
-      联系方式&nbsp;|&nbsp;8493978933@qq.com
+      Contact&nbsp;|&nbsp;8493978933@qq.com
     </div>
   </div>
 </footer>

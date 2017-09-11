@@ -15,7 +15,7 @@ semaphore12345678">
 <meta property="og:description" content="os是多任务操作系统,同一个进程下面是可以有多个线程(进程)同时运行的,线程实际也是一个进程,只是对父进程的一个copy,与父进程共享地址空间进程,所以对同一进程共享的资源需要进行同步,同步的方法包括mutex semaphore spinlock 条件变量
 很多东西如果只停留在概念层面远远是不够的，我们还是要不断的思考下面的实现机制和原理,下面说下同步的东西。
 semaphore12345678">
-<meta property="og:updated_time" content="2017-03-14T10:48:28.131Z">
+<meta property="og:updated_time" content="2017-09-11T01:36:47.674Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="lock">
 <meta name="twitter:description" content="os是多任务操作系统,同一个进程下面是可以有多个线程(进程)同时运行的,线程实际也是一个进程,只是对父进程的一个copy,与父进程共享地址空间进程,所以对同一进程共享的资源需要进行同步,同步的方法包括mutex semaphore spinlock 条件变量
@@ -47,7 +47,7 @@ semaphore12345678">
         
           <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
@@ -80,7 +80,7 @@ semaphore12345678">
 </a>
     
   <div class="article-category">
-    <a class="article-category-link" href="/categories/linux/">linux</a>
+    <a class="article-category-link" href="/categories/linux-c/">linux c</a>
   </div>
 
   </div>
@@ -117,7 +117,7 @@ semaphore12345678">
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/14/lock/" data-id="cj09ezbt90007ebpv8q8a9p3m" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/14/lock/" data-id="cj7fzdgxi000fggq6ce36b88n" class="article-share-link">Share</a>
       
       
       
@@ -129,9 +129,18 @@ semaphore12345678">
     
 <nav id="article-nav">
   
+    <a href="/2017/09/08/enjoy-hexo/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          enjoy hexo
+        
+      </div>
+    </a>
+  
   
     <a href="/2017/03/14/linux-io/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">下一篇</strong>
+      <strong class="article-nav-caption">Older</strong>
       <div class="article-nav-title">linux-io</div>
     </a>
   
@@ -153,7 +162,7 @@ semaphore12345678">
     
       <div class="widget" id="toc-widget-fixed">
       
-        <strong class="toc-title">文章目录</strong>
+        <strong class="toc-title">Content</strong>
         <div class="toc-widget-list">
               <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#semaphore"><span class="toc-number">1.</span> <span class="toc-text">semaphore</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#mutex"><span class="toc-number">2.</span> <span class="toc-text">mutex</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#spinlock"><span class="toc-number">3.</span> <span class="toc-text">spinlock</span></a></li></ol>
           </div>
@@ -179,10 +188,10 @@ semaphore12345678">
   <div class="outer">
     <div id="footer-left">
       &copy; 2014 - 2017 Oscan&nbsp;|&nbsp;
-      主题 <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
+      Theme by <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
     </div>
      <div id="footer-right">
-      联系方式&nbsp;|&nbsp;8493978933@qq.com
+      Contact&nbsp;|&nbsp;8493978933@qq.com
     </div>
   </div>
 </footer>
