@@ -37,7 +37,7 @@
         
           <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
@@ -64,6 +64,61 @@
 </header>
       <div class="outer">
         <section id="main">
+  
+    <article id="post-nsq" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/03/03/nsq/" class="article-date">
+  <time datetime="2017-03-03T03:07:28.000Z" itemprop="datePublished">2017-03-03</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/开源项目/">开源项目</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/03/03/nsq/">NSQ</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="NSQ说明"><a href="#NSQ说明" class="headerlink" title="NSQ说明"></a>NSQ说明</h2><p>NSQ是一个分布式的实时的消息队列,基于GO语言开发,它的分布式是无中心节点的结构,据说是高可用,上亿的消息毫无压力，并且部署非常简单，之前项目里也有用，没详细读过代码，下面来说下NSQ的结构和实现</p>
+<h3 id="NSQ的组成部分"><a href="#NSQ的组成部分" class="headerlink" title="NSQ的组成部分"></a>NSQ的组成部分</h3><p>主要由以下三个daemon进程组成。</p>
+<ul>
+<li><strong>lookupd</strong></li>
+</ul>
+<p>维护<code>nsqd</code>节点以及他的<code>topic</code>和<code>channel</code>,方便<code>client</code>可以获取<code>nsqd</code>,也就是nsq里面的<code>Producer</code></p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">type</span> RegistrationDB <span class="keyword">struct</span> &#123;</div><div class="line">    sync.RWMutex</div><div class="line">    registrationMap <span class="keyword">map</span>[Registration]Producers</div><div class="line">&#125;</div><div class="line"><span class="keyword">type</span> Registration <span class="keyword">struct</span> &#123;</div><div class="line">    Category <span class="keyword">string</span></div><div class="line">    Key      <span class="keyword">string</span></div><div class="line">    SubKey   <span class="keyword">string</span></div><div class="line">&#125;</div><div class="line"><span class="keyword">type</span> Registrations []Registration</div><div class="line"><span class="keyword">type</span> PeerInfo <span class="keyword">struct</span> &#123;</div><div class="line">    lastUpdate       <span class="keyword">int64</span></div><div class="line">    id               <span class="keyword">string</span></div><div class="line">    RemoteAddress    <span class="keyword">string</span> <span class="string">`json:"remote_address"`</span></div><div class="line">    Hostname         <span class="keyword">string</span> <span class="string">`json:"hostname"`</span></div><div class="line">    BroadcastAddress <span class="keyword">string</span> <span class="string">`json:"broadcast_address"`</span></div><div class="line">    TCPPort          <span class="keyword">int</span>    <span class="string">`json:"tcp_port"`</span></div><div class="line">    HTTPPort         <span class="keyword">int</span>    <span class="string">`json:"http_port"`</span></div><div class="line">    Version          <span class="keyword">string</span> <span class="string">`json:"version"`</span></div><div class="line">&#125;</div><div class="line"><span class="keyword">type</span> Producer <span class="keyword">struct</span> &#123;</div><div class="line">    peerInfo     *PeerInfo</div><div class="line">    tombstoned   <span class="keyword">bool</span></div><div class="line">    tombstonedAt time.Time</div><div class="line">&#125;</div><div class="line"><span class="keyword">type</span> Producers []*Producer</div></pre></td></tr></table></figure>
+        
+          <p class="article-more-link">
+            <a href="/2017/03/03/nsq/#more">继续阅读全文 »</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/03/03/nsq/" data-id="cj7iehgvv000iq0q65ofk3qxt" class="article-share-link">分享</a>
+      
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/golang-nsq-消息队列/">golang nsq 消息队列</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
   
     <article id="post-skynet" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
@@ -112,7 +167,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/02/skynet/" data-id="cj7g037hw000nrcq666h391uz" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2017/03/02/skynet/" data-id="cj7iehgvz000pq0q6k4xw3i7j" class="article-share-link">分享</a>
       
       
       
@@ -129,7 +184,7 @@
 
 
   <nav id="page-nav">
-    <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+    <a class="extend prev" rel="prev" href="/">&laquo; 上一页</a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
   </nav>
 </section>
            
@@ -147,9 +202,13 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title recent-posts">Recent Posts</h3>
+    <h3 class="widget-title recent-posts">最新文章</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2017/09/12/如何构建一个go项目/">如何构建一个go项目</a>
+          </li>
         
           <li>
             <a href="/2017/09/11/go-bugs/">golang开发中遇到的坑</a>
@@ -165,10 +224,6 @@
         
           <li>
             <a href="/2017/03/14/lock/">lock</a>
-          </li>
-        
-          <li>
-            <a href="/2017/03/14/linux-io/">linux-io</a>
           </li>
         
       </ul>
@@ -187,10 +242,10 @@
   <div class="outer">
     <div id="footer-left">
       &copy; 2014 - 2017 Oscan&nbsp;|&nbsp;
-      Theme by <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
+      主题 <a href="https://github.com/giscafer/hexo-theme-cafe/" target="_blank">Cafe</a>
     </div>
      <div id="footer-right">
-      Contact&nbsp;|&nbsp;8493978933@qq.com
+      联系方式&nbsp;|&nbsp;8493978933@qq.com
     </div>
   </div>
 </footer>
