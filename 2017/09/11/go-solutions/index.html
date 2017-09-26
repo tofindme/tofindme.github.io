@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   
-  <title>golang开发中遇到的坑 | 不可同日而语</title>
+  <title>golang开发中遇到的问题 | 不可同日而语</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="问题总结在用golang编写服务器程序的时候，遇到下面一些问题，所以在这里做一些记录，尤其是slice隐藏的bug较隐性，若对slice工作原理不了解是较难发现的。
 
@@ -14,11 +14,10 @@ map的并发读写导致进程挂掉
 String方法导致的递归死循环
 通道多次close(close of closed channel)
 死锁
-
-slice">
+下次gc内存">
 <meta property="og:type" content="article">
-<meta property="og:title" content="golang开发中遇到的坑">
-<meta property="og:url" content="http://yoursite.com/2017/09/11/go-bugs/index.html">
+<meta property="og:title" content="golang开发中遇到的问题">
+<meta property="og:url" content="http://yoursite.com/2017/09/11/go-solutions/index.html">
 <meta property="og:site_name" content="不可同日而语">
 <meta property="og:description" content="问题总结在用golang编写服务器程序的时候，遇到下面一些问题，所以在这里做一些记录，尤其是slice隐藏的bug较隐性，若对slice工作原理不了解是较难发现的。
 
@@ -29,11 +28,10 @@ map的并发读写导致进程挂掉
 String方法导致的递归死循环
 通道多次close(close of closed channel)
 死锁
-
-slice">
-<meta property="og:updated_time" content="2017-09-11T09:52:38.592Z">
+下次gc内存">
+<meta property="og:updated_time" content="2017-09-26T08:11:52.859Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="golang开发中遇到的坑">
+<meta name="twitter:title" content="golang开发中遇到的问题">
 <meta name="twitter:description" content="问题总结在用golang编写服务器程序的时候，遇到下面一些问题，所以在这里做一些记录，尤其是slice隐藏的bug较隐性，若对slice工作原理不了解是较难发现的。
 
 slice元素被莫名替换
@@ -43,8 +41,7 @@ map的并发读写导致进程挂掉
 String方法导致的递归死循环
 通道多次close(close of closed channel)
 死锁
-
-slice">
+下次gc内存">
   
     <link rel="alternate" href="/atom.xml" title="不可同日而语" type="application/atom+xml">
   
@@ -97,9 +94,9 @@ slice">
   </div>
 </header>
       <div class="outer">
-        <section id="main"><article id="post-go-bugs" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-go-solutions" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2017/09/11/go-bugs/" class="article-date">
+    <a href="/2017/09/11/go-solutions/" class="article-date">
   <time datetime="2017-09-11T01:56:22.000Z" itemprop="datePublished">2017-09-11</time>
 </a>
     
@@ -115,7 +112,7 @@ slice">
         
   
     <h1 class="article-title" itemprop="name">
-      golang开发中遇到的坑
+      golang开发中遇到的问题
     </h1>
   
 
@@ -134,6 +131,8 @@ slice">
 <li>String方法导致的递归死循环</li>
 <li>通道多次close(close of closed channel)</li>
 <li>死锁</li>
+<li>下次gc内存回收条件</li>
+<li>定时任务的问题</li>
 </ul>
 <h3 id="slice元素被替换"><a href="#slice元素被替换" class="headerlink" title="slice元素被替换"></a>slice元素被替换</h3><blockquote>
 <p>slice在开发中运用较频繁的基础数据类型,和数组相似，与数组最大的区别在于他是系统自动扩容的。</p>
@@ -163,11 +162,48 @@ slice">
 <h3 id="map的并发读写导致进程挂掉"><a href="#map的并发读写导致进程挂掉" class="headerlink" title="map的并发读写导致进程挂掉"></a>map的并发读写导致进程挂掉</h3><p>对一个多线程程序来说对数据竞争的保护是必不可少的，但在处理日志输出的时候，如果<br>一个对象有map或数组之类的并对有并发读写这很容易导致进程panic掉。所以打印日志的<br>时候一定要注意不要输出一个对象。</p>
 <h3 id="String方法导致的递归死循环"><a href="#String方法导致的递归死循环" class="headerlink" title="String方法导致的递归死循环"></a>String方法导致的递归死循环</h3><p>在日志输出的时候打印了一个对象并且对象实现了String()方法，如果String方法里面<br>又调了自身，这种使用方法是很危险的，在我们开发期间是有同事犯了这个一个错误的。</p>
 <h3 id="死锁"><a href="#死锁" class="headerlink" title="死锁"></a>死锁</h3><p>既然是并发程序，难免会有数据竞争的问题，所以我们用了互斥锁来解决这个问题，<br>如果获取锁和释放锁没有成对使用或者是锁重入(递归获取锁)就会导致死锁的风险，<br>因为我们项目是针对房间的，虽然不影响所有的人，一出现死锁只会影响这个房间<br>的人，不过我们这种锁是睡眠锁,并不消耗CPU。</p>
+<blockquote>
+<p>我们的产品是一款地方麻将,用golang开发的</p>
+</blockquote>
+<p><strong>死锁1:</strong></p>
+<p>我们的产品上线第二天就出现导致全服(多个逻辑服)服务不可用。后来经过排查是有死锁影响了全局。</p>
+<p>一开始并不知道问题在哪，有以下两个解决方案:</p>
+<ul>
+<li>新增高版本的逻辑服(不影响新的玩家)</li>
+<li>停服维护</li>
+</ul>
+<p>一开始我们选择的是一方案，但好像出了点问题，又换了二方案，二方案虽然可以但是已经开的房间的钻石没返还。<br>弄了好久才弄程序把需要返还钻石返还。</p>
+<p>不过好在上线前有人说要开放pprof接口,经过日志分析是有很多goroutine阻塞在获取锁的地方。<br>上线前我们做了一个需求，10分钟没开局的房间需要解散掉。也没考虑太多，觉得这个需求比较<br>简单，所以逻辑服这边起了个定时任务1分钟扫下单个逻辑服的房间列表。</p>
+<p>定时任务我们是用的读锁来执行的，从列表里面删除一个房间的是写锁的。读锁是可以多次获取的。<br>假如1分钟还没遍历完所有的房间，另外一个定时任务立即执行，又重新获取房间列表的读锁。1分<br>钟遍历的时候是有获取房间的锁的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">R*是获取房间里面的锁</div><div class="line">RA ——&gt; roomA</div><div class="line">RB ——&gt; roomB</div><div class="line">    再尝试获取房间列表写锁的:</div><div class="line">    RA ——&gt; list</div><div class="line">    RB ——&gt; list</div><div class="line"></div><div class="line">T*是定时任务得到房间列表的读锁:</div><div class="line">T1  ——&gt; list</div><div class="line">T2  ——&gt; list</div><div class="line">T3  ——&gt; list</div><div class="line">	再获取房间里面的锁</div><div class="line">	TA ——&gt; roomA</div><div class="line">	TB ——&gt; roomB</div></pre></td></tr></table></figure>
+<p><strong>定时任务是有获取房间的锁的,如果刚好TA的锁等着RA的锁就会产生死锁</strong></p>
+<p>后续我们的解决方案是为每一个房间启一个定时。能不用锁解决的问题千万不要不用，获取锁是会导致上下文的切换，<br>从一执行线程切换到另一个执行线程。</p>
+<p>golang的<code>channel</code>就是通过锁来实现不同的协程之间可以通信。虽然用到了锁，但是这个锁对开发人员是无感的，所<br>以对使用者来说就安全了。</p>
+<p><strong>死锁2:</strong></p>
+<p>这个问题是异常情况下面导致的单个房间的死锁，当时写代码的时候能不用defer就不用，所以在一个加锁的函数的<br>地方没有用defer解锁，在函数执行当中有panic，所以没执行后面解锁的函数。如果用了defer解锁就不会有这个问<br>题了。所以在有锁的情况尽量用defer就用defer。</p>
+<h3 id="下次gc内存回收条件"><a href="#下次gc内存回收条件" class="headerlink" title="下次gc内存回收条件"></a>下次gc内存回收条件</h3><p>线上因为通过<code>pprof</code>看到<code>heap</code>一直在增长，一天增长了一千多。用top观察实际res也增了几十兆的物理内存。<br>因此网上找了很多关于linux内存管理以及golang的pprof里面的heap各字段详细描述。</p>
+<p>(MemStats)[<a href="https://golang.org/pkg/runtime/#MemStats" target="_blank" rel="external">https://golang.org/pkg/runtime/#MemStats</a>]</p>
+<p>通过线上实际表现，内存是一直往上增的情况，所以看了下哪里可能有内存没被回收掉，以及GC的回收机制。</p>
+<p>一开始自己有以下疑问:</p>
+<ul>
+<li>有垃圾回收的语言不是会自动回收的吗?</li>
+<li>有回收的话哪些对象没被回收掉？</li>
+</ul>
+<p>一开始对代码大概的看了一下，除了其它一些频繁make的切片(也就十几个byte)的长度，这些部分是由他底层内存分配<br>管理器来控制的，我是束手无从的，不过也对一些频繁用到的对像用了内置的pool对象池。所以从其它地方想下还有哪<br>些地方没被回收掉，后来想到定时器！定时器确实也是有泄漏的(有些没有Stop掉)。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">export GODEBUG=GOGC=50,GCTRACE=1</div><div class="line">./main</div></pre></td></tr></table></figure>
+<p>默认GOGC是100的，所以gc会在下次分配的内存和上次分配的内存的比是成倍的才会把内存回收掉，设置成50后<br>通过压测试后通过日志输出会发现回收的次数相对来说要频繁，所以内存没有出现大的增长，停下来的时候恢复<br>平稳的值，但设置成50的时候会偶发的卡顿。线上估计也只能设置成80左右吧！暂时这个值没放到线上去跑。</p>
+<p><a href="https://golang.org/pkg/runtime/#GC" target="_blank" rel="external">参数说明</a></p>
+<h3 id="定时任务的问题"><a href="#定时任务的问题" class="headerlink" title="定时任务的问题"></a>定时任务的问题</h3><p><strong>参考:</strong><br><a href="https://guidao.github.io/go_timer.html" target="_blank" rel="external">实现说明</a></p>
+<p>go里面使用定时器有以下几种方式:</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewTimer</span><span class="params">(d Duration)</span> *<span class="title">Timer</span></span> &#123;</div><div class="line">	c := <span class="built_in">make</span>(<span class="keyword">chan</span> Time, <span class="number">1</span>)</div><div class="line">	t := &amp;Timer&#123;</div><div class="line">		C: c,</div><div class="line">		r: runtimeTimer&#123;</div><div class="line">			when: when(d),</div><div class="line">			f:    sendTime,</div><div class="line">			arg:  c,</div><div class="line">		&#125;,</div><div class="line">	&#125;</div><div class="line">	startTimer(&amp;t.r)</div><div class="line">	<span class="keyword">return</span> t</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">type</span> runtimeTimer <span class="keyword">struct</span> &#123;</div><div class="line">	i      <span class="keyword">int</span></div><div class="line">	when   <span class="keyword">int64</span></div><div class="line">	period <span class="keyword">int64</span></div><div class="line">	f      <span class="function"><span class="keyword">func</span><span class="params">(<span class="keyword">interface</span>&#123;&#125;, <span class="keyword">uintptr</span>)</span> // <span class="title">NOTE</span>: <span class="title">must</span> <span class="title">not</span> <span class="title">be</span> <span class="title">closure</span></span></div><div class="line">	<span class="title">arg</span>    <span class="title">interface</span>&#123;&#125;</div><div class="line">	seq    <span class="keyword">uintptr</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">AfterFunc</span><span class="params">(d Duration, f <span class="keyword">func</span>()</span>) *<span class="title">Timer</span></span> &#123;</div><div class="line">	t := &amp;Timer&#123;</div><div class="line">		r: runtimeTimer&#123;</div><div class="line">			when: when(d),</div><div class="line">			f:    goFunc,</div><div class="line">			arg:  f,</div><div class="line">		&#125;,</div><div class="line">	&#125;</div><div class="line">	startTimer(&amp;t.r)</div><div class="line">	<span class="keyword">return</span> t</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">goFunc</span><span class="params">(arg <span class="keyword">interface</span>&#123;&#125;, seq <span class="keyword">uintptr</span>)</span></span> &#123;</div><div class="line">	<span class="keyword">go</span> arg.(<span class="function"><span class="keyword">func</span><span class="params">()</span>)<span class="params">()</span></span></div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="title">time</span>.<span class="title">NewTicker</span><span class="params">(time.Second)</span></div><div class="line"><span class="title">time</span>.<span class="title">After</span><span class="params">(time.Second)</span></div><div class="line"><span class="title">time</span>.<span class="title">AfterFun</span><span class="params">(time.Second, <span class="keyword">func</span>()</span>&#123;&#125;)</div></pre></td></tr></table></figure>
+<p>通过源码以及使用接口总结，主要有两种定时器。1) 执行一次的  2) 定期执行的。通过数据结构<br>我们看了下不同接口实际的区别只在<code>period</code>字段。以及这个<code>f</code>参数用的默认的<code>sendTime</code>是非<br>阻塞的调用，<code>AfterFun</code>和前面两个接口不同的时没通过管道来实现定时器到点了(可以执行我的<br>业务了)，而它是直接用的goFunc包装在自己的协程里面执行</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">for</span> i := <span class="number">0</span>; i &lt;= <span class="number">1000000</span>; i++ &#123;</div><div class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</div><div class="line">		<span class="keyword">for</span> &#123;</div><div class="line">			<span class="keyword">select</span> &#123;</div><div class="line">			<span class="keyword">case</span> &lt;-time.Tick(time.Second):</div><div class="line">				<span class="keyword">return</span></div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>如果像上面的代码用<code>time.Tick()</code>创建的定时器(也就是管道)没<code>Stop()</code>掉，定时器任务<br>列表会一直规程，导致内存一直无法得到释放。尤其是循环条件加大到百万级别的时候就<br>更明显了。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/09/11/go-bugs/" data-id="cj7iehgvn000aq0q6pz579vgj" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/09/11/go-solutions/" data-id="cj81bpthq00052gq6wtn0jbh9" class="article-share-link">分享</a>
       
       
       
@@ -214,7 +250,7 @@ slice">
       
         <strong class="toc-title">文章目录</strong>
         <div class="toc-widget-list">
-              <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#问题总结"><span class="toc-number">1.</span> <span class="toc-text">问题总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#slice元素被替换"><span class="toc-number">2.</span> <span class="toc-text">slice元素被替换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#index-out-of-range"><span class="toc-number">3.</span> <span class="toc-text">index out of range</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#空指针引用"><span class="toc-number">4.</span> <span class="toc-text">空指针引用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#map的并发读写导致进程挂掉"><span class="toc-number">5.</span> <span class="toc-text">map的并发读写导致进程挂掉</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#String方法导致的递归死循环"><span class="toc-number">6.</span> <span class="toc-text">String方法导致的递归死循环</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#死锁"><span class="toc-number">7.</span> <span class="toc-text">死锁</span></a></li></ol>
+              <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#问题总结"><span class="toc-number">1.</span> <span class="toc-text">问题总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#slice元素被替换"><span class="toc-number">2.</span> <span class="toc-text">slice元素被替换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#index-out-of-range"><span class="toc-number">3.</span> <span class="toc-text">index out of range</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#空指针引用"><span class="toc-number">4.</span> <span class="toc-text">空指针引用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#map的并发读写导致进程挂掉"><span class="toc-number">5.</span> <span class="toc-text">map的并发读写导致进程挂掉</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#String方法导致的递归死循环"><span class="toc-number">6.</span> <span class="toc-text">String方法导致的递归死循环</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#死锁"><span class="toc-number">7.</span> <span class="toc-text">死锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#下次gc内存回收条件"><span class="toc-number">8.</span> <span class="toc-text">下次gc内存回收条件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#定时任务的问题"><span class="toc-number">9.</span> <span class="toc-text">定时任务的问题</span></a></li></ol>
           </div>
       </div>
     </div>

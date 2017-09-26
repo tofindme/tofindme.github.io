@@ -65,6 +65,122 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-docker" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/03/07/docker/" class="article-date">
+  <time datetime="2017-03-07T09:25:11.000Z" itemprop="datePublished">2017-03-07</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/容器/">容器</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/03/07/docker/">docker.md</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="docker介绍"><a href="#docker介绍" class="headerlink" title="docker介绍"></a>docker介绍</h1><blockquote>
+<p>docker是用google开源语言golang开发的一款类似vm这样的管理容器的开源软件，他的优势在于不像vm一样启动一个虚拟机需要等待漫长的时间，而对docker而言只需要简单的启动一个image就相当于运行一个独立的container。各个container是相互独立的。启停一个container也是相对方便和快速的</p>
+</blockquote>
+<p><em>此笔记记录阅读docker官网及博客并实践操作所记</em></p>
+<ul>
+<li>docker和vm的区别</li>
+<li>docker实践讲解</li>
+</ul>
+        
+          <p class="article-more-link">
+            <a href="/2017/03/07/docker/#more">继续阅读全文 »</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/03/07/docker/" data-id="cj81bpths00062gq6gijqiv7o" class="article-share-link">分享</a>
+      
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/docker-容器/">docker 容器</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-kubernete" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/03/07/kubernete/" class="article-date">
+  <time datetime="2017-03-07T01:34:22.000Z" itemprop="datePublished">2017-03-07</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/容器/">容器</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/03/07/kubernete/">kubernete</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>这个世界最伟大的就是思想，人这一特种对这世界的改造都取决于他们独有的思想，他们用思想来创造或改造这个世界。而思想的优越之处在于把事物抽象化，技术的实现就是对现实世界的抽象。人真是太聪明了</p>
+<h3 id="kubernete"><a href="#kubernete" class="headerlink" title="kubernete"></a>kubernete</h3><p>容器化技术在最近一两年可谓是风生水起,自从<code>docker</code>出世以来就爱到程序界的追棒，而去年google家亲生的<code>kubernete</code>也是更受亲耐，下面通过官网的手来学习记录。</p>
+<pre><code>Production-Grade Container Orchestration
+</code></pre><p>Automated container deployment, scaling, and management</p>
+<p>这是官网的标语.<code>生产级别的容器编排，自动化进行容器部署、平衡、管理</code></p>
+<p>通俗的说<code>kubernete</code>就是一个容器管理系统,我们的app就运行在这些容器上，官网上说google在<code>kubernete</code>一周运行了上亿的容器。管理这么多的容器，要是传统的模式这么多台服务器该怎么管理呀，真是太解放了。</p>
+<h4 id="kubernete集群"><a href="#kubernete集群" class="headerlink" title="kubernete集群"></a>kubernete集群</h4><p><code>kubernete</code>集群是把多台机器抽象成一个独立的单元，并保证集群的高可用性。这样一来我们发布我们的应用的时候不需要指定到某一机器，只要把我们的应用容器化就可以部署在集群中，并不需要关心部署在某台机器上。<br><code>kubernete</code>会以高效的方式在集群中发布和调度这些容器</p>
+<p>一个集群概念包含两种类型的资源:</p>
+<ul>
+<li><strong>Master</strong>  用来协调各个<code>Node</code>节点</li>
+<li><strong>Node</strong> 运行我们的应用</li>
+</ul>
+        
+          <p class="article-more-link">
+            <a href="/2017/03/07/kubernete/#more">继续阅读全文 »</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/03/07/kubernete/" data-id="cj81bpthl00022gq6suh496j9" class="article-share-link">分享</a>
+      
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/容器-kurbenet-docker/">容器 kurbenet docker</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-nsq" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2017/03/03/nsq/" class="article-date">
@@ -106,7 +222,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/03/nsq/" data-id="cj7iehgvv000iq0q65ofk3qxt" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/03/nsq/" data-id="cj81bpti6000j2gq6ghzxdlzg" class="article-share-link">分享</a>
       
       
       
@@ -167,7 +283,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2017/03/02/skynet/" data-id="cj7iehgvz000pq0q6k4xw3i7j" class="article-share-link">分享</a>
+      <a data-url="http://yoursite.com/2017/03/02/skynet/" data-id="cj81bpti9000n2gq6nve49dvh" class="article-share-link">分享</a>
       
       
       
@@ -207,23 +323,23 @@
       <ul>
         
           <li>
+            <a href="/2017/09/20/malloc/">malloc</a>
+          </li>
+        
+          <li>
+            <a href="/2017/09/13/深入理解Linux中内存管理/">深入理解Linux中内存管理</a>
+          </li>
+        
+          <li>
             <a href="/2017/09/12/如何构建一个go项目/">如何构建一个go项目</a>
           </li>
         
           <li>
-            <a href="/2017/09/11/go-bugs/">golang开发中遇到的坑</a>
+            <a href="/2017/09/11/go-solutions/">golang开发中遇到的问题</a>
           </li>
         
           <li>
             <a href="/2017/09/11/about-me/">关于我</a>
-          </li>
-        
-          <li>
-            <a href="/2017/09/08/enjoy-hexo/">enjoy hexo</a>
-          </li>
-        
-          <li>
-            <a href="/2017/03/14/lock/">lock</a>
           </li>
         
       </ul>
