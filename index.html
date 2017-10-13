@@ -234,6 +234,748 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/11/linux-concurrency-lock/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="易斌">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="知而智">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/11/linux-concurrency-lock/" itemprop="url">linux-concurrency</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-11T13:14:59+08:00">
+                2017-10-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux-c/" itemprop="url" rel="index">
+                    <span itemprop="name">linux-c</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><img src="http://www.linux-mag.com/id/2316/" alt="翻译"></p>
+<blockquote>
+<p>英语水平有限，工作空闲时间翻译。同时也学习了并发控制的一些知识</p>
+</blockquote>
+<h3 id="Concurrency-in-the-Kernel-内核里面的并发控制"><a href="#Concurrency-in-the-Kernel-内核里面的并发控制" class="headerlink" title="Concurrency in the Kernel (内核里面的并发控制)"></a>Concurrency in the Kernel (内核里面的并发控制)</h3><p>Multiple threads of execution need to be synchronized to avoid data corruption and even system freezes.</p>
+<p>对于有多线程的程序来说，如果有访问共享的东西的话会导致数据的错乱甚至会导致系统的冻结</p>
+<p>As the Linux kernel has grown in complexity to support Symmetric Multi-Processing (SMP) and kernel preemption, more and more scenarios generate multiple threads of execution. Because threads can simultaneously operate on shared kernel data structures, access to such data structures has to be serialized. In this column, let’s learn the basics of protecting shared kernel resources from concurrent access, starting with a simple example and slowly introducing complexities like interrupts, kernel preemption, and SMP.</p>
+<p>随着linux内核支持对称多处理系统，简称SMP(Symmetric Multi-Processing)以及内核抢占，使得内核变得更加的复杂，越来越多的地方会有多线程的出现，所以线程可以同时操作内核共享的数据结构，访问这些数据必须得串行。在这里，让我们从一个简单的示例来学习并发访问时内核共享资源的基本保护并慢慢的介绍更复杂的情况。比如:中断，内核抢占以及SMP.</p>
+<h4 id="Spinlocks-and-Semaphores-自旋锁和信息量"><a href="#Spinlocks-and-Semaphores-自旋锁和信息量" class="headerlink" title="Spinlocks and Semaphores (自旋锁和信息量)"></a>Spinlocks and Semaphores (自旋锁和信息量)</h4><p>A code area that accesses shared resources is called a critical section. Spinlocks and semaphores are the two mechanisms used to protect critical sections in the kernel.</p>
+<p>一段访问共享资源的代码叫做临界区。在内核里面，自旋锁和信号量是用来保护临界区的两种机制。</p>
+<p>A spinlock ensures that only a single thread enters a critical section at any time. Any other thread that wants to enter the critical section must wait “spinning its wheels” until the first thread exits. Listing One shows a basic use of a spinlock.</p>
+<p>在任何时候，只会有一个获取自旋锁的线程进入临界区。其它线程想要进入临界区必须”自旋”等待，直到第之前获取到锁的线程释放。</p>
+<p><strong>Listing One: Basic spinlock usage</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;linux/spinlock.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="comment">/* Initialize */</span></div><div class="line"><span class="keyword">spinlock_t</span> mylock = SPIN_LOCK_UNLOCKED; </div><div class="line"></div><div class="line"><span class="comment">/* Try to acquire the spinlock. This is inexpensive if there </span></div><div class="line">* is no one inside the critical section. In the face of contention,</div><div class="line">* spinlock() busy waits.</div><div class="line">*/</div><div class="line">spin_lock (&amp;mylock); </div><div class="line"></div><div class="line"><span class="comment">/* … Critical Section … */</span></div><div class="line"></div><div class="line"><span class="comment">/* Release the lock */</span></div><div class="line">spin_unlock (&amp;mylock);</div></pre></td></tr></table></figure>
+<p>In contrast to spinlocks, which put threads into a spin if they attempt to enter a busy critical section, a semaphore puts each contending thread to sleep until its turn arrives to occupy the critical section.</p>
+<p>如果线程尝试进入已经被自旋锁锁住的临界区，那么自旋锁会导致线程自旋。与自旋锁相比，信号量会让每个相互竞争锁的线程休眠直到他占有这<br>临界区</p>
+<p>Because it’s bad to consume processor cycles to spin, semaphores are more suitable than spinlocks to protect critical sections when the estimated wait time is long. In semaphore terms, anything more than two context switches can be considered long, since semaphores have to switch out the contending thread to sleep, and switch it back in when it’s time to wake it up.</p>
+<p>由于自旋占用cpu，当执行临界区的代码需要比较长时间时，信号量来保护临界区要比自旋锁更合适。在信号量的情况下，需要考虑超过两次上下文从信号量把竞争锁的线程成休眠到唤醒休眠的切换的时间。</p>
+<p>Thus, in many cases, it’s easy to make a decision on whether to use a spinlock or a semaphore:</p>
+<p>因此，在各种情况下，很容易作出决定用信号量还是用自旋锁来保护临界区:</p>
+<ul>
+<li>If your critical section needs to sleep, you have no choice but to use a semaphore. It’s a deadly sin to schedule, preempt, or sleep on a wait queue after acquiring a spinlock.</li>
+<li><p>如果你的临界区需要休眠，除了用信号量别无选择。在获取自旋锁后如果在等待队列里被重新调度、抢占或休眠是致命的错误。</p>
+</li>
+<li><p>Since semaphores put the calling thread to sleep in the face of contention, you have no choice but to use spinlocks inside interrupt handlers.</p>
+</li>
+<li>因为信号量在获取临界区是会导致调用线程休眠的，所以在中断处理程序里除了用自旋锁别无选择</li>
+</ul>
+<p>Unlike spinlocks, which allow only a single thread inside a critical section at a time, semaphores can be configured to allow a predetermined number of threads into the critical section simultaneously. (However, semaphores that permit only a single thread at a time are more common in the kernel.) A semaphore that permits only a single thread at a time is called a mutex. Listing Two shows basic mutex usage.</p>
+<p>每个时间点自旋锁只允许一个线程处于临界区，信号量是允许配置预先定义好的线程个数同时进入临界区(然而，在内核里面，每次只允许一个线程在临界区)。每个时间点只允许一个线程进入临界区的叫互斥量。</p>
+<p><strong>Listing Two: Basic Mutex Usage</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">* Architecture dependent */</div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;asm/semaphore.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="comment">/* Statically declare a mutex. To dynamically create</span></div><div class="line">* a mutex, use init_MUTEX().</div><div class="line">*/</div><div class="line"><span class="function"><span class="keyword">static</span> <span class="title">DECLARE_MUTEX</span> <span class="params">(mysem)</span></span>;</div><div class="line"></div><div class="line"><span class="comment">/* Try to acquire the semaphore. This is inexpensive if there </span></div><div class="line">* is no one inside the critical section. In the face of contention,</div><div class="line">* down() puts the calling thread to sleep.</div><div class="line">*/</div><div class="line">down (&amp;mysem);</div><div class="line"></div><div class="line"><span class="comment">/* … Critical Section … */</span></div><div class="line"></div><div class="line"><span class="comment">/* Release the semaphore */</span></div><div class="line">up (&amp;mysem);</div></pre></td></tr></table></figure>
+<p>To illustrate the use of locks, let’s start with a critical section that is present only in process context and gradually introduce complexities in the following order:</p>
+<p>为了说明锁的使用，我们从一个进程上下文的临界区开始然后逐渐讨论以下复杂的情况:</p>
+<ul>
+<li><p>Critical section present only in process context on a uniprocessor box running a non-preemptible kernel (P-UP-N). This is the simplest case and needs no locking.</p>
+</li>
+<li><p>临界区只存在不可抢占的单核(P-UP-N)的进程上下文时，这种简单的情况下是不需要锁的。</p>
+</li>
+<li><p>Critical section present in process and interrupt contexts on a uniprocessor machine running a non-preemptible kernel (PI-UP-N).</p>
+</li>
+<li><p>临界区存在不可抢占单核(PI-UP-N)的进程和中断上下文</p>
+</li>
+<li><p>Critical section present in process and interrupt contexts on a uniprocessor machine running a preemptible kernel (PI-UP-P).</p>
+</li>
+<li><p>临界区存在可抢占单核(PI-UP-P)的进程和中断上下文</p>
+</li>
+<li><p>Critical section present in process and interrupt contexts on an SMP machine running a preemptible kernel (PI-SMP-P).</p>
+</li>
+<li><p>临界区存在可抢占的多核(PI-SMP-P)的进程和中断上下文</p>
+</li>
+</ul>
+<blockquote>
+<p>除了第一种情况，其它三种是需要对临界区做保护的</p>
+</blockquote>
+<h4 id="Case-Two-PI-UP-N"><a href="#Case-Two-PI-UP-N" class="headerlink" title="Case Two: PI-UP-N"></a>Case Two: PI-UP-N</h4><p>In the case of a critical section present only in process context on a uniprocessor box running a non-preemptible kernel case, you only need to disable interrupts to protect the critical region:</p>
+<p>在临界区存在中断上下文的时候，你需要把中断禁止来保护这个临界区:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">cli ();  <span class="comment">/* Disable Interrupts */</span></div><div class="line"><span class="comment">/* ... Critical Region ...  */</span></div><div class="line">sti ();  <span class="comment">/* Enable Interrupts */</span></div></pre></td></tr></table></figure>
+<p>However, if interrupts are already disabled when execution reaches cli(), sti() has the unpleasant side effect of re-enabling interrupts, rather than restoring interrupt state. This can be fixed with:</p>
+<p>然而，如果执行到cli()这里里中断已经被禁止了，sti()恢复中断后会有意想不到的影响会出现，这个可以通过恢复中断状态修改:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> flags;</div><div class="line"></div><div class="line"><span class="comment">/* Point A: Disable Interrupts */</span></div><div class="line">save_flags (flags); </div><div class="line">cli ();  </div><div class="line"><span class="comment">/* ... Critical Region ... */</span></div><div class="line"><span class="comment">/* Restore state to what it was at Point A above */</span>	</div><div class="line">restore_flags (flags);</div></pre></td></tr></table></figure>
+<p>This latter code works correctly, regardless of the interrupt state when<br>execution reaches cli().</p>
+<p>这个代码正确工作，当执行到cli()时忽略中断的状态.</p>
+<h4 id="Case-Three-PI-UP-P"><a href="#Case-Three-PI-UP-P" class="headerlink" title="Case Three: PI-UP-P"></a>Case Three: PI-UP-P</h4><p>If preemption is enabled, mere disabling of interrupts won’t protect your critical region from being trampled. There is the possibility of multiple threads simultaneously using the critical section in process context. The solution, apparently, is to disable kernel preemption before the start of the critical section and re-enable it at the end. Spinlocks do that internally if CONFIG_PREEMPT is enabled:</p>
+<p>如果内核是可以抢占的，仅仅只禁掉中断是不能保护你的临界区的，有可能多个线程在同一个进程上下文进入到同一临界区。很显然，解决方案是在进入临界区前禁用内核抢占然后在最后重新开启内核抢占。在可抢占的内核里面，自旋锁就是这样实现的:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* Marker to turn OFF preemption */</span></div><div class="line">spin_lock (&amp;mylock);    </div><div class="line"><span class="comment">/* ... Critical Region ... */</span></div><div class="line"><span class="comment">/* Marker to turn ON preemption */</span></div><div class="line">spin_unlock (&amp;mylock);</div></pre></td></tr></table></figure>
+<p>However, this still doesn’t prevent interrupt handlers from stomping through your critical section. Instead, use the IRQ variant of spinlocks:</p>
+<p>然而，这仍然还是不能避免在临界区发生的中思。取而代之的是使用自旋锁的另一种实现IRQ:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> flags;</div><div class="line"></div><div class="line"><span class="comment">/*</span></div><div class="line"> * Point A:</div><div class="line"> * Save interrupt state.</div><div class="line"> * Disable interrupts and preemption.</div><div class="line"> */	</div><div class="line">spin_lock_irqsave (&amp;mylock, flags);</div><div class="line"><span class="comment">/* ... Critical Region ... */</span></div><div class="line"><span class="comment">/*</span></div><div class="line"> * Enable preemption. Restore interrupt state to that </div><div class="line"> * at Point A.</div><div class="line"> */</div><div class="line">spin_unlock_irqrestore (&amp;mylock, flags);</div></pre></td></tr></table></figure>
+<p>Preemption state need not be restored to what it was at Point A, since the kernel does that for you via a variable called the preemption counter. The counter gets incremented whenever preemption is disabled (using the preempt_disable() function), and gets decremented whenever preemption is enabled (using the preempt_enable() function). Preemption kicks in only if the counter value is zero.</p>
+<p>自从内核通过一个叫可抢占计数后，在Point A不需要保存抢占的状态。这个计数在抢占禁用(preempt_disable)时会增加,在启用(preempt_enable())时会减少计数。只有当这个计数为0的时候才是可以抢占的。</p>
+<h4 id="Case-Three-PI-SMP-P"><a href="#Case-Three-PI-SMP-P" class="headerlink" title="Case Three: PI-SMP-P"></a>Case Three: PI-SMP-P</h4><p>Now assume that the critical section executes on an SMP machine and that your kernel has been configured with CONFIG_SMP and CONFIG_PREEMPT turned on.</p>
+<p>假设我们的临界区在一个内核已经开启SMP和可抢占的SMP机器上</p>
+<p>In the scenarios discussed so far, the spinlock primitives have done little other than enable and disable preemption and interrupts. The actual lock features have been compiled away.</p>
+<p>到目前为止讨论的场景中, 自旋锁原语除了启用和禁用抢占和中断之外, 没有做什么。实际上锁的功能已被编译成汇编了。</p>
+<p>In the presence of SMP, the actual locking logic gets compiled in, and the spinlock primitives are rendered SMP-safe. The SMP-enabled semantics is:</p>
+<p>在SMP的机器上，锁的实现逻辑是通过编译器实现的，自旋锁原语提供了SMP安全，启用SMP的语义是:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> flags;</div><div class="line"></div><div class="line"><span class="comment">/*</span></div><div class="line"> * Point A:</div><div class="line"> * Save interrupt state on the local CPU</div><div class="line"> * Disable interrupts on the local CPU</div><div class="line"> * Disable preemption</div><div class="line"> * Lock the section to regulate access by other CPUs</div><div class="line"> */	</div><div class="line">spin_lock_irqsave (&amp;mylock, flags);</div><div class="line"><span class="comment">/* ... Critical Region ... */</span></div><div class="line"><span class="comment">/*</span></div><div class="line"> * Enable preemption. Restore interrupt state to what </div><div class="line"> * it was at Point A for the local CPU.</div><div class="line"> * Release the lock.</div><div class="line"> */</div><div class="line">spin_unlock_irqrestore (&amp;mylock, flags);</div></pre></td></tr></table></figure>
+<p>In the SMP case, only interrupts in the local CPU are disabled when the lock is acquired. If interrupts are not disabled in the local CPU, a deadlock might arise if an interrupt is generated while execution is in the middle of a critical section. (The interrupt handler sits in a tight spin, waiting for the lock to become available, but the critical section cannot complete until the interrupt handler itself finishes execution.) However, this danger of deadlock does not arise for interrupts generated on other CPUs, since an interrupt handler executing on processor A doesn’t prevent process context code on processor B from executing. The interrupt handler on processor A spins, waiting until processor B exits the critical section.</p>
+<p>在SMP的情况下，当锁获取后只有当前CPU的中断会被禁用。如果当前CPU的中断没有被禁用，在执行临界区时产生另一个中断可能会产生一个死锁。(中断处理程序会处于紧急旋转状态，一直等待之前的锁被释，但是之前的临界区一直等着现有的中断程序处理的返回)。然而，在其它CPU上产生的中断不会出现死锁的危险，当一个中断程序在processor A上执行时不会阻止进程上下文的代码在processor B上的执行。中断处理程序在processor A一直旋转直到processor B离开临界区。</p>
+<p>The kernel has specialized locking primitives in its repertoire that help improve performance under specific conditions. Using a mutual exclusion scheme tailored to your needs will make your code more powerful. Let’s take a look at some of the specialized exclusion mechanisms.</p>
+<p>内核指令里有专门的锁定原语，在特定的条件下帮你提升性能。根据你的需要来使用一个互斥方案会使你的代码更加强大。让我们来看一些互斥机制。</p>
+<h5 id="Atomic-Operators"><a href="#Atomic-Operators" class="headerlink" title="Atomic Operators"></a>Atomic Operators</h5><p>Atomic operators are used to perform lightweight operations like bumping counters, conditional increments, and setting bit positions, in one shot. Atomic operations are guaranteed to be serialized and do not need locks for protection against concurrent access. The implementation of atomic operators is architecture-dependent.</p>
+<p>原子操作被用作执行一些轻微的动作，比如:碰撞计数、条件增量和设置bit位的位置.简而言之，原子操作确保有序并且不需要锁来保护并发访问。原子操作的实现是基于系统架构的。</p>
+<p>For example, to check whether there are any remaining data references before freeing a kernel network buffer (called an skbuff), the skb_release_data() routine defined in net/core/skbuff.c does the following:</p>
+<p>举个例子，用来检查是否有剩余的数据引用在内核释放网络缓冲(被称为<code>skbuff</code>)的数据,skb_release_data()函数的实现在<code>net/core/skbuff.c</code>里，内容如下:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (!skb-&gt;cloned ||</div><div class="line">    <span class="comment">/* Atomically decrement and check the reference value */</span></div><div class="line">    atomic_dec_and_test(&amp;(skb_shinfo(skb)-&gt;dataref))) &#123;</div><div class="line">    <span class="comment">/* ... */</span>    </div><div class="line">    kfree(skb-&gt;head);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>While skb_release_data() is thus executing, another thread using the skbuff_clone() function (defined in the same file), might be simultaneously incrementing the data reference counter:</p>
+<p>当<code>skb_release_data()</code>执行时，另一个线程可能同时增加这数据的引用计数通过使用<code>skbuff_clone</code>(在同一个文件中)函数:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* .. */</span></div><div class="line"></div><div class="line"><span class="comment">/* Atomically bump the reference count */</span></div><div class="line">atomic_inc(&amp;(skb_shinfo(skb)-&gt;dataref));</div><div class="line"></div><div class="line"><span class="comment">/* .. */</span></div></pre></td></tr></table></figure>
+<p>The use of atomic operators protects the data reference counter from being trampled by these two threads. It also eliminates the hassle of using locks to protect a single integer variable from concurrent access.<br>The kernel also supports operators like set_bit(), clear_bit(), and test_and_set_bit(), to atomically manipulate a single bit.</p>
+<p>使用原子操作保护数据的引用计数被多个线程碰撞。它还消除了使用来锁保护对单个整型变量的并发方问。<br>内核同样支持如:<code>set_bit()、clear_bit()和test_and_set_bit()</code>在一个bit位上执行原子操作</p>
+<h5 id="Reader-Write-Locks"><a href="#Reader-Write-Locks" class="headerlink" title="Reader-Write Locks"></a>Reader-Write Locks</h5><p>The reader-writer variant of a spinlock is another specialized concurrency regulation mechanism. If the usage of a critical section is such that separate threads either read or write, but don’t do both, a reader-writer lock is a natural fit.<br>Multiple reader threads are allowed inside a critical region simultaneously. Reader spinlocks are defined as:</p>
+<p>自旋锁的一个变种——读写锁是是另外一个特定的并发机制。临界区的使用被分离出读和写的线程，读和写不能同时获得，读写锁是设计巧秒的。<br>多个读线程可以同时在一个临界区。读的自旋锁定义如下:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">rwlock_t</span> myrwlock = RW_LOCK_UNLOCKED;</div><div class="line"></div><div class="line"> <span class="comment">/* Acquire reader lock */</span></div><div class="line">read_lock (&amp;myrwlock);   </div><div class="line"></div><div class="line"><span class="comment">/* ... Critical Region ... */</span></div><div class="line"></div><div class="line"><span class="comment">/* Release lock */</span></div><div class="line">read_unlock (&amp;myrwlock);</div></pre></td></tr></table></figure>
+<p>However, if a writer thread enters a critical section, other reader or writer threads are not allowed inside. To use writer spinlocks, you’d write:</p>
+<p>然而，当一个写的线程进入临界区时，其它尝试进入临界区的读或写的线程是不成功的。对写自旋锁的使用，你可能会这样使用:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">rwlock_t</span> myrwlock = RW_LOCK_UNLOCKED;</div><div class="line"></div><div class="line"><span class="comment">/* Acquire writer lock */</span></div><div class="line">write_lock (&amp;myrwlock);</div><div class="line"></div><div class="line"><span class="comment">/* ... Critical Region ... */</span></div><div class="line"></div><div class="line"><span class="comment">/* Release lock */</span></div><div class="line">write_unlock (&amp;myrwlock);</div></pre></td></tr></table></figure>
+<p>Look at the Internetwork Packet Exchange (IPX) routing code in net/ipx/ipx_route.c for a real life example of reader-writer spinlock usage. A reader-writer lock called ipx_routes_lock protects the IPX routing table from simultaneous access. Threads that need to look-up the routing table to forward packets don’t have to write to the table and can request reader locks. However, threads that need to add or delete entries from the routing table have to acquire writer locks. This improves performance since there will usually be far more instances of routing table look-ups than routing table updates.<br>Like regular spinlocks, reader-writer locks also have corresponding irq versions, namely, read_lock_irqsave(), read_lock_irqrestore(), write_lock_irqsave(), and write_lock_irqrestore(). The semantics of these functions are similar to that discussed for regular spinlocks.</p>
+<p>通过<code>net/ipx/ipx_route.c</code>里面IPX路由代码的实现来体验下读写自旋锁的使用。一个叫ipx_routes_lock的读写锁用来保护IPX路由表的并发访问。线程需要遍历路由表来发送网络包，因为不需要对这路由表写，所以可以请求的是读锁。然而需要新增或删除路由表里面的数据需要获取写锁。这样将对性能有很大的提升，因为会查询路由表的次数会比写的次数多。<br>像常规的自旋锁一样，读写锁一样有相对应的irq版本，叫做<code>read_lock_irqsave(),read_lock_irqrestor(),write_lock_irqsave()和 write_lock_irqrestore()</code>。这些函数的语义和之前讨论的自旋锁用法一样。</p>
+<p>Corresponding reader-writer flavors of semaphores are, down_read(), down_write(), up_read(), and up_write().<br>Sequence locks or seqlocks, introduced in the 2.6 kernel, are reader-writer locks where writers are favored over readers. Writer threads do not wait for readers who may be inside a critical section. Because of this, reader threads may discover that their critical section operation has failed, and may need to retry:</p>
+<p>相对应的信息量的读写的方式有<code>down_read(),down_write(),up_read()和up_write()</code>。在2.6内核里面介绍的序号锁是写锁比读锁更受欢迎的读写锁。写的线程不需要等待在临界区的读线程。因此，读的线程可以发现他们的临界区操作失败然后可能需要重新获取:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">do</span> &#123;</div><div class="line">    seq = read_seqbegin (&amp;mylock);</div><div class="line">    <span class="comment">/* ... Critical Section */</span></div><div class="line">&#125; <span class="keyword">while</span> (read_seqtry (&amp;mylock, seq));</div></pre></td></tr></table></figure>
+<p>Writers protect critical regions using write_seqlock() and write_sequnlock().<br>The 2.6 kernel introduced another mechanism called Read-Copy Update (RCU) that can yield improved performance in cases where readers far outnumber writers. The basic idea is that reader threads can execute without locking. Writer threads are more complex: each performs update operations on a copy of the data structure and replaces the pointer that readers will see. The original copy is maintained until the next context switch to ensure completion of all ongoing read operations. (Be aware that using RCU is more involved than using the primitives discussed thus far, and should be used only if you are sure that it’s the right tool for the job. There’s ample documentation in the kernel tree in Documentation/RCU/*.)<br>For an example on using RCU, look at fs/dcache.c. In Linux, each file is associated with directory entry information (stored in a structure called dentry), meta data information (stored in an inode), and actual data (stored in data blocks). Each time you operate on a file, the components in the file path are traversed and corresponding dentries are created. The dentries are kept cached in a data structure called the dcache to speed up future operations. At any time, the number of dcache lookups will be much more than dcache updates, so references to the dcache are protected using RCU primitives.</p>
+<p>写的线程使用 write_seqlock () 和 write_sequnlock () 保护关键区域。<br>2.6 内核引入了另一个称为读拷贝更新的机制, 在读者远远超过作者的情况下, 可以提高性能。基本思想是, 读取器线程无需锁定即可执行。写线程更为复杂: 每一个都对数据结构的副本执行更新操作, 并替换读者将看到的指针。原始副本一直保持到下一上下文切换, 以确保所有正在进行的读取操作完成。(请注意, 使用RCU比使用上面讨论过的原语更复杂难懂, 只有当您确信它对你正在进行的任务是正确的工具才使用。内核在Documentation/RCU/*中有足够的文件对其说明。<br>举一个使用RCU的例子, 请查看 fs/dcache。在 Linux 中, 每个文件都与目录条目信息 (存储在称为 dentry 的结构中)、元数据信息 (存储在 inode 中) 和实际数据 (存储在数据块中) 相关联。每次对文件进行操作时, 都会遍历文件路径中的组件, 并创建相应的 dentries。dentries 被保存在一个称为 dcache 的数据结构中, 以加速未来的操作。在任何时候, dcache 查找的数量将远远超过 dcache 的更新, 因此对 dcache 的引用是使用协调单位原语进行保护的。</p>
+<h5 id="Debugging"><a href="#Debugging" class="headerlink" title="Debugging"></a>Debugging</h5><p>Concurrency-related problems are generally hard to debug since they are usually difficult to reproduce. It’s a good idea to enable SMP (CONFIG_SMP) and preemption (CONFIG_PREEMPT) while compiling and testing your code, even if your production kernel is going to run on a UP machine with preemption disabled. There is a configuration option under Kernel Hacking called Spinlock Debugging (CONFIG_DEBUG_SPINLOCK) that can help you catch some common spinlock errors. Also, tools like lockmeter (<a href="http://oss.sgi.com/projects/lockmeter/" target="_blank" rel="external">http://oss.sgi.com/projects/lockmeter/</a>) can be used to collect lock-related statistics.<br>The most common concurrency problem occurs when you forget to lock an access to a shared resource. This results in different threads “racing” through that access in an unregulated manner. The problem (called a race condition) may appear in the form of occasional strange code behavior.<br>Another potential problem arises when you miss releasing held locks in certain code paths, resulting in deadlocks. To get a hang of this, consider the following example:</p>
+<p>并发相关的问题通常很难调试,因为它们通常很难重现。在编译和测试代码时启用 SMP (CONFIG_SMP) 和抢占 (CONFIG_PREEMPT) 是个好主意，即使你的生产环境内核运行在一个不可中断的单核机器。在内核里面有个叫Spinlock Debugging(CONFIG_DEBUG_SPINLOCK)的配置选项，这个可以帮助你发现一些常见的自旋锁的错误。当然，类似<code>lockmeter</code>(<a href="http://oss.sgi.com/projects/lockmeter/)的工具同样可以用来收集锁信息的信息。" target="_blank" rel="external">http://oss.sgi.com/projects/lockmeter/)的工具同样可以用来收集锁信息的信息。</a></p>
+<p>当您忘记锁定对共享资源的访问时, 会发生最常见的并发问题。这种不常规的访问方式会导致不同的线程同步问题。这个问题(数据竞争情况)可能偶尔出现奇奇怪怪的代码行为</p>
+<p>另一个潜在的问题是，当你忘记代码中忘记对获得的锁进行释放时，就会导致死锁的问题。为了理解这个，考虑下下面的例子:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* Acquire lock */</span></div><div class="line">spin_lock (&amp;mylock);    </div><div class="line"></div><div class="line"><span class="comment">/* ... Critical Section ... */</span></div><div class="line"></div><div class="line"><span class="comment">/* Assume that error is very rare </span></div><div class="line"> *</div><div class="line"> * I forgot to release the lock! </div><div class="line"> */</div><div class="line"><span class="keyword">if</span> (error) &#123;    </div><div class="line">   <span class="keyword">return</span> -EIO; </div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/* Release lock */</span></div><div class="line">spin_unlock (&amp;mylock);</div></pre></td></tr></table></figure>
+<p>After the occurrence of the error condition, any thread trying to acquire mylock gets deadlocked, and the kernel may freeze.<br>If the problem first manifests months or years after you write the code, it’s that much harder to go back and debug it. To avoid such unpleasant encounters, concurrency logic should be designed systematically at the beginning, when you architect your software.</p>
+<p>在error条件判断出现的后面，任一尝试获取锁的线程都会死锁，系统可能会冻结住(死循环了)。如果问题首先体现在编写代码后的几个月或数年, 那么返回并调试它会更加困难。为了避免这种不愉快的遭遇, 在构建软件时, 应该在开始时系统地设计并发逻辑。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/10/linux-thread/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="易斌">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="知而智">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/10/linux-thread/" itemprop="url">linux-thread</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-10T14:40:06+08:00">
+                2017-10-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux-c/" itemprop="url" rel="index">
+                    <span itemprop="name">linux-c</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>你是否知道进程和线程的关系？是否知道(user/kernel) space thread以及LWP之间的区别和关系。<br>以及操作系统如何调度它们的？</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/10/linux-cpu-core/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="易斌">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="知而智">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/10/linux-cpu-core/" itemprop="url">linux-cpu-core</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-10T11:44:59+08:00">
+                2017-10-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux-c/" itemprop="url" rel="index">
+                    <span itemprop="name">linux-c</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>计算机从单任务到多任务的发展也是对应的CPU的处理能力。现在的系统基本都是多核的系统并有着更高的系统吞吐能力。</p>
+<p>平常只是脑海中有这些概念，并没有通过某些方法去论证这些东西。</p>
+<p>在linux上面我们所有CPU相关的信息可以在<code>/proc/cpuinfo</code>文件里面可以看到，我们可以看到以下信息:</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#查看CPU信息（型号）</span></div><div class="line">[root@local ~]<span class="comment"># cat /proc/cpuinfo | grep name | cut -f2 -d: | uniq -c</span></div><div class="line">     <span class="number">24</span>         Intel(R) Xeon(R) CPU E5-<span class="number">2630</span> <span class="number">0</span> @ <span class="number">2.30</span>GHz</div><div class="line"></div><div class="line"><span class="comment"># 查看物理CPU个数</span></div><div class="line">[root@local ~]<span class="comment"># cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l</span></div><div class="line"><span class="number">2</span></div><div class="line"></div><div class="line"><span class="comment"># 查看每个物理CPU中core的个数(即核数)</span></div><div class="line">[root@local ~]<span class="comment"># cat /proc/cpuinfo| grep "cpu cores"| uniq</span></div><div class="line">cpu cores    : <span class="number">6</span></div><div class="line"></div><div class="line"><span class="comment"># 查看逻辑CPU的个数</span></div><div class="line">[root@local ~]<span class="comment"># cat /proc/cpuinfo| grep "processor"| wc -l</span></div><div class="line"><span class="number">24</span></div></pre></td></tr></table></figure>
+<p><strong>以上各信息有如下关系:</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">CPU总核数 = 物理CPU个数 * 每颗物理CPU的核数 </div><div class="line">总逻辑CPU数 = 物理CPU个数 * 每颗物理CPU的核数 * 超线程数</div></pre></td></tr></table></figure>
+<p><span style="color:blue;"><strong>从上面执行的结果来看，证明我使用的cpu有2 * 6 = 12核，每个核有2个超线程，所以有24个逻辑cpu。</strong></span></p>
+<p>我们来看各CPU的架构</p>
+<p><strong>多个物理CPU，CPU通过总线进行通信，效率比较低，如下：</strong></p>
+<p><img src="../../../../images/cpu_single_core.jpg" alt=""></p>
+<p><em>多核CPU，不同的核通过L2 cache进行通信，存储和外设通过总线与CPU通信，如下：*</em></p>
+<p><img src="../../../../images/cpu_multi_core.jpg" alt=""></p>
+<p><strong>多核超线程,每个核有两个逻辑的处理单元，两个核共同分享一个核的资源，如下：</strong></p>
+<p><img src="../../../../images/cpu_multi_core_super.jpg" alt=""></p>
+<p><a href="http://www.cnblogs.com/bugutian/p/6138880.html" target="_blank" rel="external">参数</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/30/linux-tcp-ip/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="易斌">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="知而智">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/09/30/linux-tcp-ip/" itemprop="url">tcp/ip</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-30T10:53:32+08:00">
+                2017-09-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux-c/" itemprop="url" rel="index">
+                    <span itemprop="name">linux-c</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>由于之前所学没有系统性的对网络这块的知识也没个详细学习过程，对于<code>http</code>、<code>tcp/ip</code>这些东西还只是停留在使用层面，但具体对系统是如何实现的原理无所适从。一个东西只要<br>弄清楚原理后，对这东西的使用就如刨丁解牛。</p>
+<blockquote>
+<p>对一个东西的理解不能停留在表面，也不要感性的理解一个东西，我们需要看到一个东西<br>本质</p>
+</blockquote>
+<p>我们平常生活中用电脑、手机很方便的上网或和它人聊天，这里就用到一些类似http、tcp等<br>技术实现，不同电脑或手机能识别其它设备发过来的东西要利益于互联网以及很早以前制订的<br>OSI模型。</p>
+<blockquote>
+<p>国际标准化组织ISO在1979年建立了一个分委员会来专门研究一种用于开放系统的体系结构，<br>提出了开放系统互连OSI模型，这是一个定义连接异种计算机的标准主体结构。</p>
+</blockquote>
+<p><img src="../../../../images/osi_layer.png" alt="flow"></p>
+<p><img src="../../../../images/osi_protocol.png" alt="flow"></p>
+<p>下面是自己根据现实实际情况非官方的语言版的理解:</p>
+<ul>
+<li><p>物理层<br>相对于接收数据而言，是把发过来的信号转成机器识别的数据<br>相对于发送数据来说，是把数据转化成信号在线路上传递。<br><strong>也就是说设备之间沟通的第一个媒介及其连接</strong></p>
+</li>
+<li><p>数据链路层</p>
+</li>
+</ul>
+<p>相对于维护网络中需要通信的一条路，用来传递数据，只是这个数据是以帧来定义</p>
+<ul>
+<li>网络层</li>
+</ul>
+<p>这层标识了网络中两个实体的数据用的什么协议从哪里到哪里。</p>
+<ul>
+<li>传输层</li>
+</ul>
+<p>数据的包的传送，保证消息的有序性，你抓包看到的seq ack等.我们平常用read读和写在这层</p>
+<ul>
+<li>会话层</li>
+</ul>
+<p>也不知道怎么描述</p>
+<ul>
+<li>表示层</li>
+</ul>
+<p>主要定义数据格式以及加密</p>
+<ul>
+<li>应用层</li>
+</ul>
+<p>http、telnet等都是实现了应用层</p>
+<h3 id="网络数据流向"><a href="#网络数据流向" class="headerlink" title="网络数据流向"></a>网络数据流向</h3><p>一个网络数据包会经过多层路由器转发，所以下图是一个包从一个机器发出到达另外一台机器的示意图</p>
+<p><img src="../../../../images/data_flow.jpg" alt="flow"></p>
+<h3 id="TCP简述"><a href="#TCP简述" class="headerlink" title="TCP简述"></a>TCP简述</h3><p>大家都知道tcp是一个面向连接的，可靠的，基于字节流的位于传输层的通信协议。</p>
+<p><img src="../../../../images/protocol-stack.jpg" alt="flow"></p>
+<p><img src="../../../../images/tcp-ip.png" alt="flow"></p>
+<p><img src="../../../../images/tcp_header.png" alt="flow"></p>
+<p> 其中不携带选项的TCP头如下图所示(其中阴影部分的四个字段表示了相反方向的数据流信息)，其中header length字段由4比特构成，最大为15，单位是32比特(32-bit word)，即头长的最大值为15*32 bits = 60bytes，因此上面说携带选项的TCP头长最长为60bytes。</p>
+<p><img src="../../../../images/tcpdump.png" alt="flow"></p>
+<p>根据上面的图，tcp_header以及tcpdump日志截图，我们可以知道内部的一些实现</p>
+<p>上图中有几个字段需要重点介绍下：<br>  （1）序号：Seq序号，占32位，用来标识从TCP源端向目的端发送的字节流，发起方发送数据时对此进行标记。<br>  （2）确认序号：Ack序号，占32位，只有ACK标志位为1时，确认序号字段才有效，Ack=Seq+1。<br>  （3）标志位：共6个，即URG、ACK、PSH、RST、SYN、FIN等，具体含义如下：<br>  （A）URG：紧急指针（urgent pointer）有效。<br>  （B）ACK：确认序号有效。<br>  （C）PSH：接收方应该尽快将这个报文交给应用层。<br>  （D）RST：重置连接。<br>  （E）SYN：发起一个新连接。<br>  （F）FIN：释放一个连接。</p>
+<p>通过tcpdump日志的截图我们发现，回包的ACK都是发送方SEQ+1是告诉发送方你下次包的序号是ACK代码的</p>
+<p><img src="http://www.cnblogs.com/lshs/p/6038458.html" alt="参考"></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/28/部署脚本/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -437,7 +1179,7 @@
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/linux-c/" itemprop="url" rel="index">
-                    <span itemprop="name">linux c</span>
+                    <span itemprop="name">linux-c</span>
                   </a>
                 </span>
 
@@ -611,7 +1353,7 @@
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/linux-c/" itemprop="url" rel="index">
-                    <span itemprop="name">linux c</span>
+                    <span itemprop="name">linux-c</span>
                   </a>
                 </span>
 
@@ -1303,606 +2045,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/03/14/lock/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="易斌">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="知而智">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/03/14/lock/" itemprop="url">lock</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-03-14T17:56:08+08:00">
-                2017-03-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux-c/" itemprop="url" rel="index">
-                    <span itemprop="name">linux c</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>os是多任务操作系统,同一个进程下面是可以有多个线程(进程)同时运行的,线程实际也是一个进程,只是对父进程的一个copy,与父进程共享地址空间进程,所以对同一进程共享的资源需要进行同步,同步的方法包括<code>mutex semaphore spinlock 条件变量</code></p>
-<p>很多东西如果只停留在概念层面远远是不够的，我们还是要不断的思考下面的实现机制和原理,下面说下同步的东西。</p>
-<h4 id="semaphore"><a href="#semaphore" class="headerlink" title="semaphore"></a>semaphore</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> semaphore &#123;</div><div class="line">    <span class="keyword">atomic_t</span> count;</div><div class="line">    <span class="keyword">int</span> sleepers;</div><div class="line">    <span class="keyword">wait_queue_head_t</span> wait;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> &#123;</div><div class="line">    <span class="keyword">volatile</span> <span class="keyword">int</span> counter; </div><div class="line">&#125; <span class="keyword">atomic_t</span>;</div></pre></td></tr></table></figure>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2017/03/14/lock/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/03/14/linux-io/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="易斌">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="知而智">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/03/14/linux-io/" itemprop="url">linux-io</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-03-14T11:04:29+08:00">
-                2017-03-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux-c/" itemprop="url" rel="index">
-                    <span itemprop="name">linux c</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p><strong>少说话，多看代码，多思考，多动手</strong></p>
-<p>io操作是一个程序必不可少的部分，io可以是对块设备的读写，文件的读写，基于网络上的io,这里通过内核select和epoll源码比较下这两种io的优劣。平常服务器需要处理客户端多个连接(基于tcp)的io事件。</p>
-<p>对io的读写是有阻塞和非阻塞之分的，对于tcp连接上的读写实际是基于它的读写缓存区，如果fd是阻塞的话,对读来说,缓冲区没数据,对写来说，缓冲区不足够装下需要写的数据或已经满了同样会阻塞。下面是一个阻塞和非阻塞读取标准输入的程序。</p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2017/03/14/linux-io/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/03/13/c-lua/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="易斌">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="知而智">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/03/13/c-lua/" itemprop="url">c和lua交互</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-03-13T09:59:28+08:00">
-                2017-03-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux-c/" itemprop="url" rel="index">
-                    <span itemprop="name">linux c</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>要理解Lua和C++交互，首先要理解Lua堆栈。</p>
-<p>简单来说，Lua和C/C++语言通信的主要方法是一个无处不在的虚拟栈。栈的特点是先进后出。</p>
-<p>在Lua中，Lua堆栈就是一个struct，<strong>堆栈索引的方式可是是正数也可以是负数，区别是：正数索引1永远表示栈底，负数索引-1永远表示栈顶。如图：</strong></p>
-<p><img src="../../../../images/stack.png" alt=""></p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2017/03/13/c-lua/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/03/08/max-open-file/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="易斌">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="知而智">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/03/08/max-open-file/" itemprop="url">最大可打开的文件数</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-03-08T15:21:28+08:00">
-                2017-03-08
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux-c/" itemprop="url" rel="index">
-                    <span itemprop="name">linux c</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>平常开发项目的时候会遇到进程下打开的最大fd超过默认设置，导致用户不能正常使用服务。<code>linux</code>是基于文件系统的一个操作系统,操作系统最基本的单元就是进程。最大可打开的文件描述符分为系统级别的和进程级别的。</p>
-<h5 id="面向全系统的"><a href="#面向全系统的" class="headerlink" title="面向全系统的"></a>面向全系统的</h5><p>虽然操作系统是基于文件系统的，但它对整个系统中所打开的最大fd数目也是有限制的，默认的系统最大的fd在<code>/proc/sys/fs/file-max</code>文件里，记住<code>proc</code>目录只是一个虚拟的，实际控制的值是在<code>/etc/sysctl.conf</code>里可通过以下方式修改:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">vim /etc/sysctl.conf #fs.file-max=795165把这个放到文件最后</div><div class="line">sysctl -w fs.file-max=795165</div></pre></td></tr></table></figure>
-<p>最后需要执行<code>sysctl -p</code>生效,再到<code>cat /proc/sys/fs/file-max</code>验证已经同步</p>
-<p>&lt;! – more –&gt;</p>
-<h5 id="面向进程"><a href="#面向进程" class="headerlink" title="面向进程"></a>面向进程</h5><p>我们知道<code>linux</code>系统是一个多用户多进程的多核操作系统,进程是属于具体某一个用户的，通过<code>xshell</code>等工具<code>ulimit</code>看到的东西是对这个用户的一些资源限制，默认的最大fd数是1024,这一般不能满足于我们的需求，所以需要我们手动修改<br>如果默认从终端(shell环境)启动的进程会继承这些参数，修改可以通过以下几种方式:</p>
-<ul>
-<li><p><code>/etc/profile /etc/bashrc ~/.bash_profile ~/.bashrc</code> 等脚本初始化地方加入<code>ulimit -n value</code></p>
-</li>
-<li><p><code>vim /etc/security/limits.conf</code> 按里面的说明还以为是对用户所有打开的fd有限制，经过测试并不是，对资源的限制还是针对进程的,只是用户登录shell会读取这个默认的值</p>
-</li>
-</ul>
-<p>ulimit -n value value值不能超过硬链接数 <code>ulimit -Hn</code>可以查看硬链数,最好在<code>/etc/security/limits.conf</code>设置自己想要的值</p>
-<p><a href="https://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/" target="_blank" rel="external">参考</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1952,7 +2094,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">14</span>
+                <span class="site-state-item-count">18</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1974,7 +2116,7 @@
             
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">14</span>
+                <span class="site-state-item-count">18</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>
