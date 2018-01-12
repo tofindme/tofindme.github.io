@@ -234,6 +234,474 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/15/reids/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="易斌">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="知而智">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/12/15/reids/" itemprop="url">reids</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-15T10:17:40+08:00">
+                2017-12-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/开源代码学习/" itemprop="url" rel="index">
+                    <span itemprop="name">开源代码学习</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>redis和nginx一直是我认为很优秀的开源项目，也是我看的较多的开源实现。下面从几个方面简单说说redis实现。</p>
+<ul>
+<li>redis介绍</li>
+<li>常用数据类型</li>
+<li>io模型</li>
+<li>通信协议</li>
+<li>疑问解答</li>
+</ul>
+<h3 id="redis"><a href="#redis" class="headerlink" title="redis"></a>redis</h3><p>redis是一个基于<strong>内存</strong>的数据库，现有的数据类型满足大部分公司的开发需求，性能也满足一般公司使用。</p>
+<p>redis虽然是一个基于<strong>内存</strong>的数据库，但他提供了两种可以持久化的方式。这种持久化的机制避免的redis服务<br>器重启丢失数据的问题，但也不能完全避免数据不会丢失(这里讨论的是非集群模式)。</p>
+<p>redis提供的内存持久有<code>rdb</code>快照和基于<code>aof</code>的文件方式，默认是rdb快照，可以通过配置修改快照更新的方式，<br>这两种方式都是<code>fork</code>进程执行<code>backup</code>的。下面我们讨论redis里面的数据类型</p>
+<h3 id="数据类型"><a href="#数据类型" class="headerlink" title="数据类型"></a>数据类型</h3><p>我们先来看下redis源码说明。redis里的值有5种基础的类型，任何一个值都是以<code>redisObject</code>存在，并以下面不<br>同的编码方式编码成一个<code>redisObject</code>。</p>
+<p><code>server.h</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*-----------------------------------------------------------------------------</span></div><div class="line"> * Data types</div><div class="line"> *----------------------------------------------------------------------------*/</div><div class="line"></div><div class="line"><span class="comment">/* A redis object, that is a type able to hold a string / list / set */</span></div><div class="line"></div><div class="line"><span class="comment">/* The actual Redis Object */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_STRING 0</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_LIST 1</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_SET 2</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ZSET 3</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_HASH 4</span></div><div class="line"></div><div class="line"></div><div class="line"><span class="comment">// ... </span></div><div class="line"></div><div class="line"></div><div class="line"><span class="comment">/* Objects encoding. Some kind of objects like Strings and Hashes can be</span></div><div class="line"> * internally represented in multiple ways. The 'encoding' field of the object</div><div class="line"> * is set to one of this fields for this object. */</div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_RAW 0     <span class="comment">/* Raw representation */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_INT 1     <span class="comment">/* Encoded as integer */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_HT 2      <span class="comment">/* Encoded as hash table */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_ZIPMAP 3  <span class="comment">/* Encoded as zipmap */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_LINKEDLIST 4 <span class="comment">/* No longer used: old list encoding. */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_ZIPLIST 5 <span class="comment">/* Encoded as ziplist */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_INTSET 6  <span class="comment">/* Encoded as intset */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_SKIPLIST 7  <span class="comment">/* Encoded as skiplist */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_EMBSTR 8  <span class="comment">/* Embedded sds string encoding */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_QUICKLIST 9 <span class="comment">/* Encoded as linked list of ziplists */</span></span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> LRU_BITS 24</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> LRU_CLOCK_MAX ((1<span class="meta-string">&lt;&lt;LRU_BITS)-1) /* Max value of obj-&gt;</span>lru */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> LRU_CLOCK_RESOLUTION 1000 <span class="comment">/* LRU clock resolution in ms */</span></span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_SHARED_REFCOUNT INT_MAX</span></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> redisObject &#123;</div><div class="line">    <span class="keyword">unsigned</span> type:<span class="number">4</span>;</div><div class="line">    <span class="keyword">unsigned</span> encoding:<span class="number">4</span>;</div><div class="line">    <span class="keyword">unsigned</span> lru:LRU_BITS; <span class="comment">/* LRU time (relative to server.lruclock) or</span></div><div class="line">                            * LFU data (least significant 8 bits frequency</div><div class="line">                            * and most significant 16 bits decreas time). */</div><div class="line">    <span class="keyword">int</span> refcount;</div><div class="line">    <span class="keyword">void</span> *ptr;</div><div class="line">&#125; robj;</div></pre></td></tr></table></figure>
+<h4 id="String"><a href="#String" class="headerlink" title="String"></a>String</h4><p>字符串类型是redis里最基础的值。字符串是二进制安全的，也就是说这样的字符串可以包含任意的数据，比如一张<code>JPEG</code>的图片或一个序列化的<code>Ruby</code>对象。字符串值最大的长度是<code>512MB</code>。</p>
+<p>在redis里面，你可以用字符串做一些有趣的事情。比如:</p>
+<ul>
+<li>字符串可以使用类似<code>INCR</code>的命令(<code>INCR</code> <code>DECR</code> <code>INCRBY</code>)作为原子计数</li>
+<li>用<code>APPEND</code>命令向字符串的值里追加一些字符串</li>
+<li>可以用<code>GETRANGE</code>和<code>SETRANGE</code>像随机访问数组一样获取或改变字符串里面的内容</li>
+<li>少量的空间可以编码大量的数据或者可以使用<code>GETBIT</code>和<code>SETBIT</code>来创建一个<code>Redis backed Bloom Filter</code></li>
+</ul>
+<p>常用的命令如下:</p>
+<p><code>INCR</code> <code>GET</code> <code>SET</code> <code>STRLEN</code>等命令</p>
+<h4 id="Lists"><a href="#Lists" class="headerlink" title="Lists"></a>Lists</h4><p>列表是一个简单的字符串列表，按插入的顺序排序。往列表增加一个元素可能从列表的头部或者从列表的尾部添加。</p>
+<p><code>LPUSH</code>命令在列表的头部插入一个新的元素，<code>RPUSH</code>则是往列表尾部插入一个新的元素。当在一个不存的在key上<br>执行以上操作后会生成一个新的列表。同样的，执行对应的操作key所对应的空间会被删除。</p>
+<p>这些命令都是非常方便的语义，因此，如果命令带有一个不存的key时，所有的列表相关的命令在空列表里面会执行和他们名称相同的操作，<br>一些列表相关的命令使用例子以及结果如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">LPUSH mylist a   # now the list is &quot;a&quot;</div><div class="line">LPUSH mylist b   # now the list is &quot;b&quot;,&quot;a&quot;</div><div class="line">RPUSH mylist c   # now the list is &quot;b&quot;,&quot;a&quot;,&quot;c&quot; (RPUSH was used this time)</div></pre></td></tr></table></figure>
+<p>开表最大的长度是<strong>2<sup>32</sup>-1</strong>(4294967295,超过40亿).</p>
+<p>从时间复杂角度来看列表的主要特征是他在列表的首尾进行插入和删除的时间常数。即使列表里面有数亿个元素，访问里边的元素是非常快的，<br>但访问一个非常巨大的列表来说，越访问后面的速度会变得越慢，它的时间复杂度为O(N)</p>
+<p>你可以用列表做一些有趣的事情，比如:</p>
+<ul>
+<li><p>在社交网络中建立一个时间线，基于用户的时间线使用<code>LPUSH</code>增加新的元素，使用<code>LRANGE</code>来获取最近插入的元素。 </p>
+</li>
+<li><p><code>LPUSH</code>结合<code>LTRIM</code>可以创建一个不会超过指定元素的列表，只记录最近N个元素</p>
+</li>
+<li><p>列表可以作为一个消息传递原语，例如著名的<code>Resque Ruby</code>图书馆创建后台作业</p>
+</li>
+<li><p>你可以做更多关于列表相关的事，这种数据类型支持许多命令，包含阻塞的命令,如:<code>BLPOP</code></p>
+</li>
+</ul>
+<h4 id="Sets"><a href="#Sets" class="headerlink" title="Sets"></a>Sets</h4><p>Set是一个没有排序的字符串的一个集合。新增、删除以及判断是成员是否成在的时间复杂度可以是<code>O(1)</code>(这个时间常量不管集合里面的无数个数)。</p>
+<p>集合拥有不允许重复元素的特性。同一个元素增加多次的结果只会有一个元素存在集合里面，从实践的角度来说往集合里面增加一个元素的时候不需要主动判断元素是否已经存在。</p>
+<p>一个关于集合非常有趣的事情是，它支持一些服务器用来计算已经存在的集合的命令，这样你可以在短的时间内完成集合的合并、交集，差异。</p>
+<p>集合中最大的元素个数是<strong>2<sup>32</sup>-1</strong>(4294967295,超过40亿).</p>
+<p>你可以用集合做许多有趣的事情，例如:</p>
+<ul>
+<li><p>可以用集合记录唯一的东西。想要知道访问一篇博客的所有唯一的IP地址？ 每次一个页面查看的时候简单的使用<code>SADD</code>加入IP。你确定重复的IP将不会被插入。</p>
+</li>
+<li><p>集合对代表关系有好处。你可以用集合代表每个一标签创建一个标签系统。<br>然后你可以用<code>SADD</code>命令给所有拥有一个标签的对象的所有ID加到一个集合里面代表这特殊的标签。如果你想所有对象的所有ID在同一时间拥有三个不同的标签，那就使用<code>SINTER</code></p>
+</li>
+<li><p>你可以使用<code>SPOP</code>或<code>SRANDMEMBER</code>命令随机获取集合里面的元素。</p>
+</li>
+</ul>
+<h4 id="Hashes"><a href="#Hashes" class="headerlink" title="Hashes"></a>Hashes</h4><p>Hash是字符串字段和字符串的值的一个映射，因此Hash用来代表对象类型是完美的数据类型(举例:一个拥有多个字段的用户,如名字、姓氏、年龄以及更多)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">@cli</div><div class="line">HMSET user:1000 username antirez password P1pp0 age 34</div><div class="line">HGETALL user:1000</div><div class="line">HSET user:1000 password 12345</div><div class="line">HGETALL user:1000</div></pre></td></tr></table></figure>
+<p>拥有一些字段的hash以花费非常少的空间方式存储，所以你可以在一个小的Redis实例里面存储数以百万计的对象。</p>
+<p>然而hash主要被用来当作对象存储，它们拥有存储多个元素的能力，所以你同样可以为其它更多任务使用<code>hash</code></p>
+<p>每一个<code>hash</code>最多可以存储2<sup>32</sup>-1个field-value组(超过40亿).</p>
+<h4 id="Sorted-sets"><a href="#Sorted-sets" class="headerlink" title="Sorted sets"></a>Sorted sets</h4><p>有序集合和没有重复的字符串集合非常相似。区别是有序集合的每个一个成员都关联一个分值，这个分值被用来使有序集合保持从小到大的顺序。因此成员是唯一的，但分值可能重复。</p>
+<p>通过有序集合，你可以非常快的方式新增、删除或更新一个元素(在时间上与集合里面的元素个数成对比).</p>
+<p>因为元素在集合里面是有序的，并非后续才有序，你同样可以根据分数或排名很快速的获取范围。访问有序集合中间元素也非常快，所以你可以使用有序集合作为一个没有重复无素的智能列表，在这里你可以快速访问你想要访问的任何东西: 有序的元素、快速存在检测，快速访问中间元素!</p>
+<p>简而言之，使用有序集合你可以完成许多任务，并拥有在其它种类的数据库里面不能达到的好的性能。</p>
+<p>你可以用有序集合做如下事情:</p>
+<ul>
+<li><p>在大型在线游戏中做一个排行榜，在这里每一次一个新的分数提交时，你用<code>ZADD</code>更新它。使用<code>ZRANGE</code>可以容易的获取排名靠前的玩家，你同样可以使用<code>ZRANK</code>获取一个玩家自己的排名。结合<code>ZRANK</code>和<code>ZRANGE</code>你可以显示玩家以及对应的分数。所有操作都非常快。</p>
+</li>
+<li><p>有序集合经常被用来查找存在<code>redis</code>里面的数据。比如你有许多<code>hash</code>代表玩家,可以使用以玩家年龄作为分数，玩家<code>id</code>作为值的元素的一个集合。这样使用<code>ZRANGEBYSCORE</code>将会变得平常并可以根据给的年龄段很快的获取所有的玩家</p>
+</li>
+</ul>
+<h3 id="io模型"><a href="#io模型" class="headerlink" title="io模型"></a>io模型</h3><p>服务器是基于epoll的io模型，<code>redis</code>是单进程的事件模型驱动的架构设计。处理两类事件</p>
+<ul>
+<li>时间事件</li>
+<li>网络IO事件</li>
+</ul>
+<blockquote>
+<p>对于<code>redis</code>里面IO事件它支持<code>select</code>、<code>eploo</code>、<code>kqueue</code>、<code>evport</code>多种io监听机制。并封装了一套IO的接口</p>
+</blockquote>
+<p><code>ae.h</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* A simple event-driven programming library. Originally I wrote this code</span></div><div class="line"> * for the Jim's event-loop (Jim is a Tcl interpreter) but later translated</div><div class="line"> * it in form of a library for easy reuse.</div><div class="line"> *</div><div class="line"> * Copyright (c) 2006-2012, Salvatore Sanfilippo &lt;antirez at gmail dot com&gt;</div><div class="line"> * All rights reserved.</div><div class="line"> *</div><div class="line"> * Redistribution and use in source and binary forms, with or without</div><div class="line"> * modification, are permitted provided that the following conditions are met:</div><div class="line"> *</div><div class="line"> *   * Redistributions of source code must retain the above copyright notice,</div><div class="line"> *     this list of conditions and the following disclaimer.</div><div class="line"> *   * Redistributions in binary form must reproduce the above copyright</div><div class="line"> *     notice, this list of conditions and the following disclaimer in the</div><div class="line"> *     documentation and/or other materials provided with the distribution.</div><div class="line"> *   * Neither the name of Redis nor the names of its contributors may be used</div><div class="line"> *     to endorse or promote products derived from this software without</div><div class="line"> *     specific prior written permission.</div><div class="line"> *</div><div class="line"> * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"</div><div class="line"> * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</div><div class="line"> * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE</div><div class="line"> * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE</div><div class="line"> * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR</div><div class="line"> * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF</div><div class="line"> * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS</div><div class="line"> * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN</div><div class="line"> * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)</div><div class="line"> * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE</div><div class="line"> * POSSIBILITY OF SUCH DAMAGE.</div><div class="line"> */</div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> __AE_H__</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> __AE_H__</span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;time.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_OK 0</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_ERR -1</span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_NONE 0</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_READABLE 1</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_WRITABLE 2</span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_FILE_EVENTS 1</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_TIME_EVENTS 2</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_ALL_EVENTS (AE_FILE_EVENTS|AE_TIME_EVENTS)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_DONT_WAIT 4</span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_NOMORE -1</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_DELETED_EVENT_ID -1</span></div><div class="line"></div><div class="line"><span class="comment">/* Macros */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_NOTUSED(V) ((void) V)</span></div><div class="line"></div><div class="line"><span class="keyword">struct</span> aeEventLoop;</div><div class="line"></div><div class="line"><span class="comment">/* Types and data structures */</span></div><div class="line"><span class="function"><span class="keyword">typedef</span> <span class="keyword">void</span> <span class="title">aeFileProc</span><span class="params">(<span class="keyword">struct</span> aeEventLoop *eventLoop, <span class="keyword">int</span> fd, <span class="keyword">void</span> *clientData, <span class="keyword">int</span> mask)</span></span>;</div><div class="line"><span class="function"><span class="keyword">typedef</span> <span class="keyword">int</span> <span class="title">aeTimeProc</span><span class="params">(<span class="keyword">struct</span> aeEventLoop *eventLoop, <span class="keyword">long</span> <span class="keyword">long</span> id, <span class="keyword">void</span> *clientData)</span></span>;</div><div class="line"><span class="function"><span class="keyword">typedef</span> <span class="keyword">void</span> <span class="title">aeEventFinalizerProc</span><span class="params">(<span class="keyword">struct</span> aeEventLoop *eventLoop, <span class="keyword">void</span> *clientData)</span></span>;</div><div class="line"><span class="function"><span class="keyword">typedef</span> <span class="keyword">void</span> <span class="title">aeBeforeSleepProc</span><span class="params">(<span class="keyword">struct</span> aeEventLoop *eventLoop)</span></span>;</div><div class="line"></div><div class="line"><span class="comment">/* File event structure */</span></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> aeFileEvent &#123;</div><div class="line">    <span class="keyword">int</span> mask; <span class="comment">/* one of AE_(READABLE|WRITABLE) */</span></div><div class="line">    aeFileProc *rfileProc;   <span class="comment">/* io读的回调 */</span></div><div class="line">    aeFileProc *wfileProc;   <span class="comment">/* io写的回调 */</span></div><div class="line">    <span class="keyword">void</span> *clientData;</div><div class="line">&#125; aeFileEvent;</div><div class="line"></div><div class="line"><span class="comment">/* Time event structure */</span></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> aeTimeEvent &#123;</div><div class="line">    <span class="keyword">long</span> <span class="keyword">long</span> id; <span class="comment">/* time event identifier. */</span></div><div class="line">    <span class="keyword">long</span> when_sec; <span class="comment">/* seconds */</span></div><div class="line">    <span class="keyword">long</span> when_ms; <span class="comment">/* milliseconds */</span></div><div class="line">    aeTimeProc *timeProc;</div><div class="line">    aeEventFinalizerProc *finalizerProc;</div><div class="line">    <span class="keyword">void</span> *clientData;</div><div class="line">    <span class="keyword">struct</span> aeTimeEvent *next;</div><div class="line">&#125; aeTimeEvent;</div><div class="line"></div><div class="line"><span class="comment">/* A fired event */</span></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> aeFiredEvent &#123;</div><div class="line">    <span class="keyword">int</span> fd;</div><div class="line">    <span class="keyword">int</span> mask;</div><div class="line">&#125; aeFiredEvent;</div><div class="line"></div><div class="line"><span class="comment">/* State of an event based program */</span></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> aeEventLoop &#123;</div><div class="line">    <span class="keyword">int</span> maxfd;   <span class="comment">/* highest file descriptor currently registered */</span></div><div class="line">    <span class="keyword">int</span> setsize; <span class="comment">/* max number of file descriptors tracked */</span></div><div class="line">    <span class="keyword">long</span> <span class="keyword">long</span> timeEventNextId;</div><div class="line">    <span class="keyword">time_t</span> lastTime;     <span class="comment">/* Used to detect system clock skew */</span></div><div class="line">    aeFileEvent *events; <span class="comment">/* Registered events 所有已经建立tcp连接的fd */</span></div><div class="line">    aeFiredEvent *fired; <span class="comment">/* Fired events  有io事件需要处理的fd*/</span></div><div class="line">    aeTimeEvent *timeEventHead; <span class="comment">/*  定时任务的列表 */</span></div><div class="line">    <span class="keyword">int</span> stop;</div><div class="line">    <span class="keyword">void</span> *apidata; <span class="comment">/* This is used for polling API specific data 存储epool_fd 以及从内核获取所有就绪io事件的fd */</span></div><div class="line">    aeBeforeSleepProc *beforesleep;</div><div class="line">&#125; aeEventLoop;</div><div class="line"></div><div class="line"><span class="comment">/* Prototypes */</span></div><div class="line"><span class="function">aeEventLoop *<span class="title">aeCreateEventLoop</span><span class="params">(<span class="keyword">int</span> setsize)</span></span>;</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">aeDeleteEventLoop</span><span class="params">(aeEventLoop *eventLoop)</span></span>;</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">aeStop</span><span class="params">(aeEventLoop *eventLoop)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeCreateFileEvent</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">int</span> fd, <span class="keyword">int</span> mask,</span></span></div><div class="line">        aeFileProc *proc, <span class="keyword">void</span> *clientData);</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">aeDeleteFileEvent</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">int</span> fd, <span class="keyword">int</span> mask)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeGetFileEvents</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">int</span> fd)</span></span>;</div><div class="line"><span class="function"><span class="keyword">long</span> <span class="keyword">long</span> <span class="title">aeCreateTimeEvent</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">long</span> <span class="keyword">long</span> milliseconds,</span></span></div><div class="line">        aeTimeProc *proc, <span class="keyword">void</span> *clientData,</div><div class="line">        aeEventFinalizerProc *finalizerProc);</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeDeleteTimeEvent</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">long</span> <span class="keyword">long</span> id)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeProcessEvents</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">int</span> flags)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeWait</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">int</span> mask, <span class="keyword">long</span> <span class="keyword">long</span> milliseconds)</span></span>;</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">aeMain</span><span class="params">(aeEventLoop *eventLoop)</span></span>;</div><div class="line"><span class="function"><span class="keyword">char</span> *<span class="title">aeGetApiName</span><span class="params">(<span class="keyword">void</span>)</span></span>;</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">aeSetBeforeSleepProc</span><span class="params">(aeEventLoop *eventLoop, aeBeforeSleepProc *beforesleep)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeGetSetSize</span><span class="params">(aeEventLoop *eventLoop)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeResizeSetSize</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">int</span> setsize)</span></span>;</div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div></pre></td></tr></table></figure>
+<p><code>redis</code>服务器处理事件的主入口在这里，每次进入事件循环之前先执行了一个函数(持入化的相关的流程，以及回复需要回复的client等)，然后再去执行定时事件和客户端发过来的命令。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">aeMain</span><span class="params">(aeEventLoop *eventLoop)</span> </span>&#123;</div><div class="line">    eventLoop-&gt;stop = <span class="number">0</span>;</div><div class="line">    <span class="keyword">while</span> (!eventLoop-&gt;stop) &#123;</div><div class="line">        <span class="keyword">if</span> (eventLoop-&gt;beforesleep != <span class="literal">NULL</span>)</div><div class="line">            eventLoop-&gt;beforesleep(eventLoop);</div><div class="line">        aeProcessEvents(eventLoop, AE_ALL_EVENTS);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="comment">/* Process every pending time event, then every pending file event</span></div><div class="line"> * (that may be registered by time event callbacks just processed).</div><div class="line"> * Without special flags the function sleeps until some file event</div><div class="line"> * fires, or when the next time event occurs (if any).</div><div class="line"> *</div><div class="line"> * If flags is 0, the function does nothing and returns.</div><div class="line"> * if flags has AE_ALL_EVENTS set, all the kind of events are processed.</div><div class="line"> * if flags has AE_FILE_EVENTS set, file events are processed.</div><div class="line"> * if flags has AE_TIME_EVENTS set, time events are processed.</div><div class="line"> * if flags has AE_DONT_WAIT set the function returns ASAP until all</div><div class="line"> * the events that's possible to process without to wait are processed.</div><div class="line"> *</div><div class="line"> * The function returns the number of events processed. */</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeProcessEvents</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">int</span> flags)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> processed = <span class="number">0</span>, numevents;</div><div class="line"></div><div class="line">    <span class="comment">/* Nothing to do? return ASAP */</span></div><div class="line">    <span class="keyword">if</span> (!(flags &amp; AE_TIME_EVENTS) &amp;&amp; !(flags &amp; AE_FILE_EVENTS)) <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line"></div><div class="line">    <span class="comment">/* Note that we want call select() even if there are no</span></div><div class="line">     * file events to process as long as we want to process time</div><div class="line">     * events, in order to sleep until the next time event is ready</div><div class="line">     * to fire. */</div><div class="line">    <span class="keyword">if</span> (eventLoop-&gt;maxfd != <span class="number">-1</span> ||</div><div class="line">        ((flags &amp; AE_TIME_EVENTS) &amp;&amp; !(flags &amp; AE_DONT_WAIT))) &#123;</div><div class="line">        <span class="keyword">int</span> j;</div><div class="line">        aeTimeEvent *shortest = <span class="literal">NULL</span>;</div><div class="line">        <span class="keyword">struct</span> timeval tv, *tvp;</div><div class="line"></div><div class="line">        <span class="keyword">if</span> (flags &amp; AE_TIME_EVENTS &amp;&amp; !(flags &amp; AE_DONT_WAIT))</div><div class="line">            shortest = aeSearchNearestTimer(eventLoop);</div><div class="line">        <span class="keyword">if</span> (shortest) &#123;</div><div class="line">            <span class="keyword">long</span> now_sec, now_ms;</div><div class="line"></div><div class="line">            aeGetTime(&amp;now_sec, &amp;now_ms);</div><div class="line">            tvp = &amp;tv;</div><div class="line"></div><div class="line">            <span class="comment">/* How many milliseconds we need to wait for the next</span></div><div class="line">             * time event to fire? */</div><div class="line">            <span class="keyword">long</span> <span class="keyword">long</span> ms =</div><div class="line">                (shortest-&gt;when_sec - now_sec)*<span class="number">1000</span> +</div><div class="line">                shortest-&gt;when_ms - now_ms;</div><div class="line"></div><div class="line">            <span class="keyword">if</span> (ms &gt; <span class="number">0</span>) &#123;</div><div class="line">                tvp-&gt;tv_sec = ms/<span class="number">1000</span>;</div><div class="line">                tvp-&gt;tv_usec = (ms % <span class="number">1000</span>)*<span class="number">1000</span>;</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                tvp-&gt;tv_sec = <span class="number">0</span>;</div><div class="line">                tvp-&gt;tv_usec = <span class="number">0</span>;</div><div class="line">            &#125;</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            <span class="comment">/* If we have to check for events but need to return</span></div><div class="line">             * ASAP because of AE_DONT_WAIT we need to set the timeout</div><div class="line">             * to zero */</div><div class="line">            <span class="keyword">if</span> (flags &amp; AE_DONT_WAIT) &#123;</div><div class="line">                tv.tv_sec = tv.tv_usec = <span class="number">0</span>;</div><div class="line">                tvp = &amp;tv;</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                <span class="comment">/* Otherwise we can block */</span></div><div class="line">                tvp = <span class="literal">NULL</span>; <span class="comment">/* wait forever */</span></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        numevents = aeApiPoll(eventLoop, tvp);</div><div class="line">        <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; numevents; j++) &#123;</div><div class="line">            aeFileEvent *fe = &amp;eventLoop-&gt;events[eventLoop-&gt;fired[j].fd];</div><div class="line">            <span class="keyword">int</span> mask = eventLoop-&gt;fired[j].mask;</div><div class="line">            <span class="keyword">int</span> fd = eventLoop-&gt;fired[j].fd;</div><div class="line">            <span class="keyword">int</span> rfired = <span class="number">0</span>;</div><div class="line"></div><div class="line">	    <span class="comment">/* note the fe-&gt;mask &amp; mask &amp; ... code: maybe an already processed</span></div><div class="line">             * event removed an element that fired and we still didn't</div><div class="line">             * processed, so we check if the event is still valid. */</div><div class="line">            <span class="keyword">if</span> (fe-&gt;mask &amp; mask &amp; AE_READABLE) &#123;</div><div class="line">                rfired = <span class="number">1</span>;</div><div class="line">                fe-&gt;rfileProc(eventLoop,fd,fe-&gt;clientData,mask);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">if</span> (fe-&gt;mask &amp; mask &amp; AE_WRITABLE) &#123;</div><div class="line">                <span class="keyword">if</span> (!rfired || fe-&gt;wfileProc != fe-&gt;rfileProc)</div><div class="line">                    fe-&gt;wfileProc(eventLoop,fd,fe-&gt;clientData,mask);</div><div class="line">            &#125;</div><div class="line">            processed++;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">/* Check time events */</span></div><div class="line">    <span class="keyword">if</span> (flags &amp; AE_TIME_EVENTS)</div><div class="line">        processed += processTimeEvents(eventLoop);</div><div class="line"></div><div class="line">    <span class="keyword">return</span> processed; <span class="comment">/* return the number of processed file/time events */</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>aeProcessEvents</code>函数主要是处理定时任务的事件和网络IO事件，先找时间最近的一个定时任务，如果时间到了<code>aePoll</code>的时间参数为0，表示立即返回，说明优先执行定时任务然后再等下次循环进入。</p>
+<h3 id="通信协议"><a href="#通信协议" class="headerlink" title="通信协议"></a>通信协议</h3><p>redis的协议很简单，就基本的raw字符串，然后有自己的固定格式，按这格式读写就可以和<code>redis</code>服务器完成通信和后续的任务。</p>
+<p>只要和<code>redis</code>服务器建立tcp连接后，知道他消息格式的话，直接写入raw字符串就可以执行对应的命令。我们也可以通过解析这<br>样的消息格式就可以实现和服务器通信的目的。</p>
+<p>redis里面用的协议名称叫<strong>RESP</strong><code>(REdis Serialization Protocol)</code>，它支持以下几种数据类型:</p>
+<ul>
+<li><strong>Strings</strong> 协议里的第一字符为 <strong>“+”</strong></li>
+<li><strong>Errors</strong> 协议里的第一字符为 <strong>“-“</strong></li>
+<li><strong>Integers</strong> 协议里的第一字符为 <strong>“:”</strong></li>
+<li><strong>Bulk Strings</strong> 协议里的第一字符为 <strong>“$”</strong></li>
+<li><strong>Arrays</strong> 协议里的第一字符为 <strong>“*”</strong></li>
+</ul>
+<blockquote>
+<p>客户端发给服务器的命令是一个<code>Bulk String</code>的数组，服务器回的包含以上所例举的。</p>
+</blockquote>
+<h4 id="Strings"><a href="#Strings" class="headerlink" title="Strings"></a>Strings</h4><p>字符串类型被编码成下面的方式:”+”后面跟具体的字符串内容，中间不包含<code>CR</code>或者<code>LF</code>字符(没有新的行才是允许的)，最后台<code>CRLF</code>(\r\n)结尾.</p>
+<p>字符串类型用最小的开销来传输非二进安全的字符串。比如许多<code>redis</code>命令执行成功时仅回复”OK”，这样的字符串类型被编码成以下5个字节:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;+OK\r\n&quot;</div></pre></td></tr></table></figure>
+<p>为了发送二进制安全的字符串，<code>Bulk Strings</code>用来替代<code>Strings</code>的功能。</p>
+<p>当<code>redis</code>服务器回复一个字符串类型时，一个<code>redis</code>客户端的库应该返回<code>+</code>后边的字符串，不包括<code>CRLF</code>。</p>
+<h4 id="Errors"><a href="#Errors" class="headerlink" title="Errors"></a>Errors</h4><p>RESP对于错误有一个特定的数据类型。实际上<code>errors</code>非常像字符串类型，只是用<code>-</code>替代了<code>+</code>.两者的区别在于<code>errors</code>被客户端用作异常处理，错误的数据类型里面的字符串就是它的错误消息.</p>
+<p>错误消息的格式如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;-Error message\r\n&quot;</div></pre></td></tr></table></figure>
+<p>只有在发生一些错误的时候才会回复错误消息，比方说，如果执行的操作与你对应的数据类型不同时，或者你执行的命令不存在以及其它情况。当收到一个错误回复的时候<code>redis</code>客户端应该抛出一个异常。</p>
+<p>下面是一个错误回包的一个例子:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">-ERR unknown command &apos;foobar&apos;</div><div class="line">-WRONGTYPE Operation against a key holding the wrong kind of value</div></pre></td></tr></table></figure>
+<p>从第一个字符<code>-</code>到第一个空格或新的行，代表了返回的错误类型。这是<code>redis</code>常用的惯例，但并不是所有协议里面的错误格式。</p>
+<p>举例说明，<code>ERR</code>是常用的错误类型，而<code>WRONGTYPE</code>是更具体的错误，这种错误应用在当客户端执行一个操作对于错误的数据类型时候。这种错误类型叫错误前缀，它是一种允许客户端理解服务器回复的错误类型的方式，而不依赖服务器回复的具体内容，这可能会随着时间改变。</p>
+<p>对于不同的错误类型，一个客户端的实现可能会返回不同的异常，也可能会通过直接返回错误的字符串描述内容给调用者提供一个常用的方式来定位错误</p>
+<p>然而，像这样一个特征不应该考虑至关重要因为它很少有用，一个有限的客户端实现可能简单的返回常用的错误条件，比如false.</p>
+<h4 id="Integers"><a href="#Integers" class="headerlink" title="Integers"></a>Integers</h4><p>这种类型是以<code>CRLF</code>结尾的字符串代表一个<code>interger</code>，以一个<code>:</code>字节做为前缀。比如”:0\r\n”,或者”:1000\r\n”都是回复的整型类型.</p>
+<p>许多<code>redis</code>命令都回复<code>Intergers</code>，比如<code>INCR</code>，<code>LLEN</code>以及<code>LASTSAVE</code>.</p>
+<p>返回整形没有什么特殊的意义，对于<code>INCR</code>是一个增量值，对<code>LASTSAVE</code>是一个<code>Unix time</code>等等。然而，返回的整数确定是在有符号的64位整型的范围.</p>
+<p>回复整形在回得<code>true</code>或<code>false</code>的时候使用也广泛。像<code>EXISTS</code>或<code>SISMEMBER</code>命令将会返回1代表true，0代表false.</p>
+<p>像其它<code>SADD</code>,<code>SREM</code>以及<code>SETNX</code>，如果命令实际执行成功会返回1，否则返回0.</p>
+<p>下面命令会回复一个整型:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">SETNX  DEL EXISTS INCR INCRBY DECR DECRBY DBSIZE LASTSAVE</div><div class="line">RENAMEX MOVE LLEN SADD SREM SISMEMBER SCARD</div></pre></td></tr></table></figure></p>
+<h3 id="Bulk-Strings"><a href="#Bulk-Strings" class="headerlink" title="Bulk Strings"></a>Bulk Strings</h3><p><code>Bulk Strings</code>被用来代表一个独立的二进制安全的最大长度为512M的字符串</p>
+<p><code>Bulk Strings</code>被编码成下面的方式:</p>
+<ul>
+<li><code>$</code>后面跟随组成字符串内容的字节个数，以<code>CRLF</code>结尾</li>
+<li>实际的字符串内容</li>
+<li>最后一个<code>CRLF</code></li>
+</ul>
+<p>所以字符串”foobar”被编码成:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;$6\r\nfoobar\r\n&quot;</div></pre></td></tr></table></figure>
+<p>空字符串如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;$0\r\n\r\n&quot;</div></pre></td></tr></table></figure>
+<p><code>Bulk Strings</code>可以用来特殊的格式来表示一个不存在的值，这样的值代表了一个<code>Null</code>值。这种特殊的格式的长度为-1，后边没有数据，所以一个<code>Null</code>值如下所示:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;$-1\r\n&quot;</div></pre></td></tr></table></figure>
+<p>这叫做<code>Null Bulk String</code>.</p>
+<p>当服务器回复一个<code>Null Bulk String</code>，客户端的API不应该返回一个空字符串，而是一个空对象。<br>比如一个Ruby的客户端应该返回一个<code>nil</code>值，而C实现的客户端应该返回<code>NULL</code>(或者在回复的对象里设置一个特殊的标志)，以及等等</p>
+<h3 id="Arrays"><a href="#Arrays" class="headerlink" title="Arrays"></a>Arrays</h3><p>客户端使用的是<code>Arrays</code>协议向服务器发送命令。相似的<code>Redis</code>命令使用<code>Arrays</code>协议返回元素的一个合集给客户端。一个<code>LRANGE</code>命令返回列表的例子.<br>Clients send commands to the Redis server using RESP Arrays. Similarly certain Redis commands returning collections of elements to the client use RESP Arrays are reply type. An example is the LRANGE command that returns elements of a list.</p>
+<p>使用下面的格式返回一个<code>Arrays</code>:</p>
+<ul>
+<li>前面一个<code>*</code>，后面跟随数组里面元素个数的十进制数值，再接着一个<code>CRLF</code></li>
+<li>数组里面的元素是其它数据类型</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;*0\r\n&quot;</div></pre></td></tr></table></figure>
+<p>当一个包含”foo”和”bar”两个元素的数组被编码成:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;*2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n&quot;</div></pre></td></tr></table></figure>
+<p>你可以看到数组里面在<code>*&lt;count&gt;CRLF</code>的部分是由其它的数据类型连续组成的。比如一个包含三个<code>integer</code>的数组被编码成如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;*3\r\n:1\r\n:2\r\n:3\r\n&quot;</div></pre></td></tr></table></figure>
+<p>数组类型同样可以包含不同的其它类型，没有要求数组里面的元素都是相同的类型。比如，一个包含四个<code>integer</code>的列表和一个<code>bulk string</code>被编码成如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">*5\r\n</div><div class="line">:1\r\n</div><div class="line">:2\r\n</div><div class="line">:3\r\n</div><div class="line">:4\r\n</div><div class="line">$6\r\n</div><div class="line">foobar\r\n</div></pre></td></tr></table></figure>
+<blockquote>
+<p>换成多行是为了方便阅读</p>
+</blockquote>
+<p>第一行内容<code>*5\r\n</code>说明后面接着有5个元素。每一个回复构成了<code>Multi Bulk</code>用作传播。</p>
+<p><code>Null Array</code>的概念同样存在，指定一个空值是可选的(通常使用一个<code>Null Bulk String</code>，由于历史原因我们有两种格式).</p>
+<p>比如执行<code>BLPOP</code>命令超时后，服务器返回一个count为-1的空数据,格式如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;*-1\r\n&quot;</div></pre></td></tr></table></figure>
+<p>redis服务器回服一个空数组里，redis客户端应该返回一个空对象而不是一个空数组。很有必要来区分空列表和不同的条件(比如<code>BLPOP</code>命令超时)。</p>
+<p>在<code>RESP</code>协议里面数组是可以嵌套使用的。比如一个包含两个数组的数组被编码成如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">*2\r\n</div><div class="line">*3\r\n</div><div class="line">:1\r\n</div><div class="line">:2\r\n</div><div class="line">:3\r\n</div><div class="line">*2\r\n</div><div class="line">+Foo\r\n</div><div class="line">-Bar\r\n</div></pre></td></tr></table></figure>
+<p>这个说明，一个数组里面包含一个有三个整型的数组以及一个两个字条串类型的数组。</p>
+<h4 id="Null-elements-in-Arrays"><a href="#Null-elements-in-Arrays" class="headerlink" title="Null elements in Arrays"></a>Null elements in Arrays</h4><p>数组里面的单个元素可能为空。在redis回复的包里用来说明这个元素被丢失且不为空字符串。这个可能会发生在<code>sort</code>对<code>get</code>模糊匹配时指定的key不存在时进行排序时。回复一个包含空元素数组的例子:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">*3\r\n</div><div class="line">$3\r\n</div><div class="line">foo\r\n</div><div class="line">$-1\r\n</div><div class="line">$3\r\n</div><div class="line">bar\r\n</div></pre></td></tr></table></figure>
+<p>数组中第二个元素是空的。redis客户端应该返回类似下面的东西:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">[&quot;foo&quot;,nil,&quot;bar&quot;]</div></pre></td></tr></table></figure>
+<h3 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h3><ul>
+<li>一次client最大能发送多大的数据</li>
+<li>服务器最大回复的长度</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* Protocol and I/O related defines */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> PROTO_MAX_QUERYBUF_LEN  (1024*1024*1024) <span class="comment">/* 1GB max query buffer. */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> PROTO_IOBUF_LEN         (1024*16)  <span class="comment">/* Generic I/O buffer size */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> PROTO_REPLY_CHUNK_BYTES (16*1024) <span class="comment">/* 16k output buffer */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> PROTO_INLINE_MAX_SIZE   (1024*64) <span class="comment">/* Max size of inline reads */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> PROTO_MBULK_BIG_ARG     (1024*32)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> LONG_STR_SIZE      21          <span class="comment">/* Bytes needed for long -&gt; str + '\0' */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AOF_AUTOSYNC_BYTES (1024*1024*32) <span class="comment">/* fdatasync every 32MB */</span></span></div></pre></td></tr></table></figure>
+<p>一个redis client向服务器发送命令最大的长度为<code>PROTO_MAX_QUERYBUF_LEN</code>。<br>服务器一次回复最大的消息长度为<code>PROTO_REPLY_CHUNK_BYTES</code>,比方说<code>hgetall</code>比较大的时候就分多次发送</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/13/启停脚本/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="易斌">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="知而智">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/12/13/启停脚本/" itemprop="url">启停脚本</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-13T11:42:35+08:00">
+                2017-12-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/脚本/" itemprop="url" rel="index">
+                    <span itemprop="name">脚本</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>我一直忍受不了没有效率的事情，公司同时负责服务器部署和发布的同事老久都没整一套好的脚本。<br>所以自己负责新项目的时候整了一套服务启停的脚本，经实践，个人觉得非常好用。所以在这里记录下。</p>
+<p>需要依赖daemonize的一个程序<br><code>sudo yum install -y daemonize</code></p>
+<blockquote>
+<p><code>/etc/init.d/functions</code> 这里面还是有好多好东西的。</p>
+</blockquote>
+<p><code>start-stop.sh</code></p>
+<blockquote>
+<p>用来选择是启动还是停止某个进程还是所有的进程</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#!/bin/bash</span></div><div class="line"><span class="comment"># 启停脚本</span></div><div class="line"><span class="comment">#</span></div><div class="line"></div><div class="line">COLOR_RED=<span class="string">'\033[0;31m'</span></div><div class="line">COLOR_GREEN=<span class="string">'\033[0;32m'</span></div><div class="line">COLOR_RESET=<span class="string">'\033[0m'</span></div><div class="line"></div><div class="line"><span class="function"><span class="title">usage</span></span>() &#123;</div><div class="line">  <span class="built_in">echo</span> <span class="string">"Usage: `basename <span class="variable">$0</span>`  &#123;start|stop|restart|force-stop|force-restart|status&#125;"</span> &gt;&amp;2</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment"># At least three arguments are required.</span></div><div class="line"><span class="keyword">if</span> [ <span class="variable">$#</span> <span class="_">-lt</span> 1 ]; <span class="keyword">then</span></div><div class="line">    usage</div><div class="line">    <span class="built_in">exit</span> 5</div><div class="line"><span class="keyword">fi</span></div><div class="line"></div><div class="line"><span class="comment"># 引入参数</span></div><div class="line">. ./parameters.sh</div><div class="line"></div><div class="line">server_len=$((<span class="variable">$&#123;#SERVERS[@]&#125;</span>))</div><div class="line"><span class="keyword">function</span> <span class="function"><span class="title">choose_server</span></span>() &#123;</div><div class="line">    <span class="built_in">printf</span> <span class="string">"\n========================================\n"</span></div><div class="line">    <span class="built_in">printf</span> <span class="string">"             Server Name List\n"</span></div><div class="line">    <span class="keyword">for</span> ((i=0; i&lt;server_len; i=i+1)); <span class="keyword">do</span></div><div class="line">        <span class="built_in">printf</span> <span class="string">"%-10d %-20s\n"</span> <span class="variable">$i</span> <span class="variable">$&#123;SERVERS[$(($i))]&#125;</span></div><div class="line">    <span class="keyword">done</span></div><div class="line">    <span class="built_in">printf</span> <span class="string">"========================================\n"</span></div><div class="line">    <span class="built_in">printf</span> <span class="string">"             Server Name List\n"</span></div><div class="line"></div><div class="line">    <span class="built_in">read</span> -p <span class="string">"Please Enter server index[0-<span class="variable">$(($server_len -1)</span>)](greater than <span class="variable">$server_len</span> instend of all): "</span> server_index</div><div class="line"></div><div class="line">    <span class="keyword">if</span> [[ <span class="string">"<span class="variable">$server_index</span>"</span> =~ ^[0-9]?$ &amp;&amp; <span class="variable">$server_index</span> -ge 0 ]]; <span class="keyword">then</span></div><div class="line">        <span class="built_in">return</span> <span class="variable">$server_index</span></div><div class="line">    <span class="keyword">else</span></div><div class="line">        <span class="built_in">echo</span> <span class="_">-e</span> <span class="string">"<span class="variable">$&#123;COLOR_RED&#125;</span>invalidate input <span class="variable">$&#123;COLOR_RESET&#125;</span> : <span class="variable">$COLOR_GREEN</span> <span class="variable">$server_index</span> <span class="variable">$COLOR_RESET</span>"</span>;</div><div class="line">        <span class="built_in">exit</span> 4;</div><div class="line">    <span class="keyword">fi</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment"># 单个服还是所有,大于长度代表所有</span></div><div class="line">choose_server</div><div class="line">server_id=$?</div><div class="line"></div><div class="line"></div><div class="line">PROG_NAME=<span class="string">''</span></div><div class="line">PROG_ARGS=<span class="string">''</span></div><div class="line">ACTION=<span class="variable">$1</span></div><div class="line"><span class="built_in">echo</span> <span class="string">"will <span class="variable">$ACTION</span> server follow.."</span></div><div class="line"><span class="keyword">if</span> [ <span class="variable">$server_id</span> <span class="_">-lt</span> <span class="variable">$server_len</span> ]; <span class="keyword">then</span></div><div class="line">    PROG_NAME=<span class="variable">$&#123;SERVERS[$server_id]&#125;</span></div><div class="line">    PROG_ARGS=<span class="variable">$&#123;SERVER_PARAM[$PROG_NAME]&#125;</span></div><div class="line">    <span class="built_in">echo</span> <span class="string">"<span class="variable">$&#123;PROG_NAME&#125;</span>   -----&gt; <span class="variable">$&#123;PROG_ARGS&#125;</span>"</span></div><div class="line"><span class="keyword">else</span></div><div class="line">    <span class="keyword">for</span> key <span class="keyword">in</span> <span class="variable">$&#123;SERVERS[@]&#125;</span>;<span class="keyword">do</span></div><div class="line">        <span class="built_in">echo</span> <span class="string">"<span class="variable">$&#123;key&#125;</span>   -----&gt; <span class="variable">$&#123;SERVER_PARAM[$key]&#125;</span>"</span></div><div class="line">    <span class="keyword">done</span></div><div class="line"><span class="keyword">fi</span></div><div class="line"></div><div class="line"></div><div class="line"><span class="built_in">read</span> -n1 -p <span class="string">"Press insure. [y/n]"</span> sure</div><div class="line"><span class="built_in">echo</span> <span class="_">-e</span> <span class="string">"\nYour inputs: <span class="variable">$sure</span>"</span></div><div class="line"><span class="keyword">if</span> [ <span class="string">"<span class="variable">$sure</span>"</span> == <span class="string">"y"</span> ]; <span class="keyword">then</span></div><div class="line">    <span class="built_in">echo</span> <span class="string">"<span class="variable">$server_id</span> <span class="variable">$server_len</span>"</span></div><div class="line">    <span class="keyword">if</span> [ <span class="variable">$server_id</span> <span class="_">-lt</span> <span class="variable">$server_len</span> ]; <span class="keyword">then</span></div><div class="line">        <span class="built_in">echo</span> <span class="string">"<span class="variable">$PROG_NAME</span> <span class="variable">$ACTION</span> <span class="variable">$PROG_ARGS</span>"</span></div><div class="line">        <span class="comment">#bash single.sh $PROG_NAME $ACTION $PROG_ARGS</span></div><div class="line">    <span class="keyword">else</span></div><div class="line">        <span class="keyword">for</span> key <span class="keyword">in</span> <span class="variable">$&#123;SERVERS[@]&#125;</span>;<span class="keyword">do</span></div><div class="line">            PROG_NAME=<span class="variable">$&#123;key&#125;</span></div><div class="line">            PROG_ARGS=<span class="variable">$&#123;SERVER_PARAM[$key]&#125;</span></div><div class="line">            <span class="built_in">echo</span> <span class="string">"<span class="variable">$PROG_NAME</span> <span class="variable">$ACTION</span> <span class="variable">$PROG_ARGS</span>"</span></div><div class="line">            <span class="comment">#bash single.sh $PROG_NAME $ACTION $PROG_ARGS</span></div><div class="line">        <span class="keyword">done</span></div><div class="line">    <span class="keyword">fi</span></div><div class="line"><span class="keyword">fi</span></div></pre></td></tr></table></figure>
+<p><code>single.sh</code></p>
+<blockquote>
+<p>用来操作单个进程的脚本</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#!/bin/bash</span></div><div class="line"><span class="comment"># 启停脚本</span></div><div class="line"><span class="comment">#</span></div><div class="line"></div><div class="line"><span class="function"><span class="title">usage</span></span>() &#123;</div><div class="line">  <span class="built_in">echo</span> <span class="string">"Usage: `basename <span class="variable">$0</span>` PROGRAM_NAME &#123;start|stop|restart|status&#125; PROGRAM_NAME"</span> &gt;&amp;2</div><div class="line">  <span class="built_in">echo</span> <span class="string">"Where: PROGRAM_NAME is alias for this process."</span> &gt;&amp;2</div><div class="line">  <span class="built_in">echo</span> <span class="string">"       PROGRAM_ARG contain the executable file and command lind params."</span> &gt;&amp;2</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">array=( <span class="variable">$@</span> )</div><div class="line">len=<span class="variable">$&#123;#array[@]&#125;</span></div><div class="line"></div><div class="line"><span class="comment"># At least three arguments are required.</span></div><div class="line"><span class="keyword">if</span> [ <span class="variable">$len</span> <span class="_">-lt</span> 3 ]; <span class="keyword">then</span></div><div class="line">    usage</div><div class="line">    <span class="built_in">exit</span> 5</div><div class="line"><span class="keyword">fi</span></div><div class="line"></div><div class="line"><span class="built_in">source</span> /etc/init.d/<span class="built_in">functions</span></div><div class="line"></div><div class="line">CUR_DIR=$(dirname $(realpath <span class="variable">$0</span>))</div><div class="line">PROGRAM_NAME=<span class="variable">$&#123;array[0]&#125;</span></div><div class="line">ACTION=<span class="variable">$&#123;array[1]&#125;</span></div><div class="line">PROGRAM_ARGS=<span class="variable">$&#123;array[@]:2:$len-1&#125;</span></div><div class="line">RETVAL=0</div><div class="line"></div><div class="line">PID_FILE=<span class="string">".<span class="variable">$PROGRAM_NAME</span>.pid"</span></div><div class="line">LOCK_FILE=<span class="string">".<span class="variable">$PROGRAM_NAME</span>.pid.lock"</span></div><div class="line">LOG_FILE=<span class="string">"<span class="variable">$PROGRAM_NAME</span>.log"</span> <span class="comment">#标准输出和错误输出</span></div><div class="line"></div><div class="line"><span class="keyword">function</span> <span class="function"><span class="title">start</span></span>() &#123;</div><div class="line">    daemonize -c <span class="variable">$CUR_DIR</span> -p <span class="variable">$PID_FILE</span> <span class="_">-l</span> <span class="variable">$LOCK_FILE</span> -o <span class="variable">$LOG_FILE</span> <span class="_">-e</span> <span class="variable">$LOG_FILE</span> -v <span class="variable">$PROGRAM_ARGS</span></div><div class="line">    RETVAL=$?</div><div class="line">    [ <span class="variable">$RETVAL</span> = 0 ] &amp;&amp; success || failure</div><div class="line">    <span class="built_in">echo</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">function</span> <span class="function"><span class="title">stop</span></span>()&#123;</div><div class="line">    killproc -p <span class="variable">$PID_FILE</span></div><div class="line">    RETVAL=$?</div><div class="line">    <span class="built_in">echo</span></div><div class="line">    rm <span class="_">-f</span> <span class="variable">$LOCK_FILE</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">function</span> <span class="function"><span class="title">status_</span></span>()&#123;</div><div class="line">    status -p <span class="variable">$PID_FILE</span></div><div class="line">    RETVAL=$?</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">case</span> <span class="string">"<span class="variable">$ACTION</span>"</span> <span class="keyword">in</span></div><div class="line">  start)</div><div class="line">        start;</div><div class="line">        ;;</div><div class="line">  restart)</div><div class="line">        stop; sleep 1; start;</div><div class="line">        ;;</div><div class="line">  stop)</div><div class="line">        stop</div><div class="line">        ;;</div><div class="line">  status)</div><div class="line">        status_</div><div class="line">        ;;</div><div class="line">  *)</div><div class="line">        usage</div><div class="line">        <span class="built_in">exit</span> 4</div><div class="line">        ;;</div><div class="line"><span class="keyword">esac</span></div><div class="line"></div><div class="line"><span class="built_in">exit</span> <span class="variable">$RETVAL</span></div></pre></td></tr></table></figure>
+<p><code>parameters.sh</code></p>
+<blockquote>
+<p>用来配置哪些进程需要启动，以及进程启动的参数</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#!/bin/bash</span></div><div class="line"><span class="comment"># 需要启动的服对应的名称和参数</span></div><div class="line"><span class="comment">#</span></div><div class="line"></div><div class="line">CUR_DIR=$(dirname $(realpath <span class="variable">$0</span>))</div><div class="line"></div><div class="line">LOGIN=<span class="string">"login"</span></div><div class="line">HALL=<span class="string">"hall"</span></div><div class="line">COUNT=<span class="string">"count"</span></div><div class="line">GAME10206=<span class="string">"game10206"</span></div><div class="line"></div><div class="line"><span class="comment"># 定义哪些服需要启动</span></div><div class="line">SERVERS=( \</div><div class="line">    <span class="variable">$&#123;LOGIN&#125;</span> \</div><div class="line">    <span class="variable">$&#123;HALL&#125;</span>  \</div><div class="line">    <span class="variable">$&#123;COUNT&#125;</span> \</div><div class="line">    <span class="variable">$&#123;GAME10206&#125;</span>)</div><div class="line"></div><div class="line"><span class="built_in">declare</span> -A SERVER_PARAM</div><div class="line">SERVER_PARAM=([<span class="variable">$&#123;LOGIN&#125;</span>]=<span class="string">"<span class="variable">$CUR_DIR</span>/login --log_dir=log/login"</span> \</div><div class="line">              [<span class="variable">$&#123;HALL&#125;</span>]=<span class="string">"<span class="variable">$CUR_DIR</span>/hall --log_dir=log/hall"</span> \</div><div class="line">              [<span class="variable">$&#123;COUNT&#125;</span>]=<span class="string">"<span class="variable">$CUR_DIR</span>/count --log_dir=log/count"</span> \</div><div class="line">              [<span class="variable">$&#123;GAME10206&#125;</span>]=<span class="string">"<span class="variable">$CUR_DIR</span>/game --log_dir=log/game10206"</span>)</div><div class="line"></div><div class="line"><span class="keyword">for</span> key <span class="keyword">in</span> <span class="variable">$&#123;SERVERS[@]&#125;</span>;<span class="keyword">do</span></div><div class="line">    <span class="built_in">echo</span> <span class="string">"<span class="variable">$&#123;key&#125;</span>   -----&gt; <span class="variable">$&#123;SERVER_PARAM[$key]&#125;</span>"</span></div><div class="line"><span class="keyword">done</span></div></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/11/linux-concurrency-lock/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -725,7 +1193,7 @@
             <p>计算机从单任务到多任务的发展也是对应的CPU的处理能力。现在的系统基本都是多核的系统并有着更高的系统吞吐能力。</p>
 <p>平常只是脑海中有这些概念，并没有通过某些方法去论证这些东西。</p>
 <p>在linux上面我们所有CPU相关的信息可以在<code>/proc/cpuinfo</code>文件里面可以看到，我们可以看到以下信息:</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#查看CPU信息（型号）</span></div><div class="line">[root@local ~]<span class="comment"># cat /proc/cpuinfo | grep name | cut -f2 -d: | uniq -c</span></div><div class="line">     <span class="number">24</span>         Intel(R) Xeon(R) CPU E5-<span class="number">2630</span> <span class="number">0</span> @ <span class="number">2.30</span>GHz</div><div class="line"></div><div class="line"><span class="comment"># 查看物理CPU个数</span></div><div class="line">[root@local ~]<span class="comment"># cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l</span></div><div class="line"><span class="number">2</span></div><div class="line"></div><div class="line"><span class="comment"># 查看每个物理CPU中core的个数(即核数)</span></div><div class="line">[root@local ~]<span class="comment"># cat /proc/cpuinfo| grep "cpu cores"| uniq</span></div><div class="line">cpu cores    : <span class="number">6</span></div><div class="line"></div><div class="line"><span class="comment"># 查看逻辑CPU的个数</span></div><div class="line">[root@local ~]<span class="comment"># cat /proc/cpuinfo| grep "processor"| wc -l</span></div><div class="line"><span class="number">24</span></div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#查看CPU信息（型号）</span></div><div class="line">[root@<span class="built_in">local</span> ~]<span class="comment"># cat /proc/cpuinfo | grep name | cut -f2 -d: | uniq -c</span></div><div class="line">     24         Intel(R) Xeon(R) CPU E5-2630 0 @ 2.30GHz</div><div class="line"></div><div class="line"><span class="comment"># 查看物理CPU个数</span></div><div class="line">[root@<span class="built_in">local</span> ~]<span class="comment"># cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l</span></div><div class="line">2</div><div class="line"></div><div class="line"><span class="comment"># 查看每个物理CPU中core的个数(即核数)</span></div><div class="line">[root@<span class="built_in">local</span> ~]<span class="comment"># cat /proc/cpuinfo| grep "cpu cores"| uniq</span></div><div class="line">cpu cores    : 6</div><div class="line"></div><div class="line"><span class="comment"># 查看逻辑CPU的个数</span></div><div class="line">[root@<span class="built_in">local</span> ~]<span class="comment"># cat /proc/cpuinfo| grep "processor"| wc -l</span></div><div class="line">24</div></pre></td></tr></table></figure>
 <p><strong>以上各信息有如下关系:</strong></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">CPU总核数 = 物理CPU个数 * 每颗物理CPU的核数 </div><div class="line">总逻辑CPU数 = 物理CPU个数 * 每颗物理CPU的核数 * 超线程数</div></pre></td></tr></table></figure>
 <p><span style="color:blue;"><strong>从上面执行的结果来看，证明我使用的cpu有2 * 6 = 12核，每个核有2个超线程，所以有24个逻辑cpu。</strong></span></p>
@@ -1684,367 +2152,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/11/go-solutions/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="易斌">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="知而智">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/09/11/go-solutions/" itemprop="url">golang开发中遇到的问题</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-11T09:56:22+08:00">
-                2017-09-11
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/golang/" itemprop="url" rel="index">
-                    <span itemprop="name">golang</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="问题总结"><a href="#问题总结" class="headerlink" title="问题总结"></a>问题总结</h3><p>在用golang编写服务器程序的时候，遇到下面一些问题，所以在这里做一些记录，尤其是<code>slice</code>隐藏的bug较隐性，若对<code>slice</code>工作原理不了解是较难发现的。</p>
-<ul>
-<li>slice元素被莫名替换</li>
-<li>index out of range问题</li>
-<li>空指针引用</li>
-<li>map的并发读写导致进程挂掉</li>
-<li>String方法导致的递归死循环</li>
-<li>通道多次close(close of closed channel)</li>
-<li>死锁</li>
-<li>下次gc内存回收条件</li>
-<li>定时任务的问题</li>
-</ul>
-<h3 id="slice元素被替换"><a href="#slice元素被替换" class="headerlink" title="slice元素被替换"></a>slice元素被替换</h3><blockquote>
-<p>slice在开发中运用较频繁的基础数据类型,和数组相似，与数组最大的区别在于他是系统自动扩容的。</p>
-</blockquote>
-<figure class="highlight golang"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">type</span> slice <span class="keyword">struct</span> &#123;</div><div class="line">	array unsafe.Pointer</div><div class="line">	<span class="built_in">len</span>   <span class="keyword">int</span></div><div class="line">	<span class="built_in">cap</span>   <span class="keyword">int</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>上面是<code>go runtime</code>里面对slice实现数据结构，指向一块内存的一个指针、一个当前slice里面的长度以及当前slice里面的最大容量。可以预想下<br>若另外一个指针同之前slice的指针有内存重叠的话，修改重叠部分是会相互影响的，下面我们用实例来确定下这个问题。</p>
-<p><strong>test1.go</strong><br><figure class="highlight golang"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">sa := []<span class="keyword">byte</span>&#123;&#125;</div><div class="line">sa = <span class="built_in">append</span>(sa, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">6</span>)</div><div class="line"></div><div class="line">sb := sa</div><div class="line">sb = <span class="built_in">append</span>(sb, <span class="number">5</span>) <span class="comment">// sb = append(sa, 5) 同样有问题</span></div><div class="line"></div><div class="line"><span class="comment">// 从小到大排序</span></div><div class="line">algorithm.Sort(sb, <span class="number">0</span>, <span class="built_in">len</span>(sb)<span class="number">-1</span>)</div><div class="line"></div><div class="line">fmt.Printf(<span class="string">"len: %d cap: %d of slice sa: %v\n"</span>, <span class="built_in">len</span>(sa), <span class="built_in">cap</span>(sa), sa)</div><div class="line">fmt.Printf(<span class="string">"len: %d cap: %d of slice sb: %v\n"</span>, <span class="built_in">len</span>(sb), <span class="built_in">cap</span>(sb), sb)</div><div class="line"></div><div class="line"><span class="comment">// output:</span></div><div class="line"><span class="comment">// len: 5 cap: 8 of slice sa: [1 2 3 4 5]</span></div><div class="line"><span class="comment">// len: 6 cap: 8 of slice sb: [1 2 3 4 5 6]</span></div></pre></td></tr></table></figure></p>
-<p><strong>test2.go</strong><br><figure class="highlight golang"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">sa := []<span class="keyword">byte</span>&#123;&#125;</div><div class="line">sa = <span class="built_in">append</span>(sa, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">10</span>)</div><div class="line"></div><div class="line">sb := sa</div><div class="line">sb = <span class="built_in">append</span>(sb, <span class="number">9</span>)</div><div class="line"></div><div class="line"><span class="comment">// 从小到大排序</span></div><div class="line">algorithm.Sort(sb, <span class="number">0</span>, <span class="built_in">len</span>(sb)<span class="number">-1</span>)</div><div class="line"></div><div class="line">fmt.Printf(<span class="string">"len: %d cap: %d of slice sa: %v\n"</span>, <span class="built_in">len</span>(sa), <span class="built_in">cap</span>(sa), sa)</div><div class="line">fmt.Printf(<span class="string">"len: %d cap: %d of slice sb: %v\n"</span>, <span class="built_in">len</span>(sb), <span class="built_in">cap</span>(sb), sb)</div><div class="line"></div><div class="line"><span class="comment">// output:</span></div><div class="line"><span class="comment">// len: 8 cap: 8 of slice sa: [1 2 3 4 5 7 8 10]</span></div><div class="line"><span class="comment">// len: 9 cap: 16 of slice sb: [1 2 3 4 5 7 8 9 10]</span></div></pre></td></tr></table></figure></p>
-<p>上面两个程序的输出可能看出，<code>test1.go</code>中对sb排完序后sa和sb第5个元素是被替换掉了的。<br>实际上sa和sb是两个指向同块内存的不同指针，只是它们的len值不一样,需要注意的是sb调用<br>append后cap的值还是和sa的一样。和<code>test2.go</code>形成鲜明的对比，只要slice的长度超过了默<br>认的容量后就会自动扩容。</p>
-<p><strong>sb:=sa之后的代码写在函数里面同样有这样的问题，因为go里面传参都是按值传递的</strong></p>
-<h3 id="index-out-of-range"><a href="#index-out-of-range" class="headerlink" title="index out of range"></a>index out of range</h3><ul>
-<li>索引slice元素越界</li>
-</ul>
-<figure class="highlight golang"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">sa := []<span class="keyword">byte</span>&#123;&#125;</div><div class="line">sa = <span class="built_in">append</span>(sa, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">6</span>)</div><div class="line"><span class="comment">// sa[5] = 20 // 这里会panic</span></div><div class="line"></div><div class="line">sb := sa[<span class="number">5</span>:]</div><div class="line"><span class="comment">// sb[0] = 5  // 这里会panic</span></div><div class="line"></div><div class="line">fmt.Printf(<span class="string">"len: %d cap: %d of slice sa: %v\n"</span>, <span class="built_in">len</span>(sa), <span class="built_in">cap</span>(sa), sa)</div><div class="line">fmt.Printf(<span class="string">"len: %d cap: %d of slice sb: %v\n"</span>, <span class="built_in">len</span>(sb), <span class="built_in">cap</span>(sb), sb)</div><div class="line"></div><div class="line"><span class="comment">// output:</span></div><div class="line"><span class="comment">// len: 5 cap: 8 of slice sa: [1 2 3 4 6]</span></div><div class="line"><span class="comment">// len: 0 cap: 3 of slice sb: []</span></div></pre></td></tr></table></figure>
-<p>对于这种下标越界的问题是当索引的下标号超出了<code>len(sa)</code>的时候就抛出越界的错误</p>
-<ul>
-<li>slice表达式越界问题</li>
-</ul>
-<blockquote>
-<p>根据官方文档的说明slice表达式有两个，一种简单的表达式和参数更全的表达式<br>分别对应<code>a[low : high]</code>和<code>a[low : high : max]</code></p>
-</blockquote>
-<p><a href="https://golang.org/ref/spec#Slice_expressions" target="_blank" rel="external">spec说明</a><br>对于这类越界是下标不在<code>0 &lt;= low &lt;= high &lt;= max &lt;= cap(a)</code>这范围时会出现问题</p>
-<h3 id="空指针引用"><a href="#空指针引用" class="headerlink" title="空指针引用"></a>空指针引用</h3><p>相信不论是C系还是JAVA开发者都会遇到空指针的问题，C里面对空地址的访问是致命的，<br>并且不像JAVA能把这种异常捕获，go也不例外，为了保证服务正常运行同样可以通过<br>recover把所有runtime时的错捕获到，但并发读写的错误是不行的。所以我们项目里基本<br>在所有的协程里面有recover输出的。</p>
-<p>项目中我们把一个自定义的interface的变量赋值一个<code>nil</code>，但去执行原先持有的类型的<br>函数时就panic掉了，所以对默认值为空值引用的都会出这种错误，比如:空指针和接口</p>
-<p><strong>有趣的例子:</strong><br><figure class="highlight golang"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">type</span> Stu <span class="keyword">struct</span> &#123;</div><div class="line">	Name <span class="keyword">string</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Stu)</span> <span class="title">GetName</span><span class="params">()</span> <span class="title">int</span></span> &#123;</div><div class="line">	fmt.Printf(<span class="string">"s is %v"</span>, s) <span class="comment">// 这里能正常调用,但不要再去调Stu里面的成员</span></div><div class="line">	<span class="keyword">return</span> <span class="number">2</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</div><div class="line">	<span class="keyword">var</span> s *Stu</div><div class="line">	s.GetName()</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>上面的例子一开始出乎意料，但仔细一想其实是符合go的设计理念的，方法是属于类型的，<br>类型的变量当然是可以正常调用的，但变量为空再去调用里面的成员就是对空指针的访问了。</p>
-<h3 id="map的并发读写导致进程挂掉"><a href="#map的并发读写导致进程挂掉" class="headerlink" title="map的并发读写导致进程挂掉"></a>map的并发读写导致进程挂掉</h3><p>对一个多线程程序来说对数据竞争的保护是必不可少的，但在处理日志输出的时候，如果<br>一个对象有map或数组之类的并对有并发读写这很容易导致进程panic掉。所以打印日志的<br>时候一定要注意不要输出一个对象。</p>
-<h3 id="String方法导致的递归死循环"><a href="#String方法导致的递归死循环" class="headerlink" title="String方法导致的递归死循环"></a>String方法导致的递归死循环</h3><p>在日志输出的时候打印了一个对象并且对象实现了String()方法，如果String方法里面<br>又调了自身，这种使用方法是很危险的，在我们开发期间是有同事犯了这个一个错误的。</p>
-<h3 id="死锁"><a href="#死锁" class="headerlink" title="死锁"></a>死锁</h3><p>既然是并发程序，难免会有数据竞争的问题，所以我们用了互斥锁来解决这个问题，<br>如果获取锁和释放锁没有成对使用或者是锁重入(递归获取锁)就会导致死锁的风险，<br>因为我们项目是针对房间的，虽然不影响所有的人，一出现死锁只会影响这个房间<br>的人，不过我们这种锁是睡眠锁,并不消耗CPU。</p>
-<blockquote>
-<p>我们的产品是一款地方麻将,用golang开发的</p>
-</blockquote>
-<p><strong>死锁1:</strong></p>
-<p>我们的产品上线第二天就出现导致全服(多个逻辑服)服务不可用。后来经过排查是有死锁影响了全局。</p>
-<p>一开始并不知道问题在哪，有以下两个解决方案:</p>
-<ul>
-<li>新增高版本的逻辑服(不影响新的玩家)</li>
-<li>停服维护</li>
-</ul>
-<p>一开始我们选择的是一方案，但好像出了点问题，又换了二方案，二方案虽然可以但是已经开的房间的钻石没返还。<br>弄了好久才弄程序把需要返还钻石返还。</p>
-<p>不过好在上线前有人说要开放pprof接口,经过日志分析是有很多goroutine阻塞在获取锁的地方。<br>上线前我们做了一个需求，10分钟没开局的房间需要解散掉。也没考虑太多，觉得这个需求比较<br>简单，所以逻辑服这边起了个定时任务1分钟扫下单个逻辑服的房间列表。</p>
-<p>定时任务我们是用的读锁来执行的，从列表里面删除一个房间的是写锁的。读锁是可以多次获取的。<br>假如1分钟还没遍历完所有的房间，另外一个定时任务立即执行，又重新获取房间列表的读锁。1分<br>钟遍历的时候是有获取房间的锁的。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">R*是获取房间里面的锁</div><div class="line">RA ——&gt; roomA</div><div class="line">RB ——&gt; roomB</div><div class="line">    再尝试获取房间列表写锁的:</div><div class="line">    RA ——&gt; list</div><div class="line">    RB ——&gt; list</div><div class="line"></div><div class="line">T*是定时任务得到房间列表的读锁:</div><div class="line">T1  ——&gt; list</div><div class="line">T2  ——&gt; list</div><div class="line">T3  ——&gt; list</div><div class="line">	再获取房间里面的锁</div><div class="line">	TA ——&gt; roomA</div><div class="line">	TB ——&gt; roomB</div></pre></td></tr></table></figure>
-<p><strong>定时任务是有获取房间的锁的,如果刚好TA的锁等着RA的锁就会产生死锁</strong></p>
-<p>后续我们的解决方案是为每一个房间启一个定时。能不用锁解决的问题千万不要不用，获取锁是会导致上下文的切换，<br>从一执行线程切换到另一个执行线程。</p>
-<p>golang的<code>channel</code>就是通过锁来实现不同的协程之间可以通信。虽然用到了锁，但是这个锁对开发人员是无感的，所<br>以对使用者来说就安全了。</p>
-<p><strong>死锁2:</strong></p>
-<p>这个问题是异常情况下面导致的单个房间的死锁，当时写代码的时候能不用defer就不用，所以在一个加锁的函数的<br>地方没有用defer解锁，在函数执行当中有panic，所以没执行后面解锁的函数。如果用了defer解锁就不会有这个问<br>题了。所以在有锁的情况尽量用defer就用defer。</p>
-<h3 id="下次gc内存回收条件"><a href="#下次gc内存回收条件" class="headerlink" title="下次gc内存回收条件"></a>下次gc内存回收条件</h3><p>线上因为通过<code>pprof</code>看到<code>heap</code>一直在增长，一天增长了一千多。用top观察实际res也增了几十兆的物理内存。<br>因此网上找了很多关于linux内存管理以及golang的pprof里面的heap各字段详细描述。</p>
-<p>(MemStats)[<a href="https://golang.org/pkg/runtime/#MemStats" target="_blank" rel="external">https://golang.org/pkg/runtime/#MemStats</a>]</p>
-<p>通过线上实际表现，内存是一直往上增的情况，所以看了下哪里可能有内存没被回收掉，以及GC的回收机制。</p>
-<p>一开始自己有以下疑问:</p>
-<ul>
-<li>有垃圾回收的语言不是会自动回收的吗?</li>
-<li>有回收的话哪些对象没被回收掉？</li>
-</ul>
-<p>一开始对代码大概的看了一下，除了其它一些频繁make的切片(也就十几个byte)的长度，这些部分是由他底层内存分配<br>管理器来控制的，我是束手无从的，不过也对一些频繁用到的对像用了内置的pool对象池。所以从其它地方想下还有哪<br>些地方没被回收掉，后来想到定时器！定时器确实也是有泄漏的(有些没有Stop掉)。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">export GODEBUG=GOGC=50,GCTRACE=1</div><div class="line">./main</div></pre></td></tr></table></figure>
-<p>默认GOGC是100的，所以gc会在下次分配的内存和上次分配的内存的比是成倍的才会把内存回收掉，设置成50后<br>通过压测试后通过日志输出会发现回收的次数相对来说要频繁，所以内存没有出现大的增长，停下来的时候恢复<br>平稳的值，但设置成50的时候会偶发的卡顿。线上估计也只能设置成80左右吧！暂时这个值没放到线上去跑。</p>
-<p><a href="https://golang.org/pkg/runtime/#GC" target="_blank" rel="external">参数说明</a></p>
-<h3 id="定时任务的问题"><a href="#定时任务的问题" class="headerlink" title="定时任务的问题"></a>定时任务的问题</h3><p><strong>参考:</strong><br><a href="https://guidao.github.io/go_timer.html" target="_blank" rel="external">实现说明</a></p>
-<p>go里面使用定时器有以下几种方式:</p>
-<figure class="highlight golang"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewTimer</span><span class="params">(d Duration)</span> *<span class="title">Timer</span></span> &#123;</div><div class="line">	c := <span class="built_in">make</span>(<span class="keyword">chan</span> Time, <span class="number">1</span>)</div><div class="line">	t := &amp;Timer&#123;</div><div class="line">		C: c,</div><div class="line">		r: runtimeTimer&#123;</div><div class="line">			when: when(d),</div><div class="line">			f:    sendTime,</div><div class="line">			arg:  c,</div><div class="line">		&#125;,</div><div class="line">	&#125;</div><div class="line">	startTimer(&amp;t.r)</div><div class="line">	<span class="keyword">return</span> t</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">type</span> runtimeTimer <span class="keyword">struct</span> &#123;</div><div class="line">	i      <span class="keyword">int</span></div><div class="line">	when   <span class="keyword">int64</span></div><div class="line">	period <span class="keyword">int64</span></div><div class="line">	f      <span class="function"><span class="keyword">func</span><span class="params">(<span class="keyword">interface</span>&#123;&#125;, <span class="keyword">uintptr</span>)</span> // <span class="title">NOTE</span>: <span class="title">must</span> <span class="title">not</span> <span class="title">be</span> <span class="title">closure</span></span></div><div class="line">	<span class="title">arg</span>    <span class="title">interface</span>&#123;&#125;</div><div class="line">	seq    <span class="keyword">uintptr</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">AfterFunc</span><span class="params">(d Duration, f <span class="keyword">func</span>()</span>) *<span class="title">Timer</span></span> &#123;</div><div class="line">	t := &amp;Timer&#123;</div><div class="line">		r: runtimeTimer&#123;</div><div class="line">			when: when(d),</div><div class="line">			f:    goFunc,</div><div class="line">			arg:  f,</div><div class="line">		&#125;,</div><div class="line">	&#125;</div><div class="line">	startTimer(&amp;t.r)</div><div class="line">	<span class="keyword">return</span> t</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">goFunc</span><span class="params">(arg <span class="keyword">interface</span>&#123;&#125;, seq <span class="keyword">uintptr</span>)</span></span> &#123;</div><div class="line">	<span class="keyword">go</span> arg.(<span class="function"><span class="keyword">func</span><span class="params">()</span>)<span class="params">()</span></span></div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="title">time</span>.<span class="title">NewTicker</span><span class="params">(time.Second)</span></div><div class="line"><span class="title">time</span>.<span class="title">After</span><span class="params">(time.Second)</span></div><div class="line"><span class="title">time</span>.<span class="title">AfterFun</span><span class="params">(time.Second, <span class="keyword">func</span>()</span>&#123;&#125;)</div></pre></td></tr></table></figure>
-<p>通过源码以及使用接口总结，主要有两种定时器。1) 执行一次的  2) 定期执行的。通过数据结构<br>我们看了下不同接口实际的区别只在<code>period</code>字段。以及这个<code>f</code>参数用的默认的<code>sendTime</code>是非<br>阻塞的调用，<code>AfterFun</code>和前面两个接口不同的时没通过管道来实现定时器到点了(可以执行我的<br>业务了)，而它是直接用的goFunc包装在自己的协程里面执行</p>
-<figure class="highlight golang"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">for</span> i := <span class="number">0</span>; i &lt;= <span class="number">1000000</span>; i++ &#123;</div><div class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</div><div class="line">		<span class="keyword">for</span> &#123;</div><div class="line">			<span class="keyword">select</span> &#123;</div><div class="line">			<span class="keyword">case</span> &lt;-time.Tick(time.Second):</div><div class="line">				<span class="keyword">return</span></div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>如果像上面的代码用<code>time.Tick()</code>创建的定时器(也就是管道)没<code>Stop()</code>掉，定时器任务<br>列表会一直规程，导致内存一直无法得到释放。尤其是循环条件加大到百万级别的时候就<br>更明显了。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/08/enjoy-hexo/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="易斌">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="知而智">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/09/08/enjoy-hexo/" itemprop="url">enjoy hexo</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-08T10:50:37+08:00">
-                2017-09-08
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h4 id="搭建博客的过程"><a href="#搭建博客的过程" class="headerlink" title="搭建博客的过程"></a>搭建博客的过程</h4><p>对于没有购买自己域名的个人来说<code>hexo+github</code>是个不错的选择。</p>
-<p>安装步骤:</p>
-<ul>
-<li>安装<code>git</code></li>
-<li>安装<code>nodejs</code></li>
-<li>在git上创建自己的仓库</li>
-<li>用<code>hexo</code>创建博客并生成静态页面，关联自己的仓库，再<code>hexo deploy</code>基本就好了</li>
-</ul>
-<h3 id="前期准备工作"><a href="#前期准备工作" class="headerlink" title="前期准备工作"></a>前期准备工作</h3><ul>
-<li><a href="https://git-for-windows.github.io/" target="_blank" rel="external">git下载</a></li>
-<li><a href="https://nodejs.org/en/" target="_blank" rel="external">nodejs下载</a> 选择LTS(Long Term Support)版本就好</li>
-<li><code>npm i -g hexo</code>安装hexo</li>
-</ul>
-<p>npm是nodejs来管理软件库的一个工具，i是安装-g 是全局安装,安装后尽情享受hexo –help的功能吧。<br><a href="https://hexo.io/themes/" target="_blank" rel="external">更换主题地址</a><code>git clone url themes/</code></p>
-<h3 id="enjoy"><a href="#enjoy" class="headerlink" title="enjoy"></a>enjoy</h3><p>所有准备工作做好后直接用<code>hexo init name</code>初始化一个博客目录</p>
-<ul>
-<li><code>hexo new first-post</code>来创建自己的需要写的文章</li>
-<li><code>hexo server</code>就可以通过访问<code>localhost:4000</code>博客地址了</li>
-</ul>
-<p>可以在配置文件里面支持分类、评论和主题等各种参数配置</p>
-<p><strong>在配置git上面的仓库的时候用git协议每次更新就不需要输入密码~</strong></p>
-<h3 id="发布到github"><a href="#发布到github" class="headerlink" title="发布到github"></a>发布到github</h3><p>把自己本地的ssh的公钥放到github个人帐号的key下面,没有则用<code>ssh-keygen</code>一直回车生成,<code>cat ~/.ssh/id_rsa.pub</code><br>在配置里面自己github仓库地址</p>
-<p><strong>仓库名格式:<code>名称+github.io</code> example:hello.github.io，否则无效</strong></p>
-<p>每次有新文章需要发布的时候执行下面命令:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">hexo clean   </div><div class="line">hexo generate</div><div class="line">hexo deploy</div></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2094,7 +2201,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-count">20</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2116,7 +2223,7 @@
             
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-count">19</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>
@@ -2158,7 +2265,7 @@
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2017</span>
+  <span itemprop="copyrightYear">2018</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

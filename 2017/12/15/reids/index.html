@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="c 数据结节 内存数据库," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="redis和nginx一直是我认为很优秀的开源项目，也是我看的较多的开源实现。下面从几个方面简单说说redis实现。
+
+redis介绍
+常用数据类型
+io模型
+通信协议
+疑问解答
+
+redisredis是一个基于内存的数据库，现有的数据类型满足大部分公司的开发需求，性能也满足一般公司使用。
+redis虽然是一个基于内存的数据库，但他提供了两种可以持久化的方式。这种持久化的机制避免的redis服务器">
+<meta property="og:type" content="article">
+<meta property="og:title" content="reids">
+<meta property="og:url" content="http://yoursite.com/2017/12/15/reids/index.html">
+<meta property="og:site_name" content="知而智">
+<meta property="og:description" content="redis和nginx一直是我认为很优秀的开源项目，也是我看的较多的开源实现。下面从几个方面简单说说redis实现。
+
+redis介绍
+常用数据类型
+io模型
+通信协议
+疑问解答
+
+redisredis是一个基于内存的数据库，现有的数据类型满足大部分公司的开发需求，性能也满足一般公司使用。
+redis虽然是一个基于内存的数据库，但他提供了两种可以持久化的方式。这种持久化的机制避免的redis服务器">
+<meta property="og:updated_time" content="2018-01-02T06:28:48.704Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="reids">
+<meta name="twitter:description" content="redis和nginx一直是我认为很优秀的开源项目，也是我看的较多的开源实现。下面从几个方面简单说说redis实现。
+
+redis介绍
+常用数据类型
+io模型
+通信协议
+疑问解答
+
+redisredis是一个基于内存的数据库，现有的数据类型满足大部分公司的开发需求，性能也满足一般公司使用。
+redis虽然是一个基于内存的数据库，但他提供了两种可以持久化的方式。这种持久化的机制避免的redis服务器">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.2',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/12/15/reids/"/>
+
+
+
+
+
+  <title>reids | 知而智</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <!-- <div class="headband"></div> -->
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">知而智</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/15/reids/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="易斌">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="知而智">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">reids</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-15T10:17:40+08:00">
+                2017-12-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/开源代码学习/" itemprop="url" rel="index">
+                    <span itemprop="name">开源代码学习</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>redis和nginx一直是我认为很优秀的开源项目，也是我看的较多的开源实现。下面从几个方面简单说说redis实现。</p>
+<ul>
+<li>redis介绍</li>
+<li>常用数据类型</li>
+<li>io模型</li>
+<li>通信协议</li>
+<li>疑问解答</li>
+</ul>
+<h3 id="redis"><a href="#redis" class="headerlink" title="redis"></a>redis</h3><p>redis是一个基于<strong>内存</strong>的数据库，现有的数据类型满足大部分公司的开发需求，性能也满足一般公司使用。</p>
+<p>redis虽然是一个基于<strong>内存</strong>的数据库，但他提供了两种可以持久化的方式。这种持久化的机制避免的redis服务<br>器重启丢失数据的问题，但也不能完全避免数据不会丢失(这里讨论的是非集群模式)。</p>
+<p>redis提供的内存持久有<code>rdb</code>快照和基于<code>aof</code>的文件方式，默认是rdb快照，可以通过配置修改快照更新的方式，<br>这两种方式都是<code>fork</code>进程执行<code>backup</code>的。下面我们讨论redis里面的数据类型</p>
+<h3 id="数据类型"><a href="#数据类型" class="headerlink" title="数据类型"></a>数据类型</h3><p>我们先来看下redis源码说明。redis里的值有5种基础的类型，任何一个值都是以<code>redisObject</code>存在，并以下面不<br>同的编码方式编码成一个<code>redisObject</code>。</p>
+<p><code>server.h</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*-----------------------------------------------------------------------------</span></div><div class="line"> * Data types</div><div class="line"> *----------------------------------------------------------------------------*/</div><div class="line"></div><div class="line"><span class="comment">/* A redis object, that is a type able to hold a string / list / set */</span></div><div class="line"></div><div class="line"><span class="comment">/* The actual Redis Object */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_STRING 0</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_LIST 1</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_SET 2</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ZSET 3</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_HASH 4</span></div><div class="line"></div><div class="line"></div><div class="line"><span class="comment">// ... </span></div><div class="line"></div><div class="line"></div><div class="line"><span class="comment">/* Objects encoding. Some kind of objects like Strings and Hashes can be</span></div><div class="line"> * internally represented in multiple ways. The 'encoding' field of the object</div><div class="line"> * is set to one of this fields for this object. */</div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_RAW 0     <span class="comment">/* Raw representation */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_INT 1     <span class="comment">/* Encoded as integer */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_HT 2      <span class="comment">/* Encoded as hash table */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_ZIPMAP 3  <span class="comment">/* Encoded as zipmap */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_LINKEDLIST 4 <span class="comment">/* No longer used: old list encoding. */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_ZIPLIST 5 <span class="comment">/* Encoded as ziplist */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_INTSET 6  <span class="comment">/* Encoded as intset */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_SKIPLIST 7  <span class="comment">/* Encoded as skiplist */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_EMBSTR 8  <span class="comment">/* Embedded sds string encoding */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_ENCODING_QUICKLIST 9 <span class="comment">/* Encoded as linked list of ziplists */</span></span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> LRU_BITS 24</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> LRU_CLOCK_MAX ((1<span class="meta-string">&lt;&lt;LRU_BITS)-1) /* Max value of obj-&gt;</span>lru */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> LRU_CLOCK_RESOLUTION 1000 <span class="comment">/* LRU clock resolution in ms */</span></span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> OBJ_SHARED_REFCOUNT INT_MAX</span></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> redisObject &#123;</div><div class="line">    <span class="keyword">unsigned</span> type:<span class="number">4</span>;</div><div class="line">    <span class="keyword">unsigned</span> encoding:<span class="number">4</span>;</div><div class="line">    <span class="keyword">unsigned</span> lru:LRU_BITS; <span class="comment">/* LRU time (relative to server.lruclock) or</span></div><div class="line">                            * LFU data (least significant 8 bits frequency</div><div class="line">                            * and most significant 16 bits decreas time). */</div><div class="line">    <span class="keyword">int</span> refcount;</div><div class="line">    <span class="keyword">void</span> *ptr;</div><div class="line">&#125; robj;</div></pre></td></tr></table></figure>
+<h4 id="String"><a href="#String" class="headerlink" title="String"></a>String</h4><p>字符串类型是redis里最基础的值。字符串是二进制安全的，也就是说这样的字符串可以包含任意的数据，比如一张<code>JPEG</code>的图片或一个序列化的<code>Ruby</code>对象。字符串值最大的长度是<code>512MB</code>。</p>
+<p>在redis里面，你可以用字符串做一些有趣的事情。比如:</p>
+<ul>
+<li>字符串可以使用类似<code>INCR</code>的命令(<code>INCR</code> <code>DECR</code> <code>INCRBY</code>)作为原子计数</li>
+<li>用<code>APPEND</code>命令向字符串的值里追加一些字符串</li>
+<li>可以用<code>GETRANGE</code>和<code>SETRANGE</code>像随机访问数组一样获取或改变字符串里面的内容</li>
+<li>少量的空间可以编码大量的数据或者可以使用<code>GETBIT</code>和<code>SETBIT</code>来创建一个<code>Redis backed Bloom Filter</code></li>
+</ul>
+<p>常用的命令如下:</p>
+<p><code>INCR</code> <code>GET</code> <code>SET</code> <code>STRLEN</code>等命令</p>
+<h4 id="Lists"><a href="#Lists" class="headerlink" title="Lists"></a>Lists</h4><p>列表是一个简单的字符串列表，按插入的顺序排序。往列表增加一个元素可能从列表的头部或者从列表的尾部添加。</p>
+<p><code>LPUSH</code>命令在列表的头部插入一个新的元素，<code>RPUSH</code>则是往列表尾部插入一个新的元素。当在一个不存的在key上<br>执行以上操作后会生成一个新的列表。同样的，执行对应的操作key所对应的空间会被删除。</p>
+<p>这些命令都是非常方便的语义，因此，如果命令带有一个不存的key时，所有的列表相关的命令在空列表里面会执行和他们名称相同的操作，<br>一些列表相关的命令使用例子以及结果如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">LPUSH mylist a   # now the list is &quot;a&quot;</div><div class="line">LPUSH mylist b   # now the list is &quot;b&quot;,&quot;a&quot;</div><div class="line">RPUSH mylist c   # now the list is &quot;b&quot;,&quot;a&quot;,&quot;c&quot; (RPUSH was used this time)</div></pre></td></tr></table></figure>
+<p>开表最大的长度是<strong>2<sup>32</sup>-1</strong>(4294967295,超过40亿).</p>
+<p>从时间复杂角度来看列表的主要特征是他在列表的首尾进行插入和删除的时间常数。即使列表里面有数亿个元素，访问里边的元素是非常快的，<br>但访问一个非常巨大的列表来说，越访问后面的速度会变得越慢，它的时间复杂度为O(N)</p>
+<p>你可以用列表做一些有趣的事情，比如:</p>
+<ul>
+<li><p>在社交网络中建立一个时间线，基于用户的时间线使用<code>LPUSH</code>增加新的元素，使用<code>LRANGE</code>来获取最近插入的元素。 </p>
+</li>
+<li><p><code>LPUSH</code>结合<code>LTRIM</code>可以创建一个不会超过指定元素的列表，只记录最近N个元素</p>
+</li>
+<li><p>列表可以作为一个消息传递原语，例如著名的<code>Resque Ruby</code>图书馆创建后台作业</p>
+</li>
+<li><p>你可以做更多关于列表相关的事，这种数据类型支持许多命令，包含阻塞的命令,如:<code>BLPOP</code></p>
+</li>
+</ul>
+<h4 id="Sets"><a href="#Sets" class="headerlink" title="Sets"></a>Sets</h4><p>Set是一个没有排序的字符串的一个集合。新增、删除以及判断是成员是否成在的时间复杂度可以是<code>O(1)</code>(这个时间常量不管集合里面的无数个数)。</p>
+<p>集合拥有不允许重复元素的特性。同一个元素增加多次的结果只会有一个元素存在集合里面，从实践的角度来说往集合里面增加一个元素的时候不需要主动判断元素是否已经存在。</p>
+<p>一个关于集合非常有趣的事情是，它支持一些服务器用来计算已经存在的集合的命令，这样你可以在短的时间内完成集合的合并、交集，差异。</p>
+<p>集合中最大的元素个数是<strong>2<sup>32</sup>-1</strong>(4294967295,超过40亿).</p>
+<p>你可以用集合做许多有趣的事情，例如:</p>
+<ul>
+<li><p>可以用集合记录唯一的东西。想要知道访问一篇博客的所有唯一的IP地址？ 每次一个页面查看的时候简单的使用<code>SADD</code>加入IP。你确定重复的IP将不会被插入。</p>
+</li>
+<li><p>集合对代表关系有好处。你可以用集合代表每个一标签创建一个标签系统。<br>然后你可以用<code>SADD</code>命令给所有拥有一个标签的对象的所有ID加到一个集合里面代表这特殊的标签。如果你想所有对象的所有ID在同一时间拥有三个不同的标签，那就使用<code>SINTER</code></p>
+</li>
+<li><p>你可以使用<code>SPOP</code>或<code>SRANDMEMBER</code>命令随机获取集合里面的元素。</p>
+</li>
+</ul>
+<h4 id="Hashes"><a href="#Hashes" class="headerlink" title="Hashes"></a>Hashes</h4><p>Hash是字符串字段和字符串的值的一个映射，因此Hash用来代表对象类型是完美的数据类型(举例:一个拥有多个字段的用户,如名字、姓氏、年龄以及更多)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">@cli</div><div class="line">HMSET user:1000 username antirez password P1pp0 age 34</div><div class="line">HGETALL user:1000</div><div class="line">HSET user:1000 password 12345</div><div class="line">HGETALL user:1000</div></pre></td></tr></table></figure>
+<p>拥有一些字段的hash以花费非常少的空间方式存储，所以你可以在一个小的Redis实例里面存储数以百万计的对象。</p>
+<p>然而hash主要被用来当作对象存储，它们拥有存储多个元素的能力，所以你同样可以为其它更多任务使用<code>hash</code></p>
+<p>每一个<code>hash</code>最多可以存储2<sup>32</sup>-1个field-value组(超过40亿).</p>
+<h4 id="Sorted-sets"><a href="#Sorted-sets" class="headerlink" title="Sorted sets"></a>Sorted sets</h4><p>有序集合和没有重复的字符串集合非常相似。区别是有序集合的每个一个成员都关联一个分值，这个分值被用来使有序集合保持从小到大的顺序。因此成员是唯一的，但分值可能重复。</p>
+<p>通过有序集合，你可以非常快的方式新增、删除或更新一个元素(在时间上与集合里面的元素个数成对比).</p>
+<p>因为元素在集合里面是有序的，并非后续才有序，你同样可以根据分数或排名很快速的获取范围。访问有序集合中间元素也非常快，所以你可以使用有序集合作为一个没有重复无素的智能列表，在这里你可以快速访问你想要访问的任何东西: 有序的元素、快速存在检测，快速访问中间元素!</p>
+<p>简而言之，使用有序集合你可以完成许多任务，并拥有在其它种类的数据库里面不能达到的好的性能。</p>
+<p>你可以用有序集合做如下事情:</p>
+<ul>
+<li><p>在大型在线游戏中做一个排行榜，在这里每一次一个新的分数提交时，你用<code>ZADD</code>更新它。使用<code>ZRANGE</code>可以容易的获取排名靠前的玩家，你同样可以使用<code>ZRANK</code>获取一个玩家自己的排名。结合<code>ZRANK</code>和<code>ZRANGE</code>你可以显示玩家以及对应的分数。所有操作都非常快。</p>
+</li>
+<li><p>有序集合经常被用来查找存在<code>redis</code>里面的数据。比如你有许多<code>hash</code>代表玩家,可以使用以玩家年龄作为分数，玩家<code>id</code>作为值的元素的一个集合。这样使用<code>ZRANGEBYSCORE</code>将会变得平常并可以根据给的年龄段很快的获取所有的玩家</p>
+</li>
+</ul>
+<h3 id="io模型"><a href="#io模型" class="headerlink" title="io模型"></a>io模型</h3><p>服务器是基于epoll的io模型，<code>redis</code>是单进程的事件模型驱动的架构设计。处理两类事件</p>
+<ul>
+<li>时间事件</li>
+<li>网络IO事件</li>
+</ul>
+<blockquote>
+<p>对于<code>redis</code>里面IO事件它支持<code>select</code>、<code>eploo</code>、<code>kqueue</code>、<code>evport</code>多种io监听机制。并封装了一套IO的接口</p>
+</blockquote>
+<p><code>ae.h</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* A simple event-driven programming library. Originally I wrote this code</span></div><div class="line"> * for the Jim's event-loop (Jim is a Tcl interpreter) but later translated</div><div class="line"> * it in form of a library for easy reuse.</div><div class="line"> *</div><div class="line"> * Copyright (c) 2006-2012, Salvatore Sanfilippo &lt;antirez at gmail dot com&gt;</div><div class="line"> * All rights reserved.</div><div class="line"> *</div><div class="line"> * Redistribution and use in source and binary forms, with or without</div><div class="line"> * modification, are permitted provided that the following conditions are met:</div><div class="line"> *</div><div class="line"> *   * Redistributions of source code must retain the above copyright notice,</div><div class="line"> *     this list of conditions and the following disclaimer.</div><div class="line"> *   * Redistributions in binary form must reproduce the above copyright</div><div class="line"> *     notice, this list of conditions and the following disclaimer in the</div><div class="line"> *     documentation and/or other materials provided with the distribution.</div><div class="line"> *   * Neither the name of Redis nor the names of its contributors may be used</div><div class="line"> *     to endorse or promote products derived from this software without</div><div class="line"> *     specific prior written permission.</div><div class="line"> *</div><div class="line"> * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"</div><div class="line"> * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</div><div class="line"> * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE</div><div class="line"> * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE</div><div class="line"> * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR</div><div class="line"> * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF</div><div class="line"> * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS</div><div class="line"> * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN</div><div class="line"> * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)</div><div class="line"> * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE</div><div class="line"> * POSSIBILITY OF SUCH DAMAGE.</div><div class="line"> */</div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> __AE_H__</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> __AE_H__</span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;time.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_OK 0</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_ERR -1</span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_NONE 0</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_READABLE 1</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_WRITABLE 2</span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_FILE_EVENTS 1</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_TIME_EVENTS 2</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_ALL_EVENTS (AE_FILE_EVENTS|AE_TIME_EVENTS)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_DONT_WAIT 4</span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_NOMORE -1</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_DELETED_EVENT_ID -1</span></div><div class="line"></div><div class="line"><span class="comment">/* Macros */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AE_NOTUSED(V) ((void) V)</span></div><div class="line"></div><div class="line"><span class="keyword">struct</span> aeEventLoop;</div><div class="line"></div><div class="line"><span class="comment">/* Types and data structures */</span></div><div class="line"><span class="function"><span class="keyword">typedef</span> <span class="keyword">void</span> <span class="title">aeFileProc</span><span class="params">(<span class="keyword">struct</span> aeEventLoop *eventLoop, <span class="keyword">int</span> fd, <span class="keyword">void</span> *clientData, <span class="keyword">int</span> mask)</span></span>;</div><div class="line"><span class="function"><span class="keyword">typedef</span> <span class="keyword">int</span> <span class="title">aeTimeProc</span><span class="params">(<span class="keyword">struct</span> aeEventLoop *eventLoop, <span class="keyword">long</span> <span class="keyword">long</span> id, <span class="keyword">void</span> *clientData)</span></span>;</div><div class="line"><span class="function"><span class="keyword">typedef</span> <span class="keyword">void</span> <span class="title">aeEventFinalizerProc</span><span class="params">(<span class="keyword">struct</span> aeEventLoop *eventLoop, <span class="keyword">void</span> *clientData)</span></span>;</div><div class="line"><span class="function"><span class="keyword">typedef</span> <span class="keyword">void</span> <span class="title">aeBeforeSleepProc</span><span class="params">(<span class="keyword">struct</span> aeEventLoop *eventLoop)</span></span>;</div><div class="line"></div><div class="line"><span class="comment">/* File event structure */</span></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> aeFileEvent &#123;</div><div class="line">    <span class="keyword">int</span> mask; <span class="comment">/* one of AE_(READABLE|WRITABLE) */</span></div><div class="line">    aeFileProc *rfileProc;   <span class="comment">/* io读的回调 */</span></div><div class="line">    aeFileProc *wfileProc;   <span class="comment">/* io写的回调 */</span></div><div class="line">    <span class="keyword">void</span> *clientData;</div><div class="line">&#125; aeFileEvent;</div><div class="line"></div><div class="line"><span class="comment">/* Time event structure */</span></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> aeTimeEvent &#123;</div><div class="line">    <span class="keyword">long</span> <span class="keyword">long</span> id; <span class="comment">/* time event identifier. */</span></div><div class="line">    <span class="keyword">long</span> when_sec; <span class="comment">/* seconds */</span></div><div class="line">    <span class="keyword">long</span> when_ms; <span class="comment">/* milliseconds */</span></div><div class="line">    aeTimeProc *timeProc;</div><div class="line">    aeEventFinalizerProc *finalizerProc;</div><div class="line">    <span class="keyword">void</span> *clientData;</div><div class="line">    <span class="keyword">struct</span> aeTimeEvent *next;</div><div class="line">&#125; aeTimeEvent;</div><div class="line"></div><div class="line"><span class="comment">/* A fired event */</span></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> aeFiredEvent &#123;</div><div class="line">    <span class="keyword">int</span> fd;</div><div class="line">    <span class="keyword">int</span> mask;</div><div class="line">&#125; aeFiredEvent;</div><div class="line"></div><div class="line"><span class="comment">/* State of an event based program */</span></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> aeEventLoop &#123;</div><div class="line">    <span class="keyword">int</span> maxfd;   <span class="comment">/* highest file descriptor currently registered */</span></div><div class="line">    <span class="keyword">int</span> setsize; <span class="comment">/* max number of file descriptors tracked */</span></div><div class="line">    <span class="keyword">long</span> <span class="keyword">long</span> timeEventNextId;</div><div class="line">    <span class="keyword">time_t</span> lastTime;     <span class="comment">/* Used to detect system clock skew */</span></div><div class="line">    aeFileEvent *events; <span class="comment">/* Registered events 所有已经建立tcp连接的fd */</span></div><div class="line">    aeFiredEvent *fired; <span class="comment">/* Fired events  有io事件需要处理的fd*/</span></div><div class="line">    aeTimeEvent *timeEventHead; <span class="comment">/*  定时任务的列表 */</span></div><div class="line">    <span class="keyword">int</span> stop;</div><div class="line">    <span class="keyword">void</span> *apidata; <span class="comment">/* This is used for polling API specific data 存储epool_fd 以及从内核获取所有就绪io事件的fd */</span></div><div class="line">    aeBeforeSleepProc *beforesleep;</div><div class="line">&#125; aeEventLoop;</div><div class="line"></div><div class="line"><span class="comment">/* Prototypes */</span></div><div class="line"><span class="function">aeEventLoop *<span class="title">aeCreateEventLoop</span><span class="params">(<span class="keyword">int</span> setsize)</span></span>;</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">aeDeleteEventLoop</span><span class="params">(aeEventLoop *eventLoop)</span></span>;</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">aeStop</span><span class="params">(aeEventLoop *eventLoop)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeCreateFileEvent</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">int</span> fd, <span class="keyword">int</span> mask,</span></span></div><div class="line">        aeFileProc *proc, <span class="keyword">void</span> *clientData);</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">aeDeleteFileEvent</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">int</span> fd, <span class="keyword">int</span> mask)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeGetFileEvents</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">int</span> fd)</span></span>;</div><div class="line"><span class="function"><span class="keyword">long</span> <span class="keyword">long</span> <span class="title">aeCreateTimeEvent</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">long</span> <span class="keyword">long</span> milliseconds,</span></span></div><div class="line">        aeTimeProc *proc, <span class="keyword">void</span> *clientData,</div><div class="line">        aeEventFinalizerProc *finalizerProc);</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeDeleteTimeEvent</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">long</span> <span class="keyword">long</span> id)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeProcessEvents</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">int</span> flags)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeWait</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">int</span> mask, <span class="keyword">long</span> <span class="keyword">long</span> milliseconds)</span></span>;</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">aeMain</span><span class="params">(aeEventLoop *eventLoop)</span></span>;</div><div class="line"><span class="function"><span class="keyword">char</span> *<span class="title">aeGetApiName</span><span class="params">(<span class="keyword">void</span>)</span></span>;</div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">aeSetBeforeSleepProc</span><span class="params">(aeEventLoop *eventLoop, aeBeforeSleepProc *beforesleep)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeGetSetSize</span><span class="params">(aeEventLoop *eventLoop)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeResizeSetSize</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">int</span> setsize)</span></span>;</div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div></pre></td></tr></table></figure>
+<p><code>redis</code>服务器处理事件的主入口在这里，每次进入事件循环之前先执行了一个函数(持入化的相关的流程，以及回复需要回复的client等)，然后再去执行定时事件和客户端发过来的命令。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">aeMain</span><span class="params">(aeEventLoop *eventLoop)</span> </span>&#123;</div><div class="line">    eventLoop-&gt;stop = <span class="number">0</span>;</div><div class="line">    <span class="keyword">while</span> (!eventLoop-&gt;stop) &#123;</div><div class="line">        <span class="keyword">if</span> (eventLoop-&gt;beforesleep != <span class="literal">NULL</span>)</div><div class="line">            eventLoop-&gt;beforesleep(eventLoop);</div><div class="line">        aeProcessEvents(eventLoop, AE_ALL_EVENTS);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="comment">/* Process every pending time event, then every pending file event</span></div><div class="line"> * (that may be registered by time event callbacks just processed).</div><div class="line"> * Without special flags the function sleeps until some file event</div><div class="line"> * fires, or when the next time event occurs (if any).</div><div class="line"> *</div><div class="line"> * If flags is 0, the function does nothing and returns.</div><div class="line"> * if flags has AE_ALL_EVENTS set, all the kind of events are processed.</div><div class="line"> * if flags has AE_FILE_EVENTS set, file events are processed.</div><div class="line"> * if flags has AE_TIME_EVENTS set, time events are processed.</div><div class="line"> * if flags has AE_DONT_WAIT set the function returns ASAP until all</div><div class="line"> * the events that's possible to process without to wait are processed.</div><div class="line"> *</div><div class="line"> * The function returns the number of events processed. */</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">aeProcessEvents</span><span class="params">(aeEventLoop *eventLoop, <span class="keyword">int</span> flags)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> processed = <span class="number">0</span>, numevents;</div><div class="line"></div><div class="line">    <span class="comment">/* Nothing to do? return ASAP */</span></div><div class="line">    <span class="keyword">if</span> (!(flags &amp; AE_TIME_EVENTS) &amp;&amp; !(flags &amp; AE_FILE_EVENTS)) <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line"></div><div class="line">    <span class="comment">/* Note that we want call select() even if there are no</span></div><div class="line">     * file events to process as long as we want to process time</div><div class="line">     * events, in order to sleep until the next time event is ready</div><div class="line">     * to fire. */</div><div class="line">    <span class="keyword">if</span> (eventLoop-&gt;maxfd != <span class="number">-1</span> ||</div><div class="line">        ((flags &amp; AE_TIME_EVENTS) &amp;&amp; !(flags &amp; AE_DONT_WAIT))) &#123;</div><div class="line">        <span class="keyword">int</span> j;</div><div class="line">        aeTimeEvent *shortest = <span class="literal">NULL</span>;</div><div class="line">        <span class="keyword">struct</span> timeval tv, *tvp;</div><div class="line"></div><div class="line">        <span class="keyword">if</span> (flags &amp; AE_TIME_EVENTS &amp;&amp; !(flags &amp; AE_DONT_WAIT))</div><div class="line">            shortest = aeSearchNearestTimer(eventLoop);</div><div class="line">        <span class="keyword">if</span> (shortest) &#123;</div><div class="line">            <span class="keyword">long</span> now_sec, now_ms;</div><div class="line"></div><div class="line">            aeGetTime(&amp;now_sec, &amp;now_ms);</div><div class="line">            tvp = &amp;tv;</div><div class="line"></div><div class="line">            <span class="comment">/* How many milliseconds we need to wait for the next</span></div><div class="line">             * time event to fire? */</div><div class="line">            <span class="keyword">long</span> <span class="keyword">long</span> ms =</div><div class="line">                (shortest-&gt;when_sec - now_sec)*<span class="number">1000</span> +</div><div class="line">                shortest-&gt;when_ms - now_ms;</div><div class="line"></div><div class="line">            <span class="keyword">if</span> (ms &gt; <span class="number">0</span>) &#123;</div><div class="line">                tvp-&gt;tv_sec = ms/<span class="number">1000</span>;</div><div class="line">                tvp-&gt;tv_usec = (ms % <span class="number">1000</span>)*<span class="number">1000</span>;</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                tvp-&gt;tv_sec = <span class="number">0</span>;</div><div class="line">                tvp-&gt;tv_usec = <span class="number">0</span>;</div><div class="line">            &#125;</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            <span class="comment">/* If we have to check for events but need to return</span></div><div class="line">             * ASAP because of AE_DONT_WAIT we need to set the timeout</div><div class="line">             * to zero */</div><div class="line">            <span class="keyword">if</span> (flags &amp; AE_DONT_WAIT) &#123;</div><div class="line">                tv.tv_sec = tv.tv_usec = <span class="number">0</span>;</div><div class="line">                tvp = &amp;tv;</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                <span class="comment">/* Otherwise we can block */</span></div><div class="line">                tvp = <span class="literal">NULL</span>; <span class="comment">/* wait forever */</span></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        numevents = aeApiPoll(eventLoop, tvp);</div><div class="line">        <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; numevents; j++) &#123;</div><div class="line">            aeFileEvent *fe = &amp;eventLoop-&gt;events[eventLoop-&gt;fired[j].fd];</div><div class="line">            <span class="keyword">int</span> mask = eventLoop-&gt;fired[j].mask;</div><div class="line">            <span class="keyword">int</span> fd = eventLoop-&gt;fired[j].fd;</div><div class="line">            <span class="keyword">int</span> rfired = <span class="number">0</span>;</div><div class="line"></div><div class="line">	    <span class="comment">/* note the fe-&gt;mask &amp; mask &amp; ... code: maybe an already processed</span></div><div class="line">             * event removed an element that fired and we still didn't</div><div class="line">             * processed, so we check if the event is still valid. */</div><div class="line">            <span class="keyword">if</span> (fe-&gt;mask &amp; mask &amp; AE_READABLE) &#123;</div><div class="line">                rfired = <span class="number">1</span>;</div><div class="line">                fe-&gt;rfileProc(eventLoop,fd,fe-&gt;clientData,mask);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">if</span> (fe-&gt;mask &amp; mask &amp; AE_WRITABLE) &#123;</div><div class="line">                <span class="keyword">if</span> (!rfired || fe-&gt;wfileProc != fe-&gt;rfileProc)</div><div class="line">                    fe-&gt;wfileProc(eventLoop,fd,fe-&gt;clientData,mask);</div><div class="line">            &#125;</div><div class="line">            processed++;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">/* Check time events */</span></div><div class="line">    <span class="keyword">if</span> (flags &amp; AE_TIME_EVENTS)</div><div class="line">        processed += processTimeEvents(eventLoop);</div><div class="line"></div><div class="line">    <span class="keyword">return</span> processed; <span class="comment">/* return the number of processed file/time events */</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>aeProcessEvents</code>函数主要是处理定时任务的事件和网络IO事件，先找时间最近的一个定时任务，如果时间到了<code>aePoll</code>的时间参数为0，表示立即返回，说明优先执行定时任务然后再等下次循环进入。</p>
+<h3 id="通信协议"><a href="#通信协议" class="headerlink" title="通信协议"></a>通信协议</h3><p>redis的协议很简单，就基本的raw字符串，然后有自己的固定格式，按这格式读写就可以和<code>redis</code>服务器完成通信和后续的任务。</p>
+<p>只要和<code>redis</code>服务器建立tcp连接后，知道他消息格式的话，直接写入raw字符串就可以执行对应的命令。我们也可以通过解析这<br>样的消息格式就可以实现和服务器通信的目的。</p>
+<p>redis里面用的协议名称叫<strong>RESP</strong><code>(REdis Serialization Protocol)</code>，它支持以下几种数据类型:</p>
+<ul>
+<li><strong>Strings</strong> 协议里的第一字符为 <strong>“+”</strong></li>
+<li><strong>Errors</strong> 协议里的第一字符为 <strong>“-“</strong></li>
+<li><strong>Integers</strong> 协议里的第一字符为 <strong>“:”</strong></li>
+<li><strong>Bulk Strings</strong> 协议里的第一字符为 <strong>“$”</strong></li>
+<li><strong>Arrays</strong> 协议里的第一字符为 <strong>“*”</strong></li>
+</ul>
+<blockquote>
+<p>客户端发给服务器的命令是一个<code>Bulk String</code>的数组，服务器回的包含以上所例举的。</p>
+</blockquote>
+<h4 id="Strings"><a href="#Strings" class="headerlink" title="Strings"></a>Strings</h4><p>字符串类型被编码成下面的方式:”+”后面跟具体的字符串内容，中间不包含<code>CR</code>或者<code>LF</code>字符(没有新的行才是允许的)，最后台<code>CRLF</code>(\r\n)结尾.</p>
+<p>字符串类型用最小的开销来传输非二进安全的字符串。比如许多<code>redis</code>命令执行成功时仅回复”OK”，这样的字符串类型被编码成以下5个字节:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;+OK\r\n&quot;</div></pre></td></tr></table></figure>
+<p>为了发送二进制安全的字符串，<code>Bulk Strings</code>用来替代<code>Strings</code>的功能。</p>
+<p>当<code>redis</code>服务器回复一个字符串类型时，一个<code>redis</code>客户端的库应该返回<code>+</code>后边的字符串，不包括<code>CRLF</code>。</p>
+<h4 id="Errors"><a href="#Errors" class="headerlink" title="Errors"></a>Errors</h4><p>RESP对于错误有一个特定的数据类型。实际上<code>errors</code>非常像字符串类型，只是用<code>-</code>替代了<code>+</code>.两者的区别在于<code>errors</code>被客户端用作异常处理，错误的数据类型里面的字符串就是它的错误消息.</p>
+<p>错误消息的格式如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;-Error message\r\n&quot;</div></pre></td></tr></table></figure>
+<p>只有在发生一些错误的时候才会回复错误消息，比方说，如果执行的操作与你对应的数据类型不同时，或者你执行的命令不存在以及其它情况。当收到一个错误回复的时候<code>redis</code>客户端应该抛出一个异常。</p>
+<p>下面是一个错误回包的一个例子:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">-ERR unknown command &apos;foobar&apos;</div><div class="line">-WRONGTYPE Operation against a key holding the wrong kind of value</div></pre></td></tr></table></figure>
+<p>从第一个字符<code>-</code>到第一个空格或新的行，代表了返回的错误类型。这是<code>redis</code>常用的惯例，但并不是所有协议里面的错误格式。</p>
+<p>举例说明，<code>ERR</code>是常用的错误类型，而<code>WRONGTYPE</code>是更具体的错误，这种错误应用在当客户端执行一个操作对于错误的数据类型时候。这种错误类型叫错误前缀，它是一种允许客户端理解服务器回复的错误类型的方式，而不依赖服务器回复的具体内容，这可能会随着时间改变。</p>
+<p>对于不同的错误类型，一个客户端的实现可能会返回不同的异常，也可能会通过直接返回错误的字符串描述内容给调用者提供一个常用的方式来定位错误</p>
+<p>然而，像这样一个特征不应该考虑至关重要因为它很少有用，一个有限的客户端实现可能简单的返回常用的错误条件，比如false.</p>
+<h4 id="Integers"><a href="#Integers" class="headerlink" title="Integers"></a>Integers</h4><p>这种类型是以<code>CRLF</code>结尾的字符串代表一个<code>interger</code>，以一个<code>:</code>字节做为前缀。比如”:0\r\n”,或者”:1000\r\n”都是回复的整型类型.</p>
+<p>许多<code>redis</code>命令都回复<code>Intergers</code>，比如<code>INCR</code>，<code>LLEN</code>以及<code>LASTSAVE</code>.</p>
+<p>返回整形没有什么特殊的意义，对于<code>INCR</code>是一个增量值，对<code>LASTSAVE</code>是一个<code>Unix time</code>等等。然而，返回的整数确定是在有符号的64位整型的范围.</p>
+<p>回复整形在回得<code>true</code>或<code>false</code>的时候使用也广泛。像<code>EXISTS</code>或<code>SISMEMBER</code>命令将会返回1代表true，0代表false.</p>
+<p>像其它<code>SADD</code>,<code>SREM</code>以及<code>SETNX</code>，如果命令实际执行成功会返回1，否则返回0.</p>
+<p>下面命令会回复一个整型:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">SETNX  DEL EXISTS INCR INCRBY DECR DECRBY DBSIZE LASTSAVE</div><div class="line">RENAMEX MOVE LLEN SADD SREM SISMEMBER SCARD</div></pre></td></tr></table></figure></p>
+<h3 id="Bulk-Strings"><a href="#Bulk-Strings" class="headerlink" title="Bulk Strings"></a>Bulk Strings</h3><p><code>Bulk Strings</code>被用来代表一个独立的二进制安全的最大长度为512M的字符串</p>
+<p><code>Bulk Strings</code>被编码成下面的方式:</p>
+<ul>
+<li><code>$</code>后面跟随组成字符串内容的字节个数，以<code>CRLF</code>结尾</li>
+<li>实际的字符串内容</li>
+<li>最后一个<code>CRLF</code></li>
+</ul>
+<p>所以字符串”foobar”被编码成:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;$6\r\nfoobar\r\n&quot;</div></pre></td></tr></table></figure>
+<p>空字符串如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;$0\r\n\r\n&quot;</div></pre></td></tr></table></figure>
+<p><code>Bulk Strings</code>可以用来特殊的格式来表示一个不存在的值，这样的值代表了一个<code>Null</code>值。这种特殊的格式的长度为-1，后边没有数据，所以一个<code>Null</code>值如下所示:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;$-1\r\n&quot;</div></pre></td></tr></table></figure>
+<p>这叫做<code>Null Bulk String</code>.</p>
+<p>当服务器回复一个<code>Null Bulk String</code>，客户端的API不应该返回一个空字符串，而是一个空对象。<br>比如一个Ruby的客户端应该返回一个<code>nil</code>值，而C实现的客户端应该返回<code>NULL</code>(或者在回复的对象里设置一个特殊的标志)，以及等等</p>
+<h3 id="Arrays"><a href="#Arrays" class="headerlink" title="Arrays"></a>Arrays</h3><p>客户端使用的是<code>Arrays</code>协议向服务器发送命令。相似的<code>Redis</code>命令使用<code>Arrays</code>协议返回元素的一个合集给客户端。一个<code>LRANGE</code>命令返回列表的例子.<br>Clients send commands to the Redis server using RESP Arrays. Similarly certain Redis commands returning collections of elements to the client use RESP Arrays are reply type. An example is the LRANGE command that returns elements of a list.</p>
+<p>使用下面的格式返回一个<code>Arrays</code>:</p>
+<ul>
+<li>前面一个<code>*</code>，后面跟随数组里面元素个数的十进制数值，再接着一个<code>CRLF</code></li>
+<li>数组里面的元素是其它数据类型</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;*0\r\n&quot;</div></pre></td></tr></table></figure>
+<p>当一个包含”foo”和”bar”两个元素的数组被编码成:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;*2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n&quot;</div></pre></td></tr></table></figure>
+<p>你可以看到数组里面在<code>*&lt;count&gt;CRLF</code>的部分是由其它的数据类型连续组成的。比如一个包含三个<code>integer</code>的数组被编码成如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;*3\r\n:1\r\n:2\r\n:3\r\n&quot;</div></pre></td></tr></table></figure>
+<p>数组类型同样可以包含不同的其它类型，没有要求数组里面的元素都是相同的类型。比如，一个包含四个<code>integer</code>的列表和一个<code>bulk string</code>被编码成如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">*5\r\n</div><div class="line">:1\r\n</div><div class="line">:2\r\n</div><div class="line">:3\r\n</div><div class="line">:4\r\n</div><div class="line">$6\r\n</div><div class="line">foobar\r\n</div></pre></td></tr></table></figure>
+<blockquote>
+<p>换成多行是为了方便阅读</p>
+</blockquote>
+<p>第一行内容<code>*5\r\n</code>说明后面接着有5个元素。每一个回复构成了<code>Multi Bulk</code>用作传播。</p>
+<p><code>Null Array</code>的概念同样存在，指定一个空值是可选的(通常使用一个<code>Null Bulk String</code>，由于历史原因我们有两种格式).</p>
+<p>比如执行<code>BLPOP</code>命令超时后，服务器返回一个count为-1的空数据,格式如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&quot;*-1\r\n&quot;</div></pre></td></tr></table></figure>
+<p>redis服务器回服一个空数组里，redis客户端应该返回一个空对象而不是一个空数组。很有必要来区分空列表和不同的条件(比如<code>BLPOP</code>命令超时)。</p>
+<p>在<code>RESP</code>协议里面数组是可以嵌套使用的。比如一个包含两个数组的数组被编码成如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">*2\r\n</div><div class="line">*3\r\n</div><div class="line">:1\r\n</div><div class="line">:2\r\n</div><div class="line">:3\r\n</div><div class="line">*2\r\n</div><div class="line">+Foo\r\n</div><div class="line">-Bar\r\n</div></pre></td></tr></table></figure>
+<p>这个说明，一个数组里面包含一个有三个整型的数组以及一个两个字条串类型的数组。</p>
+<h4 id="Null-elements-in-Arrays"><a href="#Null-elements-in-Arrays" class="headerlink" title="Null elements in Arrays"></a>Null elements in Arrays</h4><p>数组里面的单个元素可能为空。在redis回复的包里用来说明这个元素被丢失且不为空字符串。这个可能会发生在<code>sort</code>对<code>get</code>模糊匹配时指定的key不存在时进行排序时。回复一个包含空元素数组的例子:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">*3\r\n</div><div class="line">$3\r\n</div><div class="line">foo\r\n</div><div class="line">$-1\r\n</div><div class="line">$3\r\n</div><div class="line">bar\r\n</div></pre></td></tr></table></figure>
+<p>数组中第二个元素是空的。redis客户端应该返回类似下面的东西:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">[&quot;foo&quot;,nil,&quot;bar&quot;]</div></pre></td></tr></table></figure>
+<h3 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h3><ul>
+<li>一次client最大能发送多大的数据</li>
+<li>服务器最大回复的长度</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* Protocol and I/O related defines */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> PROTO_MAX_QUERYBUF_LEN  (1024*1024*1024) <span class="comment">/* 1GB max query buffer. */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> PROTO_IOBUF_LEN         (1024*16)  <span class="comment">/* Generic I/O buffer size */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> PROTO_REPLY_CHUNK_BYTES (16*1024) <span class="comment">/* 16k output buffer */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> PROTO_INLINE_MAX_SIZE   (1024*64) <span class="comment">/* Max size of inline reads */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> PROTO_MBULK_BIG_ARG     (1024*32)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> LONG_STR_SIZE      21          <span class="comment">/* Bytes needed for long -&gt; str + '\0' */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> AOF_AUTOSYNC_BYTES (1024*1024*32) <span class="comment">/* fdatasync every 32MB */</span></span></div></pre></td></tr></table></figure>
+<p>一个redis client向服务器发送命令最大的长度为<code>PROTO_MAX_QUERYBUF_LEN</code>。<br>服务器一次回复最大的消息长度为<code>PROTO_REPLY_CHUNK_BYTES</code>,比方说<code>hgetall</code>比较大的时候就分多次发送</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/c-数据结节-内存数据库/" rel="tag"># c 数据结节 内存数据库</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/13/启停脚本/" rel="next" title="启停脚本">
+                <i class="fa fa-chevron-left"></i> 启停脚本
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          
+            <p class="site-author-name" itemprop="name">易斌</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">20</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#redis"><span class="nav-number">1.</span> <span class="nav-text">redis</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据类型"><span class="nav-number">2.</span> <span class="nav-text">数据类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#String"><span class="nav-number">2.1.</span> <span class="nav-text">String</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Lists"><span class="nav-number">2.2.</span> <span class="nav-text">Lists</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Sets"><span class="nav-number">2.3.</span> <span class="nav-text">Sets</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Hashes"><span class="nav-number">2.4.</span> <span class="nav-text">Hashes</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Sorted-sets"><span class="nav-number">2.5.</span> <span class="nav-text">Sorted sets</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#io模型"><span class="nav-number">3.</span> <span class="nav-text">io模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通信协议"><span class="nav-number">4.</span> <span class="nav-text">通信协议</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Strings"><span class="nav-number">4.1.</span> <span class="nav-text">Strings</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Errors"><span class="nav-number">4.2.</span> <span class="nav-text">Errors</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Integers"><span class="nav-number">4.3.</span> <span class="nav-text">Integers</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Bulk-Strings"><span class="nav-number">5.</span> <span class="nav-text">Bulk Strings</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Arrays"><span class="nav-number">6.</span> <span class="nav-text">Arrays</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Null-elements-in-Arrays"><span class="nav-number">6.1.</span> <span class="nav-text">Null elements in Arrays</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#思考"><span class="nav-number">7.</span> <span class="nav-text">思考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">易斌</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="shell," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="我一直忍受不了没有效率的事情，公司同时负责服务器部署和发布的同事老久都没整一套好的脚本。所以自己负责新项目的时候整了一套服务启停的脚本，经实践，个人觉得非常好用。所以在这里记录下。
+需要依赖daemonize的一个程序sudo yum install -y daemonize
+
+/etc/init.d/functions 这里面还是有好多好东西的。
+
+start-stop.sh
+
+用来选择是启动还">
+<meta property="og:type" content="article">
+<meta property="og:title" content="启停脚本">
+<meta property="og:url" content="http://yoursite.com/2017/12/13/启停脚本/index.html">
+<meta property="og:site_name" content="知而智">
+<meta property="og:description" content="我一直忍受不了没有效率的事情，公司同时负责服务器部署和发布的同事老久都没整一套好的脚本。所以自己负责新项目的时候整了一套服务启停的脚本，经实践，个人觉得非常好用。所以在这里记录下。
+需要依赖daemonize的一个程序sudo yum install -y daemonize
+
+/etc/init.d/functions 这里面还是有好多好东西的。
+
+start-stop.sh
+
+用来选择是启动还">
+<meta property="og:updated_time" content="2017-12-13T03:51:02.119Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="启停脚本">
+<meta name="twitter:description" content="我一直忍受不了没有效率的事情，公司同时负责服务器部署和发布的同事老久都没整一套好的脚本。所以自己负责新项目的时候整了一套服务启停的脚本，经实践，个人觉得非常好用。所以在这里记录下。
+需要依赖daemonize的一个程序sudo yum install -y daemonize
+
+/etc/init.d/functions 这里面还是有好多好东西的。
+
+start-stop.sh
+
+用来选择是启动还">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.2',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/12/13/启停脚本/"/>
+
+
+
+
+
+  <title>启停脚本 | 知而智</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <!-- <div class="headband"></div> -->
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">知而智</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/13/启停脚本/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="易斌">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="知而智">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">启停脚本</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-13T11:42:35+08:00">
+                2017-12-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/脚本/" itemprop="url" rel="index">
+                    <span itemprop="name">脚本</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>我一直忍受不了没有效率的事情，公司同时负责服务器部署和发布的同事老久都没整一套好的脚本。<br>所以自己负责新项目的时候整了一套服务启停的脚本，经实践，个人觉得非常好用。所以在这里记录下。</p>
+<p>需要依赖daemonize的一个程序<br><code>sudo yum install -y daemonize</code></p>
+<blockquote>
+<p><code>/etc/init.d/functions</code> 这里面还是有好多好东西的。</p>
+</blockquote>
+<p><code>start-stop.sh</code></p>
+<blockquote>
+<p>用来选择是启动还是停止某个进程还是所有的进程</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#!/bin/bash</span></div><div class="line"><span class="comment"># 启停脚本</span></div><div class="line"><span class="comment">#</span></div><div class="line"></div><div class="line">COLOR_RED=<span class="string">'\033[0;31m'</span></div><div class="line">COLOR_GREEN=<span class="string">'\033[0;32m'</span></div><div class="line">COLOR_RESET=<span class="string">'\033[0m'</span></div><div class="line"></div><div class="line"><span class="function"><span class="title">usage</span></span>() &#123;</div><div class="line">  <span class="built_in">echo</span> <span class="string">"Usage: `basename <span class="variable">$0</span>`  &#123;start|stop|restart|force-stop|force-restart|status&#125;"</span> &gt;&amp;2</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment"># At least three arguments are required.</span></div><div class="line"><span class="keyword">if</span> [ <span class="variable">$#</span> <span class="_">-lt</span> 1 ]; <span class="keyword">then</span></div><div class="line">    usage</div><div class="line">    <span class="built_in">exit</span> 5</div><div class="line"><span class="keyword">fi</span></div><div class="line"></div><div class="line"><span class="comment"># 引入参数</span></div><div class="line">. ./parameters.sh</div><div class="line"></div><div class="line">server_len=$((<span class="variable">$&#123;#SERVERS[@]&#125;</span>))</div><div class="line"><span class="keyword">function</span> <span class="function"><span class="title">choose_server</span></span>() &#123;</div><div class="line">    <span class="built_in">printf</span> <span class="string">"\n========================================\n"</span></div><div class="line">    <span class="built_in">printf</span> <span class="string">"             Server Name List\n"</span></div><div class="line">    <span class="keyword">for</span> ((i=0; i&lt;server_len; i=i+1)); <span class="keyword">do</span></div><div class="line">        <span class="built_in">printf</span> <span class="string">"%-10d %-20s\n"</span> <span class="variable">$i</span> <span class="variable">$&#123;SERVERS[$(($i))]&#125;</span></div><div class="line">    <span class="keyword">done</span></div><div class="line">    <span class="built_in">printf</span> <span class="string">"========================================\n"</span></div><div class="line">    <span class="built_in">printf</span> <span class="string">"             Server Name List\n"</span></div><div class="line"></div><div class="line">    <span class="built_in">read</span> -p <span class="string">"Please Enter server index[0-<span class="variable">$(($server_len -1)</span>)](greater than <span class="variable">$server_len</span> instend of all): "</span> server_index</div><div class="line"></div><div class="line">    <span class="keyword">if</span> [[ <span class="string">"<span class="variable">$server_index</span>"</span> =~ ^[0-9]?$ &amp;&amp; <span class="variable">$server_index</span> -ge 0 ]]; <span class="keyword">then</span></div><div class="line">        <span class="built_in">return</span> <span class="variable">$server_index</span></div><div class="line">    <span class="keyword">else</span></div><div class="line">        <span class="built_in">echo</span> <span class="_">-e</span> <span class="string">"<span class="variable">$&#123;COLOR_RED&#125;</span>invalidate input <span class="variable">$&#123;COLOR_RESET&#125;</span> : <span class="variable">$COLOR_GREEN</span> <span class="variable">$server_index</span> <span class="variable">$COLOR_RESET</span>"</span>;</div><div class="line">        <span class="built_in">exit</span> 4;</div><div class="line">    <span class="keyword">fi</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment"># 单个服还是所有,大于长度代表所有</span></div><div class="line">choose_server</div><div class="line">server_id=$?</div><div class="line"></div><div class="line"></div><div class="line">PROG_NAME=<span class="string">''</span></div><div class="line">PROG_ARGS=<span class="string">''</span></div><div class="line">ACTION=<span class="variable">$1</span></div><div class="line"><span class="built_in">echo</span> <span class="string">"will <span class="variable">$ACTION</span> server follow.."</span></div><div class="line"><span class="keyword">if</span> [ <span class="variable">$server_id</span> <span class="_">-lt</span> <span class="variable">$server_len</span> ]; <span class="keyword">then</span></div><div class="line">    PROG_NAME=<span class="variable">$&#123;SERVERS[$server_id]&#125;</span></div><div class="line">    PROG_ARGS=<span class="variable">$&#123;SERVER_PARAM[$PROG_NAME]&#125;</span></div><div class="line">    <span class="built_in">echo</span> <span class="string">"<span class="variable">$&#123;PROG_NAME&#125;</span>   -----&gt; <span class="variable">$&#123;PROG_ARGS&#125;</span>"</span></div><div class="line"><span class="keyword">else</span></div><div class="line">    <span class="keyword">for</span> key <span class="keyword">in</span> <span class="variable">$&#123;SERVERS[@]&#125;</span>;<span class="keyword">do</span></div><div class="line">        <span class="built_in">echo</span> <span class="string">"<span class="variable">$&#123;key&#125;</span>   -----&gt; <span class="variable">$&#123;SERVER_PARAM[$key]&#125;</span>"</span></div><div class="line">    <span class="keyword">done</span></div><div class="line"><span class="keyword">fi</span></div><div class="line"></div><div class="line"></div><div class="line"><span class="built_in">read</span> -n1 -p <span class="string">"Press insure. [y/n]"</span> sure</div><div class="line"><span class="built_in">echo</span> <span class="_">-e</span> <span class="string">"\nYour inputs: <span class="variable">$sure</span>"</span></div><div class="line"><span class="keyword">if</span> [ <span class="string">"<span class="variable">$sure</span>"</span> == <span class="string">"y"</span> ]; <span class="keyword">then</span></div><div class="line">    <span class="built_in">echo</span> <span class="string">"<span class="variable">$server_id</span> <span class="variable">$server_len</span>"</span></div><div class="line">    <span class="keyword">if</span> [ <span class="variable">$server_id</span> <span class="_">-lt</span> <span class="variable">$server_len</span> ]; <span class="keyword">then</span></div><div class="line">        <span class="built_in">echo</span> <span class="string">"<span class="variable">$PROG_NAME</span> <span class="variable">$ACTION</span> <span class="variable">$PROG_ARGS</span>"</span></div><div class="line">        <span class="comment">#bash single.sh $PROG_NAME $ACTION $PROG_ARGS</span></div><div class="line">    <span class="keyword">else</span></div><div class="line">        <span class="keyword">for</span> key <span class="keyword">in</span> <span class="variable">$&#123;SERVERS[@]&#125;</span>;<span class="keyword">do</span></div><div class="line">            PROG_NAME=<span class="variable">$&#123;key&#125;</span></div><div class="line">            PROG_ARGS=<span class="variable">$&#123;SERVER_PARAM[$key]&#125;</span></div><div class="line">            <span class="built_in">echo</span> <span class="string">"<span class="variable">$PROG_NAME</span> <span class="variable">$ACTION</span> <span class="variable">$PROG_ARGS</span>"</span></div><div class="line">            <span class="comment">#bash single.sh $PROG_NAME $ACTION $PROG_ARGS</span></div><div class="line">        <span class="keyword">done</span></div><div class="line">    <span class="keyword">fi</span></div><div class="line"><span class="keyword">fi</span></div></pre></td></tr></table></figure>
+<p><code>single.sh</code></p>
+<blockquote>
+<p>用来操作单个进程的脚本</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#!/bin/bash</span></div><div class="line"><span class="comment"># 启停脚本</span></div><div class="line"><span class="comment">#</span></div><div class="line"></div><div class="line"><span class="function"><span class="title">usage</span></span>() &#123;</div><div class="line">  <span class="built_in">echo</span> <span class="string">"Usage: `basename <span class="variable">$0</span>` PROGRAM_NAME &#123;start|stop|restart|status&#125; PROGRAM_NAME"</span> &gt;&amp;2</div><div class="line">  <span class="built_in">echo</span> <span class="string">"Where: PROGRAM_NAME is alias for this process."</span> &gt;&amp;2</div><div class="line">  <span class="built_in">echo</span> <span class="string">"       PROGRAM_ARG contain the executable file and command lind params."</span> &gt;&amp;2</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">array=( <span class="variable">$@</span> )</div><div class="line">len=<span class="variable">$&#123;#array[@]&#125;</span></div><div class="line"></div><div class="line"><span class="comment"># At least three arguments are required.</span></div><div class="line"><span class="keyword">if</span> [ <span class="variable">$len</span> <span class="_">-lt</span> 3 ]; <span class="keyword">then</span></div><div class="line">    usage</div><div class="line">    <span class="built_in">exit</span> 5</div><div class="line"><span class="keyword">fi</span></div><div class="line"></div><div class="line"><span class="built_in">source</span> /etc/init.d/<span class="built_in">functions</span></div><div class="line"></div><div class="line">CUR_DIR=$(dirname $(realpath <span class="variable">$0</span>))</div><div class="line">PROGRAM_NAME=<span class="variable">$&#123;array[0]&#125;</span></div><div class="line">ACTION=<span class="variable">$&#123;array[1]&#125;</span></div><div class="line">PROGRAM_ARGS=<span class="variable">$&#123;array[@]:2:$len-1&#125;</span></div><div class="line">RETVAL=0</div><div class="line"></div><div class="line">PID_FILE=<span class="string">".<span class="variable">$PROGRAM_NAME</span>.pid"</span></div><div class="line">LOCK_FILE=<span class="string">".<span class="variable">$PROGRAM_NAME</span>.pid.lock"</span></div><div class="line">LOG_FILE=<span class="string">"<span class="variable">$PROGRAM_NAME</span>.log"</span> <span class="comment">#标准输出和错误输出</span></div><div class="line"></div><div class="line"><span class="keyword">function</span> <span class="function"><span class="title">start</span></span>() &#123;</div><div class="line">    daemonize -c <span class="variable">$CUR_DIR</span> -p <span class="variable">$PID_FILE</span> <span class="_">-l</span> <span class="variable">$LOCK_FILE</span> -o <span class="variable">$LOG_FILE</span> <span class="_">-e</span> <span class="variable">$LOG_FILE</span> -v <span class="variable">$PROGRAM_ARGS</span></div><div class="line">    RETVAL=$?</div><div class="line">    [ <span class="variable">$RETVAL</span> = 0 ] &amp;&amp; success || failure</div><div class="line">    <span class="built_in">echo</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">function</span> <span class="function"><span class="title">stop</span></span>()&#123;</div><div class="line">    killproc -p <span class="variable">$PID_FILE</span></div><div class="line">    RETVAL=$?</div><div class="line">    <span class="built_in">echo</span></div><div class="line">    rm <span class="_">-f</span> <span class="variable">$LOCK_FILE</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">function</span> <span class="function"><span class="title">status_</span></span>()&#123;</div><div class="line">    status -p <span class="variable">$PID_FILE</span></div><div class="line">    RETVAL=$?</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">case</span> <span class="string">"<span class="variable">$ACTION</span>"</span> <span class="keyword">in</span></div><div class="line">  start)</div><div class="line">        start;</div><div class="line">        ;;</div><div class="line">  restart)</div><div class="line">        stop; sleep 1; start;</div><div class="line">        ;;</div><div class="line">  stop)</div><div class="line">        stop</div><div class="line">        ;;</div><div class="line">  status)</div><div class="line">        status_</div><div class="line">        ;;</div><div class="line">  *)</div><div class="line">        usage</div><div class="line">        <span class="built_in">exit</span> 4</div><div class="line">        ;;</div><div class="line"><span class="keyword">esac</span></div><div class="line"></div><div class="line"><span class="built_in">exit</span> <span class="variable">$RETVAL</span></div></pre></td></tr></table></figure>
+<p><code>parameters.sh</code></p>
+<blockquote>
+<p>用来配置哪些进程需要启动，以及进程启动的参数</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#!/bin/bash</span></div><div class="line"><span class="comment"># 需要启动的服对应的名称和参数</span></div><div class="line"><span class="comment">#</span></div><div class="line"></div><div class="line">CUR_DIR=$(dirname $(realpath <span class="variable">$0</span>))</div><div class="line"></div><div class="line">LOGIN=<span class="string">"login"</span></div><div class="line">HALL=<span class="string">"hall"</span></div><div class="line">COUNT=<span class="string">"count"</span></div><div class="line">GAME10206=<span class="string">"game10206"</span></div><div class="line"></div><div class="line"><span class="comment"># 定义哪些服需要启动</span></div><div class="line">SERVERS=( \</div><div class="line">    <span class="variable">$&#123;LOGIN&#125;</span> \</div><div class="line">    <span class="variable">$&#123;HALL&#125;</span>  \</div><div class="line">    <span class="variable">$&#123;COUNT&#125;</span> \</div><div class="line">    <span class="variable">$&#123;GAME10206&#125;</span>)</div><div class="line"></div><div class="line"><span class="built_in">declare</span> -A SERVER_PARAM</div><div class="line">SERVER_PARAM=([<span class="variable">$&#123;LOGIN&#125;</span>]=<span class="string">"<span class="variable">$CUR_DIR</span>/login --log_dir=log/login"</span> \</div><div class="line">              [<span class="variable">$&#123;HALL&#125;</span>]=<span class="string">"<span class="variable">$CUR_DIR</span>/hall --log_dir=log/hall"</span> \</div><div class="line">              [<span class="variable">$&#123;COUNT&#125;</span>]=<span class="string">"<span class="variable">$CUR_DIR</span>/count --log_dir=log/count"</span> \</div><div class="line">              [<span class="variable">$&#123;GAME10206&#125;</span>]=<span class="string">"<span class="variable">$CUR_DIR</span>/game --log_dir=log/game10206"</span>)</div><div class="line"></div><div class="line"><span class="keyword">for</span> key <span class="keyword">in</span> <span class="variable">$&#123;SERVERS[@]&#125;</span>;<span class="keyword">do</span></div><div class="line">    <span class="built_in">echo</span> <span class="string">"<span class="variable">$&#123;key&#125;</span>   -----&gt; <span class="variable">$&#123;SERVER_PARAM[$key]&#125;</span>"</span></div><div class="line"><span class="keyword">done</span></div></pre></td></tr></table></figure>
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/shell/" rel="tag"># shell</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/10/11/linux-concurrency-lock/" rel="next" title="linux-concurrency">
+                <i class="fa fa-chevron-left"></i> linux-concurrency
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/12/15/reids/" rel="prev" title="reids">
+                reids <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview sidebar-panel sidebar-panel-active">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          
+            <p class="site-author-name" itemprop="name">易斌</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">20</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">易斌</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

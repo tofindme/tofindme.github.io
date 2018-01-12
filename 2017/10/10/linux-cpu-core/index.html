@@ -84,7 +84,7 @@
 <meta property="og:image" content="http://yoursite.com/../../../../images/cpu_single_core.jpg">
 <meta property="og:image" content="http://yoursite.com/../../../../images/cpu_multi_core.jpg">
 <meta property="og:image" content="http://yoursite.com/../../../../images/cpu_multi_core_super.jpg">
-<meta property="og:updated_time" content="2017-10-10T06:42:57.147Z">
+<meta property="og:updated_time" content="2017-10-26T07:19:50.322Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="linux-cpu-core">
 <meta name="twitter:description" content="计算机从单任务到多任务的发展也是对应的CPU的处理能力。现在的系统基本都是多核的系统并有着更高的系统吞吐能力。
@@ -342,7 +342,7 @@
         <p>计算机从单任务到多任务的发展也是对应的CPU的处理能力。现在的系统基本都是多核的系统并有着更高的系统吞吐能力。</p>
 <p>平常只是脑海中有这些概念，并没有通过某些方法去论证这些东西。</p>
 <p>在linux上面我们所有CPU相关的信息可以在<code>/proc/cpuinfo</code>文件里面可以看到，我们可以看到以下信息:</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#查看CPU信息（型号）</span></div><div class="line">[root@local ~]<span class="comment"># cat /proc/cpuinfo | grep name | cut -f2 -d: | uniq -c</span></div><div class="line">     <span class="number">24</span>         Intel(R) Xeon(R) CPU E5-<span class="number">2630</span> <span class="number">0</span> @ <span class="number">2.30</span>GHz</div><div class="line"></div><div class="line"><span class="comment"># 查看物理CPU个数</span></div><div class="line">[root@local ~]<span class="comment"># cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l</span></div><div class="line"><span class="number">2</span></div><div class="line"></div><div class="line"><span class="comment"># 查看每个物理CPU中core的个数(即核数)</span></div><div class="line">[root@local ~]<span class="comment"># cat /proc/cpuinfo| grep "cpu cores"| uniq</span></div><div class="line">cpu cores    : <span class="number">6</span></div><div class="line"></div><div class="line"><span class="comment"># 查看逻辑CPU的个数</span></div><div class="line">[root@local ~]<span class="comment"># cat /proc/cpuinfo| grep "processor"| wc -l</span></div><div class="line"><span class="number">24</span></div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#查看CPU信息（型号）</span></div><div class="line">[root@<span class="built_in">local</span> ~]<span class="comment"># cat /proc/cpuinfo | grep name | cut -f2 -d: | uniq -c</span></div><div class="line">     24         Intel(R) Xeon(R) CPU E5-2630 0 @ 2.30GHz</div><div class="line"></div><div class="line"><span class="comment"># 查看物理CPU个数</span></div><div class="line">[root@<span class="built_in">local</span> ~]<span class="comment"># cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l</span></div><div class="line">2</div><div class="line"></div><div class="line"><span class="comment"># 查看每个物理CPU中core的个数(即核数)</span></div><div class="line">[root@<span class="built_in">local</span> ~]<span class="comment"># cat /proc/cpuinfo| grep "cpu cores"| uniq</span></div><div class="line">cpu cores    : 6</div><div class="line"></div><div class="line"><span class="comment"># 查看逻辑CPU的个数</span></div><div class="line">[root@<span class="built_in">local</span> ~]<span class="comment"># cat /proc/cpuinfo| grep "processor"| wc -l</span></div><div class="line">24</div></pre></td></tr></table></figure>
 <p><strong>以上各信息有如下关系:</strong></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">CPU总核数 = 物理CPU个数 * 每颗物理CPU的核数 </div><div class="line">总逻辑CPU数 = 物理CPU个数 * 每颗物理CPU的核数 * 超线程数</div></pre></td></tr></table></figure>
 <p><span style="color:blue;"><strong>从上面执行的结果来看，证明我使用的cpu有2 * 6 = 12核，每个核有2个超线程，所以有24个逻辑cpu。</strong></span></p>
@@ -463,7 +463,7 @@
             
               <a href="/archives/">
             
-                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-count">20</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -485,7 +485,7 @@
             
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-count">19</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>
@@ -527,7 +527,7 @@
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2017</span>
+  <span itemprop="copyrightYear">2018</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
