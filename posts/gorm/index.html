@@ -1,0 +1,1423 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>gorm | 江湖再见</title>
+    <meta property="og:title" content="gorm - 江湖再见">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2021-12-26T21:30:09&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2021-12-26T21:30:09&#43;08:00'>
+        
+    <meta name="Keywords" content="golang,go语言">
+    <meta name="description" content="gorm">
+        
+    <meta name="author" content="江湖再见">
+    <meta property="og:url" content="/posts/gorm/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="">
+                        江湖再见
+                    </a>
+                
+                <p class="description">这里有Go语言(golang)</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="" href="">首页</a>
+                    
+                    <a  href="/something/" title="test">test</a>
+                    
+                    <a  href="/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#源码赏析">源码赏析</a>
+      <ul>
+        <li><a href="#crud样例">CRUD样例</a></li>
+        <li><a href="#调用链分析以及主要成员说明">调用链分析以及主要成员说明</a></li>
+        <li><a href="#读记录全过程一览">读记录全过程一览</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">gorm</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2021年12月26日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/%E5%BC%80%E6%BA%90%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90'>开源源码浅析</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <p>数据库的出现极大的方便的应用程序开发人员，很快的开发出自己的应用。我们在使用mysql的时候通常也会用到一些orm库去操作数据库，虽然可能要去重新学习一个框架的一些api和一些设计理念，但这些orm用好也容易的方便帮助我们构建自己的应用。orm主要是对一些东西的封装，用起来更加方便，不需要我们自己去遍历数据库的rows然后再去scan把结果读到具体变量上去。下面我们基于gorm v2版本来赏析下源码把。</p>
+<p>如果考虑学习这些新的框架的一些概念和接口需要太多成本，我觉得另外一个orm其实比较简单，只是在内置database/sql基础上加了些东西，这个就是<a href="https://github.com/jmoiron/sqlx">sqlx</a>,这些orm一定程度上通过占位符?来避免sql注入。</p>
+<h2 id="源码赏析">源码赏析</h2>
+<p>可以先有个轮廓的认识可以去官方文档<a href="https://gorm.io/docs/">gorm</a></p>
+<h3 id="crud样例">CRUD样例</h3>
+<p>我们先来看下官网的怎么使用gorm的例子:</p>
+<pre tabindex="0"><code class="language-goalng" data-lang="goalng">package main
+
+import (
+  &quot;gorm.io/gorm&quot;
+  &quot;gorm.io/driver/mysql&quot;
+)
+
+type Product struct {
+  gorm.Model
+  Code  string
+  Price uint
+}
+
+func main() {
+  db, err := gorm.Open(mysql.Open(&quot;root:root@tcp(127.0.0.1:3306)/test?charset=utf8mb4&amp;parseTime=True&amp;loc=Local&amp;timeout=15s&amp;readTimeout=10s&amp;writeTimeout=10s&quot;), &amp;gorm.Config{})
+  if err != nil {
+    panic(&quot;failed to connect database&quot;)
+  }
+
+  // Migrate the schema
+  db.AutoMigrate(&amp;Product{})
+
+  // Create
+  db.Create(&amp;Product{Code: &quot;D42&quot;, Price: 100})
+
+  // Read
+  var product Product
+  db.First(&amp;product, 1) // find product with integer primary key
+  db.First(&amp;product, &quot;code = ?&quot;, &quot;D42&quot;) // find product with code D42
+
+  // Update - update product's price to 200
+  db.Model(&amp;product).Update(&quot;Price&quot;, 200)
+  // Update - update multiple fields
+  db.Model(&amp;product).Updates(Product{Price: 200, Code: &quot;F42&quot;}) // non-zero fields
+  db.Model(&amp;product).Updates(map[string]interface{}{&quot;Price&quot;: 200, &quot;Code&quot;: &quot;F42&quot;})
+
+  // Delete - delete product
+  db.Delete(&amp;product, 1)
+}
+</code></pre><blockquote>
+<p>dsn的拼接最好是带上charset=utf8mb4&amp;parseTime=True&amp;loc=Local&amp;timeout=15s&amp;readTimeout=10s&amp;writeTimeout=10s</p>
+</blockquote>
+<p>parseTime的话sql驱动会自动转化数据库字段到time.Time对象上面,loc的话是根据你机器时区来转化时间，后面是tcp读写超时相关的设置。</p>
+<p>关于dsn的详情说明请看<a href="https://github.com/go-sql-driver/mysql#dsn-data-source-name">dsn解释</a></p>
+<p>我们看到全程是没看到sql的，是通过struct和api来表达我们sql的使命了，所以我们在使用的过程要熟悉sql语言以及掌握各个接口正确的使用方式，所以gorm根据struct以及api的定义帮我们编写sql的过程给隐藏了。这也是gorm这种orm框架所做的事。</p>
+<h3 id="调用链分析以及主要成员说明">调用链分析以及主要成员说明</h3>
+<p>看完用例后我们在跟着用例看下他的调用链以及各个对象承担的使命。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">122
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">123
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">124
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">125
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">126
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">127
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">128
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">129
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">130
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">131
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">132
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">133
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">134
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">135
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">136
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">137
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">138
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">139
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">140
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">141
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">142
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">143
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">144
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">145
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">146
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">147
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">148
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">149
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">150
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">151
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">152
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">153
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">154
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">155
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">156
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">157
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">158
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">159
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">160
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">161
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">162
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">163
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">164
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">165
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">166
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">167
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">168
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">169
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">170
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">171
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">172
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">173
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">174
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">175
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">176
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">177
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">178
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">179
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">180
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">181
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">182
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">183
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">184
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">185
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">186
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">187
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">188
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang">
+<span style="color:#d14">`gorm.go`</span>
+<span style="color:#998;font-style:italic">// Open initialize db session based on dialector
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">Open</span>(dialector Dialector, opts <span style="color:#000;font-weight:bold">...</span>Option) (db <span style="color:#000;font-weight:bold">*</span>DB, err <span style="color:#458;font-weight:bold">error</span>) {
+
+	db = <span style="color:#000;font-weight:bold">&amp;</span>DB{Config: config, clone: <span style="color:#099">1</span>}
+
+	db.callbacks = <span style="color:#900;font-weight:bold">initializeCallbacks</span>(db)
+
+	<span style="color:#000;font-weight:bold">if</span> config.Dialector <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		err = config.Dialector.<span style="color:#900;font-weight:bold">Initialize</span>(db)
+	}
+
+	db.Statement = <span style="color:#000;font-weight:bold">&amp;</span>Statement{
+		DB:       db,
+		ConnPool: db.ConnPool,
+		Context:  context.<span style="color:#900;font-weight:bold">Background</span>(),
+		Clauses:  <span style="color:#000;font-weight:bold">map</span>[<span style="color:#458;font-weight:bold">string</span>]clause.Clause{},
+	}
+
+	<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> !config.DisableAutomaticPing {
+		<span style="color:#000;font-weight:bold">if</span> pinger, ok <span style="color:#000;font-weight:bold">:=</span> db.ConnPool.(<span style="color:#000;font-weight:bold">interface</span>{ <span style="color:#900;font-weight:bold">Ping</span>() <span style="color:#458;font-weight:bold">error</span> }); ok {
+			err = pinger.<span style="color:#900;font-weight:bold">Ping</span>()
+		}
+	
+}
+
+<span style="color:#d14">`gorm.io\driver\mysql\mysql.go`</span>
+<span style="color:#998;font-style:italic">// 
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">Open</span>(dsn <span style="color:#458;font-weight:bold">string</span>) gorm.Dialector {
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">&amp;</span>Dialector{Config: <span style="color:#000;font-weight:bold">&amp;</span>Config{DSN: dsn}}
+}
+
+<span style="color:#998;font-style:italic">// 这个就是gorm.Open时的第一个参数，主要就是做了两件事，注册相关回调和初始化内置的db对象
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (dialector Dialector) <span style="color:#900;font-weight:bold">Initialize</span>(db <span style="color:#000;font-weight:bold">*</span>gorm.DB) (err <span style="color:#458;font-weight:bold">error</span>) {
+	<span style="color:#998;font-style:italic">// 这里注册的回调函数就是平常用到的CRUD实际调用到的地方
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// register callbacks
+</span><span style="color:#998;font-style:italic"></span>	callbacks.<span style="color:#900;font-weight:bold">RegisterDefaultCallbacks</span>(db, <span style="color:#000;font-weight:bold">&amp;</span>callbacks.Config{
+		UpdateClauses: []<span style="color:#458;font-weight:bold">string</span>{<span style="color:#d14">&#34;UPDATE&#34;</span>, <span style="color:#d14">&#34;SET&#34;</span>, <span style="color:#d14">&#34;WHERE&#34;</span>, <span style="color:#d14">&#34;ORDER BY&#34;</span>, <span style="color:#d14">&#34;LIMIT&#34;</span>},
+		DeleteClauses: []<span style="color:#458;font-weight:bold">string</span>{<span style="color:#d14">&#34;DELETE&#34;</span>, <span style="color:#d14">&#34;FROM&#34;</span>, <span style="color:#d14">&#34;WHERE&#34;</span>, <span style="color:#d14">&#34;ORDER BY&#34;</span>, <span style="color:#d14">&#34;LIMIT&#34;</span>},
+	})
+	
+	<span style="color:#998;font-style:italic">// 实际用的db是内置的sql驱动，gorm是对这个对象的在一次抽象
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">if</span> dialector.Conn <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		db.ConnPool = dialector.Conn
+	} <span style="color:#000;font-weight:bold">else</span> {
+		db.ConnPool, err = sql.<span style="color:#900;font-weight:bold">Open</span>(dialector.DriverName, dialector.DSN)
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#000;font-weight:bold">return</span> err
+		}
+	}
+}
+
+<span style="color:#d14">`callbacks/callbacks.go`</span>
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">RegisterDefaultCallbacks</span>(db <span style="color:#000;font-weight:bold">*</span>gorm.DB, config <span style="color:#000;font-weight:bold">*</span>Config) {
+	enableTransaction <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">func</span>(db <span style="color:#000;font-weight:bold">*</span>gorm.DB) <span style="color:#458;font-weight:bold">bool</span> {
+		<span style="color:#000;font-weight:bold">return</span> !db.SkipDefaultTransaction
+	}
+
+	createCallback <span style="color:#000;font-weight:bold">:=</span> db.<span style="color:#900;font-weight:bold">Callback</span>().<span style="color:#900;font-weight:bold">Create</span>()
+	createCallback.<span style="color:#900;font-weight:bold">Match</span>(enableTransaction).<span style="color:#900;font-weight:bold">Register</span>(<span style="color:#d14">&#34;gorm:begin_transaction&#34;</span>, BeginTransaction)
+	createCallback.<span style="color:#900;font-weight:bold">Register</span>(<span style="color:#d14">&#34;gorm:before_create&#34;</span>, BeforeCreate)
+	createCallback.<span style="color:#900;font-weight:bold">Register</span>(<span style="color:#d14">&#34;gorm:save_before_associations&#34;</span>, <span style="color:#900;font-weight:bold">SaveBeforeAssociations</span>(<span style="color:#000;font-weight:bold">true</span>))
+	createCallback.<span style="color:#900;font-weight:bold">Register</span>(<span style="color:#d14">&#34;gorm:create&#34;</span>, <span style="color:#900;font-weight:bold">Create</span>(config))
+	createCallback.<span style="color:#900;font-weight:bold">Register</span>(<span style="color:#d14">&#34;gorm:save_after_associations&#34;</span>, <span style="color:#900;font-weight:bold">SaveAfterAssociations</span>(<span style="color:#000;font-weight:bold">true</span>))
+	createCallback.<span style="color:#900;font-weight:bold">Register</span>(<span style="color:#d14">&#34;gorm:after_create&#34;</span>, AfterCreate)
+	createCallback.<span style="color:#900;font-weight:bold">Match</span>(enableTransaction).<span style="color:#900;font-weight:bold">Register</span>(<span style="color:#d14">&#34;gorm:commit_or_rollback_transaction&#34;</span>, CommitOrRollbackTransaction)
+
+}
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">initializeCallbacks</span>(db <span style="color:#000;font-weight:bold">*</span>DB) <span style="color:#000;font-weight:bold">*</span>callbacks {
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">&amp;</span>callbacks{
+		processors: <span style="color:#000;font-weight:bold">map</span>[<span style="color:#458;font-weight:bold">string</span>]<span style="color:#000;font-weight:bold">*</span>processor{
+			<span style="color:#d14">&#34;create&#34;</span>: {db: db},
+			<span style="color:#d14">&#34;query&#34;</span>:  {db: db},
+			<span style="color:#d14">&#34;update&#34;</span>: {db: db},
+			<span style="color:#d14">&#34;delete&#34;</span>: {db: db},
+			<span style="color:#d14">&#34;row&#34;</span>:    {db: db},
+			<span style="color:#d14">&#34;raw&#34;</span>:    {db: db},
+		},
+	}
+}
+
+<span style="color:#998;font-style:italic">// 这个就是他主要的CRUD所有调用的核心
+</span><span style="color:#998;font-style:italic">// callbacks gorm callbacks manager
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> callbacks <span style="color:#000;font-weight:bold">struct</span> {
+	processors <span style="color:#000;font-weight:bold">map</span>[<span style="color:#458;font-weight:bold">string</span>]<span style="color:#000;font-weight:bold">*</span>processor
+}
+
+<span style="color:#000;font-weight:bold">type</span> processor <span style="color:#000;font-weight:bold">struct</span> {
+	db        <span style="color:#000;font-weight:bold">*</span>DB
+	Clauses   []<span style="color:#458;font-weight:bold">string</span>
+	fns       []<span style="color:#000;font-weight:bold">func</span>(<span style="color:#000;font-weight:bold">*</span>DB)
+	callbacks []<span style="color:#000;font-weight:bold">*</span>callback
+}
+
+<span style="color:#000;font-weight:bold">type</span> callback <span style="color:#000;font-weight:bold">struct</span> {
+	name      <span style="color:#458;font-weight:bold">string</span>
+	before    <span style="color:#458;font-weight:bold">string</span>
+	after     <span style="color:#458;font-weight:bold">string</span>
+	remove    <span style="color:#458;font-weight:bold">bool</span>
+	replace   <span style="color:#458;font-weight:bold">bool</span>
+	match     <span style="color:#000;font-weight:bold">func</span>(<span style="color:#000;font-weight:bold">*</span>DB) <span style="color:#458;font-weight:bold">bool</span>
+	handler   <span style="color:#000;font-weight:bold">func</span>(<span style="color:#000;font-weight:bold">*</span>DB)
+	processor <span style="color:#000;font-weight:bold">*</span>processor
+}
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">Create</span>(config <span style="color:#000;font-weight:bold">*</span>Config) <span style="color:#000;font-weight:bold">func</span>(db <span style="color:#000;font-weight:bold">*</span>gorm.DB) {
+	<span style="color:#000;font-weight:bold">if</span> config.WithReturning {
+		<span style="color:#000;font-weight:bold">return</span> CreateWithReturning
+	}
+
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">func</span>(db <span style="color:#000;font-weight:bold">*</span>gorm.DB) {
+		<span style="color:#000;font-weight:bold">if</span> db.Error <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#998;font-style:italic">// maybe record logger TODO
+</span><span style="color:#998;font-style:italic"></span>			<span style="color:#000;font-weight:bold">return</span>
+		}
+
+		<span style="color:#000;font-weight:bold">if</span> db.Statement.Schema <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> !db.Statement.Unscoped {
+			<span style="color:#000;font-weight:bold">for</span> _, c <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">range</span> db.Statement.Schema.CreateClauses {
+				db.Statement.<span style="color:#900;font-weight:bold">AddClause</span>(c)
+			}
+		}
+
+		<span style="color:#000;font-weight:bold">if</span> db.Statement.SQL.<span style="color:#900;font-weight:bold">String</span>() <span style="color:#000;font-weight:bold">==</span> <span style="color:#d14">&#34;&#34;</span> {
+			db.Statement.SQL.<span style="color:#900;font-weight:bold">Grow</span>(<span style="color:#099">180</span>)
+			db.Statement.<span style="color:#900;font-weight:bold">AddClauseIfNotExists</span>(clause.Insert{})
+			db.Statement.<span style="color:#900;font-weight:bold">AddClause</span>(<span style="color:#900;font-weight:bold">ConvertToCreateValues</span>(db.Statement))
+
+			db.Statement.<span style="color:#900;font-weight:bold">Build</span>(db.Statement.BuildClauses<span style="color:#000;font-weight:bold">...</span>)
+		}
+
+		<span style="color:#000;font-weight:bold">if</span> !db.DryRun <span style="color:#000;font-weight:bold">&amp;&amp;</span> db.Error <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+			result, err <span style="color:#000;font-weight:bold">:=</span> db.Statement.ConnPool.<span style="color:#900;font-weight:bold">ExecContext</span>(db.Statement.Context, db.Statement.SQL.<span style="color:#900;font-weight:bold">String</span>(), db.Statement.Vars<span style="color:#000;font-weight:bold">...</span>)
+
+			<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+				db.<span style="color:#900;font-weight:bold">AddError</span>(err)
+				<span style="color:#000;font-weight:bold">return</span>
+			}
+
+			db.RowsAffected, _ = result.<span style="color:#900;font-weight:bold">RowsAffected</span>()
+			<span style="color:#000;font-weight:bold">if</span> !(db.RowsAffected &gt; <span style="color:#099">0</span>) {
+				<span style="color:#000;font-weight:bold">return</span>
+			}
+
+			<span style="color:#000;font-weight:bold">if</span> db.Statement.Schema <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> db.Statement.Schema.PrioritizedPrimaryField <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> db.Statement.Schema.PrioritizedPrimaryField.HasDefaultValue {
+				<span style="color:#000;font-weight:bold">if</span> insertID, err <span style="color:#000;font-weight:bold">:=</span> result.<span style="color:#900;font-weight:bold">LastInsertId</span>(); err <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> insertID &gt; <span style="color:#099">0</span> {
+					<span style="color:#000;font-weight:bold">switch</span> db.Statement.ReflectValue.<span style="color:#900;font-weight:bold">Kind</span>() {
+					<span style="color:#000;font-weight:bold">case</span> reflect.Slice, reflect.Array:
+						<span style="color:#000;font-weight:bold">if</span> config.LastInsertIDReversed {
+							<span style="color:#000;font-weight:bold">for</span> i <span style="color:#000;font-weight:bold">:=</span> db.Statement.ReflectValue.<span style="color:#900;font-weight:bold">Len</span>() <span style="color:#000;font-weight:bold">-</span> <span style="color:#099">1</span>; i <span style="color:#000;font-weight:bold">&gt;=</span> <span style="color:#099">0</span>; i<span style="color:#000;font-weight:bold">--</span> {
+								rv <span style="color:#000;font-weight:bold">:=</span> db.Statement.ReflectValue.<span style="color:#900;font-weight:bold">Index</span>(i)
+								<span style="color:#000;font-weight:bold">if</span> reflect.<span style="color:#900;font-weight:bold">Indirect</span>(rv).<span style="color:#900;font-weight:bold">Kind</span>() <span style="color:#000;font-weight:bold">!=</span> reflect.Struct {
+									<span style="color:#000;font-weight:bold">break</span>
+								}
+
+								_, isZero <span style="color:#000;font-weight:bold">:=</span> db.Statement.Schema.PrioritizedPrimaryField.<span style="color:#900;font-weight:bold">ValueOf</span>(rv)
+								<span style="color:#000;font-weight:bold">if</span> isZero {
+									db.Statement.Schema.PrioritizedPrimaryField.<span style="color:#900;font-weight:bold">Set</span>(rv, insertID)
+									insertID <span style="color:#000;font-weight:bold">-=</span> db.Statement.Schema.PrioritizedPrimaryField.AutoIncrementIncrement
+								}
+							}
+						} <span style="color:#000;font-weight:bold">else</span> {
+							<span style="color:#000;font-weight:bold">for</span> i <span style="color:#000;font-weight:bold">:=</span> <span style="color:#099">0</span>; i &lt; db.Statement.ReflectValue.<span style="color:#900;font-weight:bold">Len</span>(); i<span style="color:#000;font-weight:bold">++</span> {
+								rv <span style="color:#000;font-weight:bold">:=</span> db.Statement.ReflectValue.<span style="color:#900;font-weight:bold">Index</span>(i)
+								<span style="color:#000;font-weight:bold">if</span> reflect.<span style="color:#900;font-weight:bold">Indirect</span>(rv).<span style="color:#900;font-weight:bold">Kind</span>() <span style="color:#000;font-weight:bold">!=</span> reflect.Struct {
+									<span style="color:#000;font-weight:bold">break</span>
+								}
+
+								<span style="color:#000;font-weight:bold">if</span> _, isZero <span style="color:#000;font-weight:bold">:=</span> db.Statement.Schema.PrioritizedPrimaryField.<span style="color:#900;font-weight:bold">ValueOf</span>(rv); isZero {
+									db.Statement.Schema.PrioritizedPrimaryField.<span style="color:#900;font-weight:bold">Set</span>(rv, insertID)
+									insertID <span style="color:#000;font-weight:bold">+=</span> db.Statement.Schema.PrioritizedPrimaryField.AutoIncrementIncrement
+								}
+							}
+						}
+					<span style="color:#000;font-weight:bold">case</span> reflect.Struct:
+						<span style="color:#000;font-weight:bold">if</span> _, isZero <span style="color:#000;font-weight:bold">:=</span> db.Statement.Schema.PrioritizedPrimaryField.<span style="color:#900;font-weight:bold">ValueOf</span>(db.Statement.ReflectValue); isZero {
+							db.Statement.Schema.PrioritizedPrimaryField.<span style="color:#900;font-weight:bold">Set</span>(db.Statement.ReflectValue, insertID)
+						}
+					}
+				} <span style="color:#000;font-weight:bold">else</span> {
+					db.<span style="color:#900;font-weight:bold">AddError</span>(err)
+				}
+			}
+
+		}
+	}
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>gorm.Open获得一个DB对象，DB对象里面有一个Config成员，这个是所有配置相关的东西都存这里，下面有这个对象成员的结构体说明，主要有<strong>Logger</strong>日志接口的实现、用于连接数据库的<strong>Dialector</strong>接口、各种<strong>callbacks</strong>合集以及<strong>ConnPool</strong>用来管理mysql连接的接口。</p>
+<p>DB对象里面有一个<strong>Statement</strong>成员，这个主要通过各种api来表达sql最终生成sql语句的一个对象，通过他的命名大概知道他的意思，可以通过<strong>Config.DryRun</strong>来看生成的sql语句。</p>
+<p>我们再来看一下DB对象里面另外一个成员clone，上面我们看到gorm.Open的时候这个值默认是1，因为gorm里面DB对象里面的每一个接口都是返回的DB对象，方便链式调用，这样一来在这条链上作用的对象实际都是同一个DB对象里面的同一个<strong>Statement</strong>，所有通过DB调用的方法都是通过<strong>getInstance</strong>根据clone得到之前的还是新建一个DB对象，如果clone值是1的话就生成一个新的<strong>clone</strong>为0(后续的调用不在生产新的DB)指向同一份<strong>Config</strong>以及新建一个<strong>Statement</strong>的DB对象。这样就实现了链式调用。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">82
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#998;font-style:italic">// DB GORM DB definition
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> DB <span style="color:#000;font-weight:bold">struct</span> {
+	<span style="color:#000;font-weight:bold">*</span>Config
+	Error        <span style="color:#458;font-weight:bold">error</span>
+	RowsAffected <span style="color:#458;font-weight:bold">int64</span>
+	Statement    <span style="color:#000;font-weight:bold">*</span>Statement
+	clone        <span style="color:#458;font-weight:bold">int</span>
+}
+
+<span style="color:#998;font-style:italic">// Config GORM config
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> Config <span style="color:#000;font-weight:bold">struct</span> {
+	<span style="color:#998;font-style:italic">// GORM perform single create, update, delete operations in transactions by default to ensure database data integrity
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// You can disable it by setting `SkipDefaultTransaction` to true
+</span><span style="color:#998;font-style:italic"></span>	SkipDefaultTransaction <span style="color:#458;font-weight:bold">bool</span>
+	<span style="color:#998;font-style:italic">// NamingStrategy tables, columns naming strategy
+</span><span style="color:#998;font-style:italic"></span>	NamingStrategy schema.Namer
+	<span style="color:#998;font-style:italic">// FullSaveAssociations full save associations
+</span><span style="color:#998;font-style:italic"></span>	FullSaveAssociations <span style="color:#458;font-weight:bold">bool</span>
+	<span style="color:#998;font-style:italic">// Logger
+</span><span style="color:#998;font-style:italic"></span>	Logger logger.Interface
+	<span style="color:#998;font-style:italic">// NowFunc the function to be used when creating a new timestamp
+</span><span style="color:#998;font-style:italic"></span>	NowFunc <span style="color:#000;font-weight:bold">func</span>() time.Time
+	<span style="color:#998;font-style:italic">// DryRun generate sql without execute
+</span><span style="color:#998;font-style:italic"></span>	DryRun <span style="color:#458;font-weight:bold">bool</span>
+	<span style="color:#998;font-style:italic">// PrepareStmt executes the given query in cached statement
+</span><span style="color:#998;font-style:italic"></span>	PrepareStmt <span style="color:#458;font-weight:bold">bool</span>
+	<span style="color:#998;font-style:italic">// DisableAutomaticPing
+</span><span style="color:#998;font-style:italic"></span>	DisableAutomaticPing <span style="color:#458;font-weight:bold">bool</span>
+	<span style="color:#998;font-style:italic">// DisableForeignKeyConstraintWhenMigrating
+</span><span style="color:#998;font-style:italic"></span>	DisableForeignKeyConstraintWhenMigrating <span style="color:#458;font-weight:bold">bool</span>
+	<span style="color:#998;font-style:italic">// DisableNestedTransaction disable nested transaction
+</span><span style="color:#998;font-style:italic"></span>	DisableNestedTransaction <span style="color:#458;font-weight:bold">bool</span>
+	<span style="color:#998;font-style:italic">// AllowGlobalUpdate allow global update
+</span><span style="color:#998;font-style:italic"></span>	AllowGlobalUpdate <span style="color:#458;font-weight:bold">bool</span>
+	<span style="color:#998;font-style:italic">// QueryFields executes the SQL query with all fields of the table
+</span><span style="color:#998;font-style:italic"></span>	QueryFields <span style="color:#458;font-weight:bold">bool</span>
+	<span style="color:#998;font-style:italic">// CreateBatchSize default create batch size
+</span><span style="color:#998;font-style:italic"></span>	CreateBatchSize <span style="color:#458;font-weight:bold">int</span>
+
+	<span style="color:#998;font-style:italic">// ClauseBuilders clause builder
+</span><span style="color:#998;font-style:italic"></span>	ClauseBuilders <span style="color:#000;font-weight:bold">map</span>[<span style="color:#458;font-weight:bold">string</span>]clause.ClauseBuilder
+	<span style="color:#998;font-style:italic">// ConnPool db conn pool
+</span><span style="color:#998;font-style:italic"></span>	ConnPool ConnPool
+	<span style="color:#998;font-style:italic">// Dialector database dialector
+</span><span style="color:#998;font-style:italic"></span>	Dialector
+	<span style="color:#998;font-style:italic">// Plugins registered plugins
+</span><span style="color:#998;font-style:italic"></span>	Plugins <span style="color:#000;font-weight:bold">map</span>[<span style="color:#458;font-weight:bold">string</span>]Plugin
+
+	callbacks  <span style="color:#000;font-weight:bold">*</span>callbacks
+	cacheStore <span style="color:#000;font-weight:bold">*</span>sync.Map
+}
+
+
+<span style="color:#998;font-style:italic">// Statement statement
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> Statement <span style="color:#000;font-weight:bold">struct</span> {
+	<span style="color:#000;font-weight:bold">*</span>DB
+	TableExpr            <span style="color:#000;font-weight:bold">*</span>clause.Expr
+	Table                <span style="color:#458;font-weight:bold">string</span>
+	Model                <span style="color:#000;font-weight:bold">interface</span>{}
+	Unscoped             <span style="color:#458;font-weight:bold">bool</span>
+	Dest                 <span style="color:#000;font-weight:bold">interface</span>{}
+	ReflectValue         reflect.Value
+	Clauses              <span style="color:#000;font-weight:bold">map</span>[<span style="color:#458;font-weight:bold">string</span>]clause.Clause
+	BuildClauses         []<span style="color:#458;font-weight:bold">string</span>
+	Distinct             <span style="color:#458;font-weight:bold">bool</span>
+	Selects              []<span style="color:#458;font-weight:bold">string</span> <span style="color:#998;font-style:italic">// selected columns
+</span><span style="color:#998;font-style:italic"></span>	Omits                []<span style="color:#458;font-weight:bold">string</span> <span style="color:#998;font-style:italic">// omit columns
+</span><span style="color:#998;font-style:italic"></span>	Joins                []join
+	Preloads             <span style="color:#000;font-weight:bold">map</span>[<span style="color:#458;font-weight:bold">string</span>][]<span style="color:#000;font-weight:bold">interface</span>{}
+	Settings             sync.Map
+	ConnPool             ConnPool
+	Schema               <span style="color:#000;font-weight:bold">*</span>schema.Schema
+	Context              context.Context
+	RaiseErrorOnNotFound <span style="color:#458;font-weight:bold">bool</span>
+	SkipHooks            <span style="color:#458;font-weight:bold">bool</span>
+	SQL                  strings.Builder
+	Vars                 []<span style="color:#000;font-weight:bold">interface</span>{}
+	CurDestIndex         <span style="color:#458;font-weight:bold">int</span>
+	attrs                []<span style="color:#000;font-weight:bold">interface</span>{}
+	assigns              []<span style="color:#000;font-weight:bold">interface</span>{}
+	scopes               []<span style="color:#000;font-weight:bold">func</span>(<span style="color:#000;font-weight:bold">*</span>DB) <span style="color:#000;font-weight:bold">*</span>DB
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="读记录全过程一览">读记录全过程一览</h3>
+<blockquote>
+<p>前面我们说过诸如orm只是把复杂的部分给你隐藏起来了，就是他帮你实现了很多东西，只要你去用就好了，读数据也是一样的。他把相应的结果通过底层的Scan接口读到你传进去的东西里面去，接下来我们一探究竟。</p>
+</blockquote>
+<p>上面通过<code>db.First(&amp;product, 1)</code>来找的数据，其实调用的还是<strong>query</strong>的回调函数。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">Query</span>(db <span style="color:#000;font-weight:bold">*</span>gorm.DB) {
+	<span style="color:#000;font-weight:bold">if</span> db.Error <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#900;font-weight:bold">BuildQuerySQL</span>(db)<span style="color:#998;font-style:italic">// 根据各种接口的定义保存的数据构建成最终的sql
+</span><span style="color:#998;font-style:italic"></span>
+		<span style="color:#000;font-weight:bold">if</span> !db.DryRun <span style="color:#000;font-weight:bold">&amp;&amp;</span> db.Error <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#998;font-style:italic">// 把参数传进去执行sql，拿到返回的结果集
+</span><span style="color:#998;font-style:italic"></span>			rows, err <span style="color:#000;font-weight:bold">:=</span> db.Statement.ConnPool.<span style="color:#900;font-weight:bold">QueryContext</span>(db.Statement.Context, db.Statement.SQL.<span style="color:#900;font-weight:bold">String</span>(), db.Statement.Vars<span style="color:#000;font-weight:bold">...</span>)
+			<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+				db.<span style="color:#900;font-weight:bold">AddError</span>(err)
+				<span style="color:#000;font-weight:bold">return</span>
+			}
+			<span style="color:#000;font-weight:bold">defer</span> rows.<span style="color:#900;font-weight:bold">Close</span>()<span style="color:#998;font-style:italic">// orm好处，避免连接泄露
+</span><span style="color:#998;font-style:italic"></span>
+			<span style="color:#998;font-style:italic">// 把结果映射到product里面
+</span><span style="color:#998;font-style:italic"></span>			gorm.<span style="color:#900;font-weight:bold">Scan</span>(rows, db, <span style="color:#000;font-weight:bold">false</span>)
+		}
+	}
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>我们对gorm.Scan在进一步分析</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">Scan</span>(rows <span style="color:#000;font-weight:bold">*</span>sql.Rows, db <span style="color:#000;font-weight:bold">*</span>DB, initialized <span style="color:#458;font-weight:bold">bool</span>) {
+	columns, _ <span style="color:#000;font-weight:bold">:=</span> rows.<span style="color:#900;font-weight:bold">Columns</span>()
+	values <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">make</span>([]<span style="color:#000;font-weight:bold">interface</span>{}, <span style="color:#0086b3">len</span>(columns))
+	db.RowsAffected = <span style="color:#099">0</span>
+		<span style="color:#000;font-weight:bold">switch</span> db.Statement.ReflectValue.<span style="color:#900;font-weight:bold">Kind</span>() {
+		<span style="color:#000;font-weight:bold">case</span> reflect.Struct, reflect.Ptr:
+			<span style="color:#000;font-weight:bold">if</span> db.Statement.ReflectValue.<span style="color:#900;font-weight:bold">Type</span>() <span style="color:#000;font-weight:bold">!=</span> Schema.ModelType {
+				Schema, _ = schema.<span style="color:#900;font-weight:bold">Parse</span>(db.Statement.Dest, db.cacheStore, db.NamingStrategy)
+			}
+
+			<span style="color:#000;font-weight:bold">if</span> initialized <span style="color:#000;font-weight:bold">||</span> rows.<span style="color:#900;font-weight:bold">Next</span>() {
+				<span style="color:#000;font-weight:bold">for</span> idx, column <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">range</span> columns {
+					<span style="color:#000;font-weight:bold">if</span> field <span style="color:#000;font-weight:bold">:=</span> Schema.<span style="color:#900;font-weight:bold">LookUpField</span>(column); field <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> field.Readable {
+						values[idx] = reflect.<span style="color:#900;font-weight:bold">New</span>(reflect.<span style="color:#900;font-weight:bold">PtrTo</span>(field.IndirectFieldType)).<span style="color:#900;font-weight:bold">Interface</span>()
+					} <span style="color:#000;font-weight:bold">else</span> <span style="color:#000;font-weight:bold">if</span> names <span style="color:#000;font-weight:bold">:=</span> strings.<span style="color:#900;font-weight:bold">Split</span>(column, <span style="color:#d14">&#34;__&#34;</span>); <span style="color:#0086b3">len</span>(names) &gt; <span style="color:#099">1</span> {
+						<span style="color:#000;font-weight:bold">if</span> rel, ok <span style="color:#000;font-weight:bold">:=</span> Schema.Relationships.Relations[names[<span style="color:#099">0</span>]]; ok {
+							<span style="color:#000;font-weight:bold">if</span> field <span style="color:#000;font-weight:bold">:=</span> rel.FieldSchema.<span style="color:#900;font-weight:bold">LookUpField</span>(strings.<span style="color:#900;font-weight:bold">Join</span>(names[<span style="color:#099">1</span>:], <span style="color:#d14">&#34;__&#34;</span>)); field <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> field.Readable {
+								values[idx] = reflect.<span style="color:#900;font-weight:bold">New</span>(reflect.<span style="color:#900;font-weight:bold">PtrTo</span>(field.IndirectFieldType)).<span style="color:#900;font-weight:bold">Interface</span>()
+								<span style="color:#000;font-weight:bold">continue</span>
+							}
+						}
+						values[idx] = <span style="color:#000;font-weight:bold">&amp;</span>sql.RawBytes{}
+					} <span style="color:#000;font-weight:bold">else</span> <span style="color:#000;font-weight:bold">if</span> <span style="color:#0086b3">len</span>(columns) <span style="color:#000;font-weight:bold">==</span> <span style="color:#099">1</span> {
+						values[idx] = dest
+					} <span style="color:#000;font-weight:bold">else</span> {
+						values[idx] = <span style="color:#000;font-weight:bold">&amp;</span>sql.RawBytes{}
+					}
+				}
+
+				db.RowsAffected<span style="color:#000;font-weight:bold">++</span>
+				db.<span style="color:#900;font-weight:bold">AddError</span>(rows.<span style="color:#900;font-weight:bold">Scan</span>(values<span style="color:#000;font-weight:bold">...</span>))
+
+				<span style="color:#000;font-weight:bold">for</span> idx, column <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">range</span> columns {
+					<span style="color:#000;font-weight:bold">if</span> field <span style="color:#000;font-weight:bold">:=</span> Schema.<span style="color:#900;font-weight:bold">LookUpField</span>(column); field <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> field.Readable {
+						field.<span style="color:#900;font-weight:bold">Set</span>(db.Statement.ReflectValue, values[idx])
+					} <span style="color:#000;font-weight:bold">else</span> <span style="color:#000;font-weight:bold">if</span> names <span style="color:#000;font-weight:bold">:=</span> strings.<span style="color:#900;font-weight:bold">Split</span>(column, <span style="color:#d14">&#34;__&#34;</span>); <span style="color:#0086b3">len</span>(names) &gt; <span style="color:#099">1</span> {
+						<span style="color:#000;font-weight:bold">if</span> rel, ok <span style="color:#000;font-weight:bold">:=</span> Schema.Relationships.Relations[names[<span style="color:#099">0</span>]]; ok {
+							<span style="color:#000;font-weight:bold">if</span> field <span style="color:#000;font-weight:bold">:=</span> rel.FieldSchema.<span style="color:#900;font-weight:bold">LookUpField</span>(strings.<span style="color:#900;font-weight:bold">Join</span>(names[<span style="color:#099">1</span>:], <span style="color:#d14">&#34;__&#34;</span>)); field <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> field.Readable {
+								relValue <span style="color:#000;font-weight:bold">:=</span> rel.Field.<span style="color:#900;font-weight:bold">ReflectValueOf</span>(db.Statement.ReflectValue)
+								value <span style="color:#000;font-weight:bold">:=</span> reflect.<span style="color:#900;font-weight:bold">ValueOf</span>(values[idx]).<span style="color:#900;font-weight:bold">Elem</span>()
+
+								<span style="color:#000;font-weight:bold">if</span> relValue.<span style="color:#900;font-weight:bold">Kind</span>() <span style="color:#000;font-weight:bold">==</span> reflect.Ptr <span style="color:#000;font-weight:bold">&amp;&amp;</span> relValue.<span style="color:#900;font-weight:bold">IsNil</span>() {
+									<span style="color:#000;font-weight:bold">if</span> value.<span style="color:#900;font-weight:bold">IsNil</span>() {
+										<span style="color:#000;font-weight:bold">continue</span>
+									}
+									relValue.<span style="color:#900;font-weight:bold">Set</span>(reflect.<span style="color:#900;font-weight:bold">New</span>(relValue.<span style="color:#900;font-weight:bold">Type</span>().<span style="color:#900;font-weight:bold">Elem</span>()))
+								}
+
+								field.<span style="color:#900;font-weight:bold">Set</span>(relValue, values[idx])
+							}
+						}
+					}
+				}
+			}
+		<span style="color:#000;font-weight:bold">default</span>:
+			db.<span style="color:#900;font-weight:bold">AddError</span>(rows.<span style="color:#900;font-weight:bold">Scan</span>(dest))
+		}
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>我们以结构体为例，实现思路也是先把结构体里面成员通过类型refelct.New一个value,放到rows.Scan里面，然后再把得到的结果通过reflect把值给结构体赋值。我们来看系统的Scan做了上面。</p>
+<blockquote>
+<p>注意Scan接口里面的参数，因为是个可变参数，我们参数传进去的时候需要<strong>values&hellip;</strong>，否则函数执行会报错。</p>
+</blockquote>
+<p><code>database/sql/sql.go</code></p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">func</span> (rs <span style="color:#000;font-weight:bold">*</span>Rows) <span style="color:#900;font-weight:bold">Scan</span>(dest <span style="color:#000;font-weight:bold">...</span><span style="color:#000;font-weight:bold">interface</span>{}) <span style="color:#458;font-weight:bold">error</span> {
+	rs.closemu.<span style="color:#900;font-weight:bold">RLock</span>()
+
+	<span style="color:#000;font-weight:bold">if</span> rs.lasterr <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> rs.lasterr <span style="color:#000;font-weight:bold">!=</span> io.EOF {
+		rs.closemu.<span style="color:#900;font-weight:bold">RUnlock</span>()
+		<span style="color:#000;font-weight:bold">return</span> rs.lasterr
+	}
+	<span style="color:#000;font-weight:bold">if</span> rs.closed {
+		err <span style="color:#000;font-weight:bold">:=</span> rs.<span style="color:#900;font-weight:bold">lasterrOrErrLocked</span>(errRowsClosed)
+		rs.closemu.<span style="color:#900;font-weight:bold">RUnlock</span>()
+		<span style="color:#000;font-weight:bold">return</span> err
+	}
+	rs.closemu.<span style="color:#900;font-weight:bold">RUnlock</span>()
+
+	<span style="color:#000;font-weight:bold">if</span> rs.lastcols <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#000;font-weight:bold">return</span> errors.<span style="color:#900;font-weight:bold">New</span>(<span style="color:#d14">&#34;sql: Scan called without calling Next&#34;</span>)
+	}
+	<span style="color:#000;font-weight:bold">if</span> <span style="color:#0086b3">len</span>(dest) <span style="color:#000;font-weight:bold">!=</span> <span style="color:#0086b3">len</span>(rs.lastcols) {
+		<span style="color:#000;font-weight:bold">return</span> fmt.<span style="color:#900;font-weight:bold">Errorf</span>(<span style="color:#d14">&#34;sql: expected %d destination arguments in Scan, not %d&#34;</span>, <span style="color:#0086b3">len</span>(rs.lastcols), <span style="color:#0086b3">len</span>(dest))
+	}
+	<span style="color:#000;font-weight:bold">for</span> i, sv <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">range</span> rs.lastcols {
+		err <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">convertAssignRows</span>(dest[i], sv, rs)
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#000;font-weight:bold">return</span> fmt.<span style="color:#900;font-weight:bold">Errorf</span>(<span style="color:#d14">`sql: Scan error on column index %d, name %q: %w`</span>, i, rs.rowsi.<span style="color:#900;font-weight:bold">Columns</span>()[i], err)
+		}
+	}
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">nil</span>
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>最终通过<code>convertAssignRows</code>根据对应类型把数据库的结果读出来，如果我们读出的类型需要自己定义，我们也可以通过实现下面接口就可以达到这个目的。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#998;font-style:italic">// Scanner is an interface used by Scan.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> Scanner <span style="color:#000;font-weight:bold">interface</span> {
+	<span style="color:#998;font-style:italic">// Scan assigns a value from a database driver.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// The src value will be of one of the following types:
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//    int64
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//    float64
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//    bool
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//    []byte
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//    string
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//    time.Time
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//    nil - for NULL values
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// An error should be returned if the value cannot be stored
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// without loss of information.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// Reference types such as []byte are only valid until the next call to Scan
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// and should not be retained. Their underlying memory is owned by the driver.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// If retention is necessary, copy their values before the next call to Scan.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#900;font-weight:bold">Scan</span>(src <span style="color:#000;font-weight:bold">interface</span>{}) <span style="color:#458;font-weight:bold">error</span>
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>通过实现上面的接口可以把数据库的值里面读到我们的类型里面了，再作为数据库sql语句的参数时，我们也可以通过实现下面的接口的话可以转成数据库里面需要的类型了。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#998;font-style:italic">// Valuer is the interface providing the Value method.
+</span><span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic">// Types implementing Valuer interface are able to convert
+</span><span style="color:#998;font-style:italic">// themselves to a driver Value.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> Valuer <span style="color:#000;font-weight:bold">interface</span> {
+	<span style="color:#998;font-style:italic">// Value returns a driver Value.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// Value must not panic.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#900;font-weight:bold">Value</span>() (Value, <span style="color:#458;font-weight:bold">error</span>)
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>我们看下标准库里面的实现，我们实现自己的类型的时候也可以这样来做。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#998;font-style:italic">// NullFloat64 represents a float64 that may be null.
+</span><span style="color:#998;font-style:italic">// NullFloat64 implements the Scanner interface so
+</span><span style="color:#998;font-style:italic">// it can be used as a scan destination, similar to NullString.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> NullFloat64 <span style="color:#000;font-weight:bold">struct</span> {
+	Float64 <span style="color:#458;font-weight:bold">float64</span>
+	Valid   <span style="color:#458;font-weight:bold">bool</span> <span style="color:#998;font-style:italic">// Valid is true if Float64 is not NULL
+</span><span style="color:#998;font-style:italic"></span>}
+
+<span style="color:#998;font-style:italic">// Scan implements the Scanner interface.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (n <span style="color:#000;font-weight:bold">*</span>NullFloat64) <span style="color:#900;font-weight:bold">Scan</span>(value <span style="color:#000;font-weight:bold">interface</span>{}) <span style="color:#458;font-weight:bold">error</span> {
+	<span style="color:#000;font-weight:bold">if</span> value <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+		n.Float64, n.Valid = <span style="color:#099">0</span>, <span style="color:#000;font-weight:bold">false</span>
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">nil</span>
+	}
+	n.Valid = <span style="color:#000;font-weight:bold">true</span>
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#900;font-weight:bold">convertAssign</span>(<span style="color:#000;font-weight:bold">&amp;</span>n.Float64, value)
+}
+
+<span style="color:#998;font-style:italic">// Value implements the driver Valuer interface.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (n NullFloat64) <span style="color:#900;font-weight:bold">Value</span>() (driver.Value, <span style="color:#458;font-weight:bold">error</span>) {
+	<span style="color:#000;font-weight:bold">if</span> !n.Valid {
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">nil</span>, <span style="color:#000;font-weight:bold">nil</span>
+	}
+	<span style="color:#000;font-weight:bold">return</span> n.Float64, <span style="color:#000;font-weight:bold">nil</span>
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="总结">总结</h2>
+<p>gorm还有很多复杂的表达数据库关系的定义和实现，我们这里只是简单的讨论了一个简单的表的数据的查询和读取相关的接口，不过基本也是可以上<strong>道</strong>了把。一个新东西的引入也是有学习成本的，所以我们要依据情况来做选择。使用orm的好处总结如下</p>
+<ul>
+<li>无需关心sql的编写，通过struct他api来定义sql</li>
+<li>通过占位符避免sql注入</li>
+<li>还可以避免连接没有及时释放</li>
+</ul>
+<p>不过orm也有一些缺点，主要是学习成本，还有更新的时候列名同样要写死，这样造成代码不好维护,最好是相关的操作统一放到一处。</p>
+<p>gorm还有很多高级用法，比分scop,plugin。有需要用到的时候可以再官网或者自己看源码怎么使用。</p>
+
+        </div>
+
+        
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/posts/go-redis/">Go Redis</a></li>
+        
+        <li><a href="/posts/gin-martini/">web框架</a></li>
+        
+        <li><a href="/posts/map/">go map</a></li>
+        
+        <li><a href="/posts/slice/">go slice</a></li>
+        
+        <li><a href="/archives/">文章归档</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/gorm'>gorm</a></li>
+                
+                <li><a href='/tags/%E6%95%B0%E6%8D%AE%E5%BA%93'>数据库</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "your github repo"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2021 <a href="">江湖再见 By 江湖再见</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+    <script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script>
+
+
+
+
+    <script src='/js/douban.js'></script>
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="/posts/gorm/" title="gorm">gorm</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-redis/" title="Go Redis">Go Redis</a>
+    </li>
+    
+    <li>
+        <a href="/posts/gin-martini/" title="web框架">web框架</a>
+    </li>
+    
+    <li>
+        <a href="/posts/map/" title="go map">go map</a>
+    </li>
+    
+    <li>
+        <a href="/posts/slice/" title="go slice">go slice</a>
+    </li>
+    
+    <li>
+        <a href="/archives/" title="文章归档">文章归档</a>
+    </li>
+    
+    <li>
+        <a href="/posts/channel/" title="go channel">go channel</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-download/" title="go下载不了的问题">go下载不了的问题</a>
+    </li>
+    
+    <li>
+        <a href="/posts/reason/" title="起源">起源</a>
+    </li>
+    
+    <li>
+        <a href="/posts/generate-go/" title=""></a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="/categories/go%E5%86%85%E9%83%A8%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">go内部源码浅析 (3)</a></li>
+    
+    <li><a href="/categories/%E5%BC%80%E6%BA%90%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">开源源码浅析 (3)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="/tags/channel/">channel</a>
+    
+    <a href="/tags/gin/">gin</a>
+    
+    <a href="/tags/go-redis/">go-redis</a>
+    
+    <a href="/tags/golang/">golang</a>
+    
+    <a href="/tags/gorm/">gorm</a>
+    
+    <a href="/tags/hash-table/">hash table</a>
+    
+    <a href="/tags/map/">map</a>
+    
+    <a href="/tags/martini/">martini</a>
+    
+    <a href="/tags/redis-client/">redis client</a>
+    
+    <a href="/tags/slice/">slice</a>
+    
+    <a href="/tags/sync-map/">sync map</a>
+    
+    <a href="/tags/%E6%90%9E%E7%82%B9%E4%B8%9C%E8%A5%BF/">搞点东西</a>
+    
+    <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+    
+    <a href="/tags/%E9%98%9F%E5%88%97/">队列</a>
+    
+</div>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="http://tofindme.github.io" title="江湖再见的博客">江湖再见的博客</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

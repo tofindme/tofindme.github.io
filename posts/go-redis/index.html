@@ -1,0 +1,1075 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>Go Redis | 江湖再见</title>
+    <meta property="og:title" content="Go Redis - 江湖再见">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2021-12-23T10:15:30&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2021-12-23T10:15:30&#43;08:00'>
+        
+    <meta name="Keywords" content="golang,go语言">
+    <meta name="description" content="Go Redis">
+        
+    <meta name="author" content="江湖再见">
+    <meta property="og:url" content="/posts/go-redis/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="">
+                        江湖再见
+                    </a>
+                
+                <p class="description">这里有Go语言(golang)</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="" href="">首页</a>
+                    
+                    <a  href="/something/" title="test">test</a>
+                    
+                    <a  href="/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#源码赏析路径">源码赏析路径</a>
+      <ul>
+        <li><a href="#client初始化以及成员说明">Client初始化以及成员说明</a></li>
+        <li><a href="#get命令一镜到底">get命令一镜到底</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Go Redis</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2021年12月23日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/%E5%BC%80%E6%BA%90%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90'>开源源码浅析</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <p>redis是一个C语言开发的基于内存的key-value的缓存服务器，协议用的就是文本，服务器用的是epoll实现的多路复用的单进程的IO实现。它有rdb他aof两种可以落地的方案，默认是rdb方式。</p>
+<p>redis是我们做项目种使用比较多的一个第三方依赖，可以根据我们的业务类型存放到不同类型的key中。很多业务都是通过redis来实现的，分布式锁setnx以及秒杀活动等。 go-redis的实现源代码看起来比较舒服，比github.com/garyburd/redigo 抽象了更好。</p>
+<h2 id="源码赏析路径">源码赏析路径</h2>
+<p>通过阅读源码主要是通过他人写的代码来学会如何写好自己的代码以及怎么更好的运用go来完成自己的功能。一下代码基本攘括了go里面的精华。让我们仔细去品品他人写的代码吧!</p>
+<h3 id="client初始化以及成员说明">Client初始化以及成员说明</h3>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">type</span> cmdable <span style="color:#000;font-weight:bold">func</span>(ctx context.Context, cmd Cmder) <span style="color:#458;font-weight:bold">error</span>
+<span style="color:#000;font-weight:bold">func</span> (c cmdable) <span style="color:#900;font-weight:bold">Wait</span>(ctx context.Context, numSlaves <span style="color:#458;font-weight:bold">int</span>, timeout time.Duration) <span style="color:#000;font-weight:bold">*</span>IntCmd {
+	cmd <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">NewIntCmd</span>(ctx, <span style="color:#d14">&#34;wait&#34;</span>, numSlaves, <span style="color:#0086b3">int</span>(timeout<span style="color:#000;font-weight:bold">/</span>time.Millisecond))
+	_ = <span style="color:#900;font-weight:bold">c</span>(ctx, cmd)
+	<span style="color:#000;font-weight:bold">return</span> cmd
+}
+
+<span style="color:#000;font-weight:bold">func</span> (c statefulCmdable) <span style="color:#900;font-weight:bold">Select</span>(ctx context.Context, index <span style="color:#458;font-weight:bold">int</span>) <span style="color:#000;font-weight:bold">*</span>StatusCmd {
+	cmd <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">NewStatusCmd</span>(ctx, <span style="color:#d14">&#34;select&#34;</span>, index)
+	_ = <span style="color:#900;font-weight:bold">c</span>(ctx, cmd)<span style="color:#998;font-style:italic">// c.cmdable = c.Process 执行这个函数
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">return</span> cmd
+}
+<span style="color:#998;font-style:italic">// Client is a Redis client representing a pool of zero or more
+</span><span style="color:#998;font-style:italic">// underlying connections. It&#39;s safe for concurrent use by multiple
+</span><span style="color:#998;font-style:italic">// goroutines.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> Client <span style="color:#000;font-weight:bold">struct</span> {
+	<span style="color:#000;font-weight:bold">*</span>baseClient	<span style="color:#998;font-style:italic">// 可以通过连接池实现对redis server连接的建立和释放
+</span><span style="color:#998;font-style:italic"></span>	cmdable <span style="color:#998;font-style:italic">// 实现所有redis命令的函数类型，函数也快以当成reciver
+</span><span style="color:#998;font-style:italic"></span>	hooks <span style="color:#998;font-style:italic">// 在执行redis命令前后可以设置一些所谓的钩子函数
+</span><span style="color:#998;font-style:italic"></span>	ctx context.Context
+}
+
+<span style="color:#000;font-weight:bold">type</span> baseClient <span style="color:#000;font-weight:bold">struct</span> {
+	opt      <span style="color:#000;font-weight:bold">*</span>Options
+	connPool pool.Pooler
+
+	onClose <span style="color:#000;font-weight:bold">func</span>() <span style="color:#458;font-weight:bold">error</span> <span style="color:#998;font-style:italic">// hook called when client is closed
+</span><span style="color:#998;font-style:italic"></span>}
+
+<span style="color:#998;font-style:italic">// NewClient returns a client to the Redis Server specified by Options.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">NewClient</span>(opt <span style="color:#000;font-weight:bold">*</span>Options) <span style="color:#000;font-weight:bold">*</span>Client {
+	opt.<span style="color:#900;font-weight:bold">init</span>()
+
+	c <span style="color:#000;font-weight:bold">:=</span> Client{
+		baseClient: <span style="color:#900;font-weight:bold">newBaseClient</span>(opt, <span style="color:#900;font-weight:bold">newConnPool</span>(opt)),  <span style="color:#998;font-style:italic">// 默认成员名字就是内嵌类型的名字
+</span><span style="color:#998;font-style:italic"></span>		ctx:        context.<span style="color:#900;font-weight:bold">Background</span>(),
+	}
+	c.cmdable = c.Process <span style="color:#998;font-style:italic">// 默认成员名字就是内嵌类型的名字
+</span><span style="color:#998;font-style:italic"></span>
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">&amp;</span>c
+}
+
+<span style="color:#000;font-weight:bold">var</span> (
+	_ Cmdable = (<span style="color:#000;font-weight:bold">*</span>Client)(<span style="color:#000;font-weight:bold">nil</span>) <span style="color:#998;font-style:italic">// 这个相信好多开源代码里面都有吧？这个在编译器在编译的时候检查这个对象有没实现这个接口对象里面的方法,没有实现对应方法的话就会报错。
+</span><span style="color:#998;font-style:italic"></span>)
+</code></pre></td></tr></table>
+</div>
+</div><p>像上面<code>Client</code>结构体成员的定义这种写法在<code>golang</code>的项目里面是非常常见的，一种类型内嵌到其他类型里面免对应的类型名称的写法大家都叫它组合，通过这种方式省去了名称的定义，我们在去调用内嵌对象类型的方法的时候可以可以用外层对象访问到。不过无论是非接口类型的复杂对象还是接口类型，始终还是当前这个结构体的一个成员，只是免去了定义一个名称而已。</p>
+<h3 id="get命令一镜到底">get命令一镜到底</h3>
+<p>这个库的代码的好处就是抽象了每个类型的命令，然后不同命名的接口会去构造此类的对象，然后通过上面的<code>c.Process</code>去执行，总体每个命令只是参数不一样，所以就抽象成了一个<code>Cmder</code>,我们来看一下简单的<code>get</code>命令。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">70
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang">
+<span style="color:#000;font-weight:bold">type</span> StringCmd <span style="color:#000;font-weight:bold">struct</span> {
+	baseCmd <span style="color:#998;font-style:italic">// 这里又出现了吧，这是一种通用的写法,把一些基础的东西抽象到一个基础的对象里面，这样一来不需要到处写了
+</span><span style="color:#998;font-style:italic"></span>
+	val <span style="color:#458;font-weight:bold">string</span>	<span style="color:#998;font-style:italic">// redis返回的结果，因为redis里面只有字符串，需要自己根据需要转成对应的类型，每个命令根据命令类型都有实现返回具体类型的函数实现
+</span><span style="color:#998;font-style:italic"></span>}
+
+<span style="color:#000;font-weight:bold">var</span> _ Cmder = (<span style="color:#000;font-weight:bold">*</span>StringCmd)(<span style="color:#000;font-weight:bold">nil</span>)<span style="color:#998;font-style:italic">// 在一次看看我吧！
+</span><span style="color:#998;font-style:italic"></span>
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">NewStringCmd</span>(ctx context.Context, args <span style="color:#000;font-weight:bold">...</span><span style="color:#000;font-weight:bold">interface</span>{}) <span style="color:#000;font-weight:bold">*</span>StringCmd {
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">&amp;</span>StringCmd{
+		baseCmd: baseCmd{<span style="color:#998;font-style:italic">// 虽然是go里面经典的写法，但最终都是有一个实体的
+</span><span style="color:#998;font-style:italic"></span>			ctx:  ctx,
+			args: args,
+		},
+	}
+}
+
+<span style="color:#000;font-weight:bold">type</span> baseCmd <span style="color:#000;font-weight:bold">struct</span> {
+	ctx    context.Context
+	args   []<span style="color:#000;font-weight:bold">interface</span>{} <span style="color:#998;font-style:italic">// 所有命令参数，get keyname
+</span><span style="color:#998;font-style:italic"></span>	err    <span style="color:#458;font-weight:bold">error</span>
+	keyPos <span style="color:#458;font-weight:bold">int8</span>
+
+	_readTimeout <span style="color:#000;font-weight:bold">*</span>time.Duration
+}
+
+
+<span style="color:#000;font-weight:bold">func</span> (cmd <span style="color:#000;font-weight:bold">*</span>baseCmd) <span style="color:#900;font-weight:bold">Name</span>() <span style="color:#458;font-weight:bold">string</span> {
+	<span style="color:#000;font-weight:bold">if</span> <span style="color:#0086b3">len</span>(cmd.args) <span style="color:#000;font-weight:bold">==</span> <span style="color:#099">0</span> {
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#d14">&#34;&#34;</span>
+	}
+	<span style="color:#998;font-style:italic">// Cmd name must be lower cased.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">return</span> internal.<span style="color:#900;font-weight:bold">ToLower</span>(cmd.<span style="color:#900;font-weight:bold">stringArg</span>(<span style="color:#099">0</span>))
+}
+
+<span style="color:#000;font-weight:bold">func</span> (cmd <span style="color:#000;font-weight:bold">*</span>baseCmd) <span style="color:#900;font-weight:bold">FullName</span>() <span style="color:#458;font-weight:bold">string</span> {
+	<span style="color:#000;font-weight:bold">switch</span> name <span style="color:#000;font-weight:bold">:=</span> cmd.<span style="color:#900;font-weight:bold">Name</span>(); name {
+	<span style="color:#000;font-weight:bold">case</span> <span style="color:#d14">&#34;cluster&#34;</span>, <span style="color:#d14">&#34;command&#34;</span>:
+		<span style="color:#000;font-weight:bold">if</span> <span style="color:#0086b3">len</span>(cmd.args) <span style="color:#000;font-weight:bold">==</span> <span style="color:#099">1</span> {
+			<span style="color:#000;font-weight:bold">return</span> name
+		}
+		<span style="color:#000;font-weight:bold">if</span> s2, ok <span style="color:#000;font-weight:bold">:=</span> cmd.args[<span style="color:#099">1</span>].(<span style="color:#458;font-weight:bold">string</span>); ok {
+			<span style="color:#000;font-weight:bold">return</span> name <span style="color:#000;font-weight:bold">+</span> <span style="color:#d14">&#34; &#34;</span> <span style="color:#000;font-weight:bold">+</span> s2
+		}
+		<span style="color:#000;font-weight:bold">return</span> name
+	<span style="color:#000;font-weight:bold">default</span>:
+		<span style="color:#000;font-weight:bold">return</span> name
+	}
+}
+
+<span style="color:#000;font-weight:bold">func</span> (cmd <span style="color:#000;font-weight:bold">*</span>baseCmd) <span style="color:#900;font-weight:bold">Args</span>() []<span style="color:#000;font-weight:bold">interface</span>{} {
+	<span style="color:#000;font-weight:bold">return</span> cmd.args
+}
+
+<span style="color:#000;font-weight:bold">type</span> Cmder <span style="color:#000;font-weight:bold">interface</span> {<span style="color:#998;font-style:italic">// 所有命令都实现共同的接口
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#900;font-weight:bold">Name</span>() <span style="color:#458;font-weight:bold">string</span>
+	<span style="color:#900;font-weight:bold">FullName</span>() <span style="color:#458;font-weight:bold">string</span>
+	<span style="color:#900;font-weight:bold">Args</span>() []<span style="color:#000;font-weight:bold">interface</span>{}
+	<span style="color:#900;font-weight:bold">String</span>() <span style="color:#458;font-weight:bold">string</span>
+	<span style="color:#900;font-weight:bold">stringArg</span>(<span style="color:#458;font-weight:bold">int</span>) <span style="color:#458;font-weight:bold">string</span>
+	<span style="color:#900;font-weight:bold">firstKeyPos</span>() <span style="color:#458;font-weight:bold">int8</span>
+	<span style="color:#900;font-weight:bold">setFirstKeyPos</span>(<span style="color:#458;font-weight:bold">int8</span>)
+
+	<span style="color:#900;font-weight:bold">readTimeout</span>() <span style="color:#000;font-weight:bold">*</span>time.Duration
+	<span style="color:#900;font-weight:bold">readReply</span>(rd <span style="color:#000;font-weight:bold">*</span>proto.Reader) <span style="color:#458;font-weight:bold">error</span>
+
+	<span style="color:#900;font-weight:bold">SetErr</span>(<span style="color:#458;font-weight:bold">error</span>)
+	<span style="color:#900;font-weight:bold">Err</span>() <span style="color:#458;font-weight:bold">error</span>
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>以上就是一个简单的redis命令的参数的组装，我们接下来看一下具体怎么和服务器交互，拿到返回结果的。</p>
+<p>主体流程就是通过连接池得到一个连接，默认就启用了连接次，只是池子的大小不同了，连接池的作用就是没有保持固定的连接数量，防止连接数暴增带来的问题，如果达到池子的最大限制的话就会等待有可用的连接，这种就不做介绍了，这种client端的实现一般都会有这种设计，思路都大同小异。</p>
+<h4 id="等待连接">等待连接</h4>
+<blockquote>
+<p>看过代码后通过withconn的封装拿到一个连接，然后在继续后面操作，代码是不是写的比较优雅呢，反正我是这样觉得的。</p>
+</blockquote>
+<p>withConn/WithWriter/WithReader通过这些函数的包装，使我们代码更简单。看起来也很贴切。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">88
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">func</span> (c <span style="color:#000;font-weight:bold">*</span>baseClient) <span style="color:#900;font-weight:bold">process</span>(ctx context.Context, cmd Cmder) <span style="color:#458;font-weight:bold">error</span> {
+	<span style="color:#000;font-weight:bold">var</span> lastErr <span style="color:#458;font-weight:bold">error</span>
+	<span style="color:#998;font-style:italic">// 支持重试次数，有默认值
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">for</span> attempt <span style="color:#000;font-weight:bold">:=</span> <span style="color:#099">0</span>; attempt <span style="color:#000;font-weight:bold">&lt;=</span> c.opt.MaxRetries; attempt<span style="color:#000;font-weight:bold">++</span> {
+		attempt <span style="color:#000;font-weight:bold">:=</span> attempt
+
+		retry, err <span style="color:#000;font-weight:bold">:=</span> c.<span style="color:#900;font-weight:bold">_process</span>(ctx, cmd, attempt)
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> <span style="color:#000;font-weight:bold">||</span> !retry {
+			<span style="color:#000;font-weight:bold">return</span> err
+		}
+
+		lastErr = err
+	}
+	<span style="color:#000;font-weight:bold">return</span> lastErr
+}
+
+<span style="color:#000;font-weight:bold">func</span> (c <span style="color:#000;font-weight:bold">*</span>baseClient) <span style="color:#900;font-weight:bold">_process</span>(ctx context.Context, cmd Cmder, attempt <span style="color:#458;font-weight:bold">int</span>) (<span style="color:#458;font-weight:bold">bool</span>, <span style="color:#458;font-weight:bold">error</span>) {
+	<span style="color:#000;font-weight:bold">if</span> attempt &gt; <span style="color:#099">0</span> {
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">:=</span> internal.<span style="color:#900;font-weight:bold">Sleep</span>(ctx, c.<span style="color:#900;font-weight:bold">retryBackoff</span>(attempt)); err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">false</span>, err
+		}
+	}
+
+	retryTimeout <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">uint32</span>(<span style="color:#099">1</span>)
+	err <span style="color:#000;font-weight:bold">:=</span> c.<span style="color:#900;font-weight:bold">withConn</span>(ctx, <span style="color:#000;font-weight:bold">func</span>(ctx context.Context, cn <span style="color:#000;font-weight:bold">*</span>pool.Conn) <span style="color:#458;font-weight:bold">error</span> {
+		<span style="color:#998;font-style:italic">// 拿到连接，设置超时时间，然后把参数写入连接里面
+</span><span style="color:#998;font-style:italic"></span>		err <span style="color:#000;font-weight:bold">:=</span> cn.<span style="color:#900;font-weight:bold">WithWriter</span>(ctx, c.opt.WriteTimeout, <span style="color:#000;font-weight:bold">func</span>(wr <span style="color:#000;font-weight:bold">*</span>proto.Writer) <span style="color:#458;font-weight:bold">error</span> {
+			<span style="color:#000;font-weight:bold">return</span> <span style="color:#900;font-weight:bold">writeCmd</span>(wr, cmd)
+		})
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#000;font-weight:bold">return</span> err
+		}
+
+		err = cn.<span style="color:#900;font-weight:bold">WithReader</span>(ctx, c.<span style="color:#900;font-weight:bold">cmdTimeout</span>(cmd), cmd.readReply)
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#000;font-weight:bold">if</span> cmd.<span style="color:#900;font-weight:bold">readTimeout</span>() <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+				atomic.<span style="color:#900;font-weight:bold">StoreUint32</span>(<span style="color:#000;font-weight:bold">&amp;</span>retryTimeout, <span style="color:#099">1</span>)
+			}
+			<span style="color:#000;font-weight:bold">return</span> err
+		}
+
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">nil</span>
+	})
+	<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">false</span>, <span style="color:#000;font-weight:bold">nil</span>
+	}
+
+	retry <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">shouldRetry</span>(err, atomic.<span style="color:#900;font-weight:bold">LoadUint32</span>(<span style="color:#000;font-weight:bold">&amp;</span>retryTimeout) <span style="color:#000;font-weight:bold">==</span> <span style="color:#099">1</span>)
+	<span style="color:#000;font-weight:bold">return</span> retry, err
+}
+
+<span style="color:#998;font-style:italic">// 这是一个context典型的用例，在一次call中携带context执行，等待执行结果的样例
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (c <span style="color:#000;font-weight:bold">*</span>baseClient) <span style="color:#900;font-weight:bold">withConn</span>(
+	ctx context.Context, fn <span style="color:#000;font-weight:bold">func</span>(context.Context, <span style="color:#000;font-weight:bold">*</span>pool.Conn) <span style="color:#458;font-weight:bold">error</span>,
+) <span style="color:#458;font-weight:bold">error</span> {
+	cn, err <span style="color:#000;font-weight:bold">:=</span> c.<span style="color:#900;font-weight:bold">getConn</span>(ctx)
+	<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#000;font-weight:bold">return</span> err
+	}
+
+	<span style="color:#000;font-weight:bold">defer</span> <span style="color:#000;font-weight:bold">func</span>() {
+		c.<span style="color:#900;font-weight:bold">releaseConn</span>(ctx, cn, err)
+	}()
+
+	<span style="color:#998;font-style:italic">// 像这种写法nolint的告诉编译器要做什么，好多地方都用到了，对go是非常了解呀！^_^大拇指！
+</span><span style="color:#998;font-style:italic"></span>	done <span style="color:#000;font-weight:bold">:=</span> ctx.<span style="color:#900;font-weight:bold">Done</span>() <span style="color:#998;font-style:italic">//nolint:ifshort
+</span><span style="color:#998;font-style:italic"></span>
+	<span style="color:#000;font-weight:bold">if</span> done <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+		err = <span style="color:#900;font-weight:bold">fn</span>(ctx, cn)
+		<span style="color:#000;font-weight:bold">return</span> err
+	}
+
+	errc <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">make</span>(<span style="color:#000;font-weight:bold">chan</span> <span style="color:#458;font-weight:bold">error</span>, <span style="color:#099">1</span>)
+	<span style="color:#000;font-weight:bold">go</span> <span style="color:#000;font-weight:bold">func</span>() { errc <span style="color:#000;font-weight:bold">&lt;-</span> <span style="color:#900;font-weight:bold">fn</span>(ctx, cn) }()
+
+	<span style="color:#000;font-weight:bold">select</span> {
+	<span style="color:#000;font-weight:bold">case</span> <span style="color:#000;font-weight:bold">&lt;-</span>done:
+		_ = cn.<span style="color:#900;font-weight:bold">Close</span>()
+		<span style="color:#998;font-style:italic">// Wait for the goroutine to finish and send something.
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#000;font-weight:bold">&lt;-</span>errc
+
+		err = ctx.<span style="color:#900;font-weight:bold">Err</span>()
+		<span style="color:#000;font-weight:bold">return</span> err
+	<span style="color:#000;font-weight:bold">case</span> err = <span style="color:#000;font-weight:bold">&lt;-</span>errc:
+		<span style="color:#000;font-weight:bold">return</span> err
+	}
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="命令写入">命令写入</h4>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">func</span> (cn <span style="color:#000;font-weight:bold">*</span>Conn) <span style="color:#900;font-weight:bold">WithWriter</span>(
+	ctx context.Context, timeout time.Duration, fn <span style="color:#000;font-weight:bold">func</span>(wr <span style="color:#000;font-weight:bold">*</span>proto.Writer) <span style="color:#458;font-weight:bold">error</span>,
+) <span style="color:#458;font-weight:bold">error</span> {
+	<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">:=</span> cn.netConn.<span style="color:#900;font-weight:bold">SetWriteDeadline</span>(cn.<span style="color:#900;font-weight:bold">deadline</span>(ctx, timeout)); err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#000;font-weight:bold">return</span> err
+	}
+
+	<span style="color:#000;font-weight:bold">if</span> cn.bw.<span style="color:#900;font-weight:bold">Buffered</span>() &gt; <span style="color:#099">0</span> {
+		cn.bw.<span style="color:#900;font-weight:bold">Reset</span>(cn.netConn)
+	}
+
+	<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">fn</span>(cn.wr); err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#000;font-weight:bold">return</span> err
+	}
+
+	<span style="color:#000;font-weight:bold">return</span> cn.bw.<span style="color:#900;font-weight:bold">Flush</span>()
+}
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">writeCmd</span>(wr <span style="color:#000;font-weight:bold">*</span>proto.Writer, cmd Cmder) <span style="color:#458;font-weight:bold">error</span> {
+	<span style="color:#000;font-weight:bold">return</span> wr.<span style="color:#900;font-weight:bold">WriteArgs</span>(cmd.<span style="color:#900;font-weight:bold">Args</span>())
+}
+
+<span style="color:#000;font-weight:bold">func</span> (w <span style="color:#000;font-weight:bold">*</span>Writer) <span style="color:#900;font-weight:bold">WriteArgs</span>(args []<span style="color:#000;font-weight:bold">interface</span>{}) <span style="color:#458;font-weight:bold">error</span> {
+	<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">:=</span> w.<span style="color:#900;font-weight:bold">WriteByte</span>(ArrayReply); err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#000;font-weight:bold">return</span> err
+	}
+
+	<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">:=</span> w.<span style="color:#900;font-weight:bold">writeLen</span>(<span style="color:#0086b3">len</span>(args)); err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#000;font-weight:bold">return</span> err
+	}
+
+	<span style="color:#000;font-weight:bold">for</span> _, arg <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">range</span> args {
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">:=</span> w.<span style="color:#900;font-weight:bold">WriteArg</span>(arg); err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#000;font-weight:bold">return</span> err
+		}
+	}
+
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">nil</span>
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>看过上面后，以get为例，写入socket的实际数据就是<code>* 1 keyname</code></p>
+<h4 id="数据读取">数据读取</h4>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#998;font-style:italic">// cn.WithReader(ctx, c.cmdTimeout(cmd), cmd.readReply)
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (cn <span style="color:#000;font-weight:bold">*</span>Conn) <span style="color:#900;font-weight:bold">WithReader</span>(ctx context.Context, timeout time.Duration, fn <span style="color:#000;font-weight:bold">func</span>(rd <span style="color:#000;font-weight:bold">*</span>proto.Reader) <span style="color:#458;font-weight:bold">error</span>) <span style="color:#458;font-weight:bold">error</span> {
+	<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">:=</span> cn.netConn.<span style="color:#900;font-weight:bold">SetReadDeadline</span>(cn.<span style="color:#900;font-weight:bold">deadline</span>(ctx, timeout)); err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#000;font-weight:bold">return</span> err
+	}
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#900;font-weight:bold">fn</span>(cn.rd)
+}
+
+
+<span style="color:#000;font-weight:bold">func</span> (cmd <span style="color:#000;font-weight:bold">*</span>StringCmd) <span style="color:#900;font-weight:bold">readReply</span>(rd <span style="color:#000;font-weight:bold">*</span>proto.Reader) (err <span style="color:#458;font-weight:bold">error</span>) {
+	cmd.val, err = rd.<span style="color:#900;font-weight:bold">ReadString</span>()
+	<span style="color:#000;font-weight:bold">return</span> err
+}
+
+
+<span style="color:#000;font-weight:bold">func</span> (r <span style="color:#000;font-weight:bold">*</span>Reader) <span style="color:#900;font-weight:bold">ReadString</span>() (<span style="color:#458;font-weight:bold">string</span>, <span style="color:#458;font-weight:bold">error</span>) {
+	line, err <span style="color:#000;font-weight:bold">:=</span> r.<span style="color:#900;font-weight:bold">ReadLine</span>()
+	<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#d14">&#34;&#34;</span>, err
+	}
+	<span style="color:#000;font-weight:bold">switch</span> line[<span style="color:#099">0</span>] {
+	<span style="color:#000;font-weight:bold">case</span> ErrorReply:
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#d14">&#34;&#34;</span>, <span style="color:#900;font-weight:bold">ParseErrorReply</span>(line)
+	<span style="color:#000;font-weight:bold">case</span> StringReply:
+		<span style="color:#000;font-weight:bold">return</span> r.<span style="color:#900;font-weight:bold">readStringReply</span>(line)
+	<span style="color:#000;font-weight:bold">case</span> StatusReply:
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#0086b3">string</span>(line[<span style="color:#099">1</span>:]), <span style="color:#000;font-weight:bold">nil</span>
+	<span style="color:#000;font-weight:bold">case</span> IntReply:
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#0086b3">string</span>(line[<span style="color:#099">1</span>:]), <span style="color:#000;font-weight:bold">nil</span>
+	<span style="color:#000;font-weight:bold">default</span>:
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#d14">&#34;&#34;</span>, fmt.<span style="color:#900;font-weight:bold">Errorf</span>(<span style="color:#d14">&#34;redis: can&#39;t parse reply=%.100q reading string&#34;</span>, line)
+	}
+}
+
+<span style="color:#000;font-weight:bold">func</span> (r <span style="color:#000;font-weight:bold">*</span>Reader) <span style="color:#900;font-weight:bold">readStringReply</span>(line []<span style="color:#458;font-weight:bold">byte</span>) (<span style="color:#458;font-weight:bold">string</span>, <span style="color:#458;font-weight:bold">error</span>) {
+	<span style="color:#000;font-weight:bold">if</span> <span style="color:#900;font-weight:bold">isNilReply</span>(line) {
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#d14">&#34;&#34;</span>, Nil
+	}
+
+	replyLen, err <span style="color:#000;font-weight:bold">:=</span> util.<span style="color:#900;font-weight:bold">Atoi</span>(line[<span style="color:#099">1</span>:])
+	<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#d14">&#34;&#34;</span>, err
+	}
+
+	b <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">make</span>([]<span style="color:#458;font-weight:bold">byte</span>, replyLen<span style="color:#000;font-weight:bold">+</span><span style="color:#099">2</span>)
+	_, err = io.<span style="color:#900;font-weight:bold">ReadFull</span>(r.rd, b)
+	<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#d14">&#34;&#34;</span>, err
+	}
+
+	<span style="color:#000;font-weight:bold">return</span> util.<span style="color:#900;font-weight:bold">BytesToString</span>(b[:replyLen]), <span style="color:#000;font-weight:bold">nil</span>
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>读数据实际就是对redis协议的解析，这里主要是通过golang去实现了一遍。
+redis协议可以看这里 <a href="https://tofindme.github.io/#%E9%80%9A%E4%BF%A1%E5%8D%8F%E8%AE%AE">协议说明</a></p>
+<h2 id="总结">总结</h2>
+<p>通过阅读源码，我们可以看别人的代码是如何设计以及可以教会我们怎么使用golang写出更好的代码。最好的学校方式莫过于直接读官方的设计文档和直接去看源码和自己的思考，深入的思考。</p>
+
+        </div>
+
+        
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/posts/gin-martini/">web框架</a></li>
+        
+        <li><a href="/posts/map/">go map</a></li>
+        
+        <li><a href="/posts/slice/">go slice</a></li>
+        
+        <li><a href="/archives/">文章归档</a></li>
+        
+        <li><a href="/posts/channel/">go channel</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/go-redis'>go-redis</a></li>
+                
+                <li><a href='/tags/redis-client'>redis client</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "your github repo"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2021 <a href="">江湖再见 By 江湖再见</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+    <script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script>
+
+
+
+
+    <script src='/js/douban.js'></script>
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="/posts/gorm/" title="gorm">gorm</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-redis/" title="Go Redis">Go Redis</a>
+    </li>
+    
+    <li>
+        <a href="/posts/gin-martini/" title="web框架">web框架</a>
+    </li>
+    
+    <li>
+        <a href="/posts/map/" title="go map">go map</a>
+    </li>
+    
+    <li>
+        <a href="/posts/slice/" title="go slice">go slice</a>
+    </li>
+    
+    <li>
+        <a href="/archives/" title="文章归档">文章归档</a>
+    </li>
+    
+    <li>
+        <a href="/posts/channel/" title="go channel">go channel</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-download/" title="go下载不了的问题">go下载不了的问题</a>
+    </li>
+    
+    <li>
+        <a href="/posts/reason/" title="起源">起源</a>
+    </li>
+    
+    <li>
+        <a href="/posts/generate-go/" title=""></a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="/categories/go%E5%86%85%E9%83%A8%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">go内部源码浅析 (3)</a></li>
+    
+    <li><a href="/categories/%E5%BC%80%E6%BA%90%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">开源源码浅析 (3)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="/tags/channel/">channel</a>
+    
+    <a href="/tags/gin/">gin</a>
+    
+    <a href="/tags/go-redis/">go-redis</a>
+    
+    <a href="/tags/golang/">golang</a>
+    
+    <a href="/tags/gorm/">gorm</a>
+    
+    <a href="/tags/hash-table/">hash table</a>
+    
+    <a href="/tags/map/">map</a>
+    
+    <a href="/tags/martini/">martini</a>
+    
+    <a href="/tags/redis-client/">redis client</a>
+    
+    <a href="/tags/slice/">slice</a>
+    
+    <a href="/tags/sync-map/">sync map</a>
+    
+    <a href="/tags/%E6%90%9E%E7%82%B9%E4%B8%9C%E8%A5%BF/">搞点东西</a>
+    
+    <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+    
+    <a href="/tags/%E9%98%9F%E5%88%97/">队列</a>
+    
+</div>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="http://tofindme.github.io" title="江湖再见的博客">江湖再见的博客</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

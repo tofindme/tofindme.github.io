@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>go channel | 江湖再见</title>
+    <meta property="og:title" content="go channel - 江湖再见">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2021-12-16T19:15:30&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2021-12-16T19:15:30&#43;08:00'>
+        
+    <meta name="Keywords" content="golang,go语言">
+    <meta name="description" content="go channel">
+        
+    <meta name="author" content="江湖再见">
+    <meta property="og:url" content="/posts/channel/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="">
+                        江湖再见
+                    </a>
+                
+                <p class="description">这里有Go语言(golang)</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="" href="">首页</a>
+                    
+                    <a  href="/something/" title="test">test</a>
+                    
+                    <a  href="/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#样例">样例</a>
+      <ul>
+        <li><a href="#阻塞">阻塞</a></li>
+        <li><a href="#非阻塞">非阻塞</a></li>
+      </ul>
+    </li>
+    <li><a href="#源码赏析">源码赏析</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#注意事项">注意事项</a></li>
+    <li><a href="#疑问">疑问</a></li>
+    <li><a href="#后记">后记</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">go channel</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2021年12月16日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/go%E5%86%85%E9%83%A8%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90'>go内部源码浅析</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <p><code>channel</code>通常理解和把他当成程序内部的队列来使用，根据队列的长度，可以把队列分为<strong>有缓冲队列(长度非0)</strong>,也叫<strong>不阻塞队列</strong>；<strong>无缓冲队列(长度为0)</strong>，也叫<strong>阻塞队列</strong>。</p>
+<p>我们在项目实践过程种最多的用到的还是在不同<code>goroutine</code>之间传递数据，可以是<strong>一对一</strong>或者<strong>多对一</strong>又或者<strong>多对多</strong>，这取决于自己的业务场景里面解决的什么问题。</p>
+<h2 id="样例">样例</h2>
+<h3 id="阻塞">阻塞</h3>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">package</span> main
+
+<span style="color:#000;font-weight:bold">import</span> (
+	<span style="color:#d14">&#34;fmt&#34;</span>
+	<span style="color:#d14">&#34;time&#34;</span>
+)
+
+<span style="color:#000;font-weight:bold">type</span> Bus <span style="color:#000;font-weight:bold">struct</span> {
+	Id      <span style="color:#458;font-weight:bold">int64</span>
+	Code    <span style="color:#458;font-weight:bold">string</span>
+	Company <span style="color:#458;font-weight:bold">string</span>
+}
+
+<span style="color:#000;font-weight:bold">type</span> People <span style="color:#000;font-weight:bold">struct</span> {
+	Name <span style="color:#458;font-weight:bold">string</span>
+}
+
+<span style="color:#998;font-style:italic">// 限定只读的写法
+</span><span style="color:#998;font-style:italic">// func WaitBus(wait &lt;-chan Bus) {
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">WaitBus</span>(wait <span style="color:#000;font-weight:bold">chan</span> Bus, people People) {
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;%v is waiting...\n&#34;</span>, people.Name)
+	bus <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">&lt;-</span>wait
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;bus come %+v\n&#34;</span>, bus)
+}
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">main</span>() {
+	<span style="color:#000;font-weight:bold">var</span> (
+		busChannel <span style="color:#000;font-weight:bold">chan</span> Bus
+		bus        Bus = Bus{Id: <span style="color:#099">1</span>, Code: <span style="color:#d14">&#34;01A543&#34;</span>, Company: <span style="color:#d14">&#34;江湖再见&#34;</span>}
+	)
+	busChannel = <span style="color:#0086b3">make</span>(<span style="color:#000;font-weight:bold">chan</span> Bus) <span style="color:#998;font-style:italic">// 不指定后面的size就是阻塞的
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">go</span> <span style="color:#900;font-weight:bold">WaitBus</span>(busChannel, People{Name: <span style="color:#d14">&#34;p1&#34;</span>})
+	busChannel <span style="color:#000;font-weight:bold">&lt;-</span> bus
+	time.<span style="color:#900;font-weight:bold">Sleep</span>(<span style="color:#099">2</span> <span style="color:#000;font-weight:bold">*</span> time.Second) <span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;welcome!!&#34;</span>)
+}
+
+
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="非阻塞">非阻塞</h3>
+<blockquote>
+<p>多个goroutine在同一个channel上面阻塞度消息的时候会按系统的规则进行唤醒，下面看源码的时候在仔细看下</p>
+</blockquote>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">package</span> main
+
+<span style="color:#000;font-weight:bold">import</span> (
+	<span style="color:#d14">&#34;fmt&#34;</span>
+	<span style="color:#d14">&#34;time&#34;</span>
+)
+
+<span style="color:#000;font-weight:bold">type</span> Bus <span style="color:#000;font-weight:bold">struct</span> {
+	Id      <span style="color:#458;font-weight:bold">int64</span>
+	Code    <span style="color:#458;font-weight:bold">string</span>
+	Company <span style="color:#458;font-weight:bold">string</span>
+}
+
+<span style="color:#000;font-weight:bold">type</span> People <span style="color:#000;font-weight:bold">struct</span> {
+	Name <span style="color:#458;font-weight:bold">string</span>
+}
+
+<span style="color:#998;font-style:italic">// 限定只读的写法
+</span><span style="color:#998;font-style:italic">// func WaitBus(wait &lt;-chan Bus) {
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">WaitBus</span>(wait <span style="color:#000;font-weight:bold">chan</span> Bus, people People) {
+	<span style="color:#000;font-weight:bold">for</span> bus <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">range</span> wait { <span style="color:#998;font-style:italic">// 另外一种写法
+</span><span style="color:#998;font-style:italic"></span>		fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;%v get in %+v\n&#34;</span>, people.Name, bus)
+	}
+}
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">main</span>() {
+	<span style="color:#000;font-weight:bold">var</span> (
+		busChannel <span style="color:#000;font-weight:bold">chan</span> Bus
+	)
+	busChannel = <span style="color:#0086b3">make</span>(<span style="color:#000;font-weight:bold">chan</span> Bus, <span style="color:#099">4</span>) <span style="color:#998;font-style:italic">// 4辆巴士
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">for</span> i <span style="color:#000;font-weight:bold">:=</span> <span style="color:#099">0</span>; i &lt; <span style="color:#099">10</span>; i<span style="color:#000;font-weight:bold">++</span> {      <span style="color:#998;font-style:italic">// 10个人等bus
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#000;font-weight:bold">go</span> <span style="color:#900;font-weight:bold">WaitBus</span>(busChannel, People{Name: fmt.<span style="color:#900;font-weight:bold">Sprintf</span>(<span style="color:#d14">&#34;p%v&#34;</span>, i<span style="color:#000;font-weight:bold">+</span><span style="color:#099">1</span>)})
+	}
+
+	<span style="color:#000;font-weight:bold">for</span> i <span style="color:#000;font-weight:bold">:=</span> <span style="color:#099">0</span>; i &lt; <span style="color:#099">4</span>; i<span style="color:#000;font-weight:bold">++</span> {
+		<span style="color:#000;font-weight:bold">go</span> <span style="color:#000;font-weight:bold">func</span>(i <span style="color:#458;font-weight:bold">int</span>) {
+			busChannel <span style="color:#000;font-weight:bold">&lt;-</span> Bus{Id: <span style="color:#0086b3">int64</span>(i <span style="color:#000;font-weight:bold">+</span> <span style="color:#099">1</span>), Company: <span style="color:#d14">&#34;江湖再见&#34;</span>}
+		}(i)
+	}
+	time.<span style="color:#900;font-weight:bold">Sleep</span>(<span style="color:#099">2</span> <span style="color:#000;font-weight:bold">*</span> time.Second) <span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">/*
+</span><span style="color:#998;font-style:italic">		output:
+</span><span style="color:#998;font-style:italic">			p7 get in {Id:3 Code: Company:江湖再见}
+</span><span style="color:#998;font-style:italic">			p1 get in {Id:4 Code: Company:江湖再见}
+</span><span style="color:#998;font-style:italic">			p2 get in {Id:2 Code: Company:江湖再见}
+</span><span style="color:#998;font-style:italic">			p5 get in {Id:1 Code: Company:江湖再见}
+</span><span style="color:#998;font-style:italic">	*/</span>
+}
+
+
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="源码赏析">源码赏析</h2>
+<p><!-- raw HTML omitted -->runtime/chan.go<!-- raw HTML omitted -->这就是底层的数据结构，仔细看下每个成员其实都好理解，主要看具体怎么实现的，比方说写数据和读数据后面整个实现过程，我们就带着这两个疑问来看下吧。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">type</span> hchan <span style="color:#000;font-weight:bold">struct</span> {
+	qcount   <span style="color:#458;font-weight:bold">uint</span>           <span style="color:#998;font-style:italic">// total data in the queue
+</span><span style="color:#998;font-style:italic"></span>	dataqsiz <span style="color:#458;font-weight:bold">uint</span>           <span style="color:#998;font-style:italic">// size of the circular queue
+</span><span style="color:#998;font-style:italic"></span>	buf      unsafe.Pointer <span style="color:#998;font-style:italic">// points to an array of dataqsiz elements
+</span><span style="color:#998;font-style:italic"></span>	elemsize <span style="color:#458;font-weight:bold">uint16</span>
+	closed   <span style="color:#458;font-weight:bold">uint32</span>
+	elemtype <span style="color:#000;font-weight:bold">*</span>_type <span style="color:#998;font-style:italic">// element type
+</span><span style="color:#998;font-style:italic"></span>	sendx    <span style="color:#458;font-weight:bold">uint</span>   <span style="color:#998;font-style:italic">// send index
+</span><span style="color:#998;font-style:italic"></span>	recvx    <span style="color:#458;font-weight:bold">uint</span>   <span style="color:#998;font-style:italic">// receive index
+</span><span style="color:#998;font-style:italic"></span>	recvq    waitq  <span style="color:#998;font-style:italic">// list of recv waiters
+</span><span style="color:#998;font-style:italic"></span>	sendq    waitq  <span style="color:#998;font-style:italic">// list of send waiters
+</span><span style="color:#998;font-style:italic"></span>
+	<span style="color:#998;font-style:italic">// lock protects all fields in hchan, as well as several
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// fields in sudogs blocked on this channel.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// Do not change another G&#39;s status while holding this lock
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// (in particular, do not ready a G), as this can deadlock
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// with stack shrinking.
+</span><span style="color:#998;font-style:italic"></span>	lock mutex
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>我们看到有一个<!-- raw HTML omitted --> buf<!-- raw HTML omitted -->成员指针，指向一个数组，数组的长度为<!-- raw HTML omitted -->dataqsize<!-- raw HTML omitted -->，数组存放的内容的类型是<!-- raw HTML omitted -->elemtype<!-- raw HTML omitted -->,还有当前有多少个数据在队列里面，以及往队列里面发送数据和等待读取队列的<!-- raw HTML omitted -->goroutine<!-- raw HTML omitted -->的两个双向链表，看起来差不多了懂了的样子，还有两个看起来不是很明确用来做什么的变量<!-- raw HTML omitted --><strong>sendx recvx</strong><!-- raw HTML omitted -->,接下来我们看下看往队列里面放数据和读取数据是怎么实现的。</p>
+<h4 id="发送数据">发送数据</h4>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">chansend</span>(c <span style="color:#000;font-weight:bold">*</span>hchan, ep unsafe.Pointer, block <span style="color:#458;font-weight:bold">bool</span>, callerpc <span style="color:#458;font-weight:bold">uintptr</span>) <span style="color:#458;font-weight:bold">bool</span> {
+	<span style="color:#998;font-style:italic">// ..... 
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">if</span> c.qcount &lt; c.dataqsiz {
+		<span style="color:#998;font-style:italic">// Space is available in the channel buffer. Enqueue the element to send.
+</span><span style="color:#998;font-style:italic"></span>		qp <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">chanbuf</span>(c, c.sendx)
+		<span style="color:#000;font-weight:bold">if</span> raceenabled {
+			<span style="color:#900;font-weight:bold">racenotify</span>(c, c.sendx, <span style="color:#000;font-weight:bold">nil</span>)
+		}
+		<span style="color:#900;font-weight:bold">typedmemmove</span>(c.elemtype, qp, ep)
+		c.sendx<span style="color:#000;font-weight:bold">++</span>
+		<span style="color:#000;font-weight:bold">if</span> c.sendx <span style="color:#000;font-weight:bold">==</span> c.dataqsiz {
+			c.sendx = <span style="color:#099">0</span>
+		}
+		c.qcount<span style="color:#000;font-weight:bold">++</span>
+		<span style="color:#900;font-weight:bold">unlock</span>(<span style="color:#000;font-weight:bold">&amp;</span>c.lock)
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">true</span>
+	}
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="读取数据">读取数据</h4>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">chanrecv</span>(c <span style="color:#000;font-weight:bold">*</span>hchan, ep unsafe.Pointer, block <span style="color:#458;font-weight:bold">bool</span>) (selected, received <span style="color:#458;font-weight:bold">bool</span>) {
+    <span style="color:#998;font-style:italic">// ....
+</span><span style="color:#998;font-style:italic"></span>    	<span style="color:#000;font-weight:bold">if</span> sg <span style="color:#000;font-weight:bold">:=</span> c.sendq.<span style="color:#900;font-weight:bold">dequeue</span>(); sg <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#998;font-style:italic">// Found a waiting sender. If buffer is size 0, receive value
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// directly from sender. Otherwise, receive from head of queue
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// and add sender&#39;s value to the tail of the queue (both map to
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// the same buffer slot because the queue is full).
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#900;font-weight:bold">recv</span>(c, sg, ep, <span style="color:#000;font-weight:bold">func</span>() { <span style="color:#900;font-weight:bold">unlock</span>(<span style="color:#000;font-weight:bold">&amp;</span>c.lock) }, <span style="color:#099">3</span>)
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">true</span>, <span style="color:#000;font-weight:bold">true</span>
+	}
+
+	<span style="color:#000;font-weight:bold">if</span> c.qcount &gt; <span style="color:#099">0</span> {
+		<span style="color:#998;font-style:italic">// Receive directly from queue
+</span><span style="color:#998;font-style:italic"></span>		qp <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">chanbuf</span>(c, c.recvx)
+		<span style="color:#000;font-weight:bold">if</span> raceenabled {
+			<span style="color:#900;font-weight:bold">racenotify</span>(c, c.recvx, <span style="color:#000;font-weight:bold">nil</span>)
+		}
+		<span style="color:#000;font-weight:bold">if</span> ep <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#900;font-weight:bold">typedmemmove</span>(c.elemtype, ep, qp)
+		}
+		<span style="color:#900;font-weight:bold">typedmemclr</span>(c.elemtype, qp)
+		c.recvx<span style="color:#000;font-weight:bold">++</span>
+		<span style="color:#000;font-weight:bold">if</span> c.recvx <span style="color:#000;font-weight:bold">==</span> c.dataqsiz {
+			c.recvx = <span style="color:#099">0</span>
+		}
+		c.qcount<span style="color:#000;font-weight:bold">--</span>
+		<span style="color:#900;font-weight:bold">unlock</span>(<span style="color:#000;font-weight:bold">&amp;</span>c.lock)
+		<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">true</span>, <span style="color:#000;font-weight:bold">true</span>
+	}
+}
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="goroutine等待队列的实现">goroutine等待队列的实现</h4>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang">
+<span style="color:#000;font-weight:bold">type</span> waitq <span style="color:#000;font-weight:bold">struct</span> {
+	first <span style="color:#000;font-weight:bold">*</span>sudog
+	last  <span style="color:#000;font-weight:bold">*</span>sudog
+}
+
+<span style="color:#000;font-weight:bold">func</span> (q <span style="color:#000;font-weight:bold">*</span>waitq) <span style="color:#900;font-weight:bold">enqueue</span>(sgp <span style="color:#000;font-weight:bold">*</span>sudog) {
+	sgp.next = <span style="color:#000;font-weight:bold">nil</span>
+	x <span style="color:#000;font-weight:bold">:=</span> q.last
+	<span style="color:#000;font-weight:bold">if</span> x <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+		sgp.prev = <span style="color:#000;font-weight:bold">nil</span>
+		q.first = sgp
+		q.last = sgp
+		<span style="color:#000;font-weight:bold">return</span>
+	}
+	sgp.prev = x
+	x.next = sgp
+	q.last = sgp
+}
+
+<span style="color:#000;font-weight:bold">func</span> (q <span style="color:#000;font-weight:bold">*</span>waitq) <span style="color:#900;font-weight:bold">dequeue</span>() <span style="color:#000;font-weight:bold">*</span>sudog {
+	<span style="color:#000;font-weight:bold">for</span> {
+		sgp <span style="color:#000;font-weight:bold">:=</span> q.first
+		<span style="color:#000;font-weight:bold">if</span> sgp <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">nil</span>
+		}
+		y <span style="color:#000;font-weight:bold">:=</span> sgp.next
+		<span style="color:#000;font-weight:bold">if</span> y <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+			q.first = <span style="color:#000;font-weight:bold">nil</span>
+			q.last = <span style="color:#000;font-weight:bold">nil</span>
+		} <span style="color:#000;font-weight:bold">else</span> {
+			y.prev = <span style="color:#000;font-weight:bold">nil</span>
+			q.first = y
+			sgp.next = <span style="color:#000;font-weight:bold">nil</span> <span style="color:#998;font-style:italic">// mark as removed (see dequeueSudog)
+</span><span style="color:#998;font-style:italic"></span>		}
+
+		<span style="color:#998;font-style:italic">// if a goroutine was put on this queue because of a
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// select, there is a small window between the goroutine
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// being woken up by a different case and it grabbing the
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// channel locks. Once it has the lock
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// it removes itself from the queue, so we won&#39;t see it after that.
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// We use a flag in the G struct to tell us when someone
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// else has won the race to signal this goroutine but the goroutine
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// hasn&#39;t removed itself from the queue yet.
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#000;font-weight:bold">if</span> sgp.isSelect <span style="color:#000;font-weight:bold">&amp;&amp;</span> !atomic.<span style="color:#900;font-weight:bold">Cas</span>(<span style="color:#000;font-weight:bold">&amp;</span>sgp.g.selectDone, <span style="color:#099">0</span>, <span style="color:#099">1</span>) {
+			<span style="color:#000;font-weight:bold">continue</span>
+		}
+
+		<span style="color:#000;font-weight:bold">return</span> sgp
+	}
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><p>我们看过发送和接收这两个函数后，队列里面有数据的情况下面主要是队当前队列长度以及发送和接收的下标移动来实现数据的收发逻辑，核心逻辑大体也是这样的，数组长度是固定的，只要在这个数组上面通过下标的移动来实现这个channel的功能。其他的话主体也是发送的时候如果满了就放到sendq，接收如果队列目前没数据的话放到recvq</p>
+<pre tabindex="0"><code class="language-raw" data-lang="raw">buf数组长度9的示例
+------------------------------------------------------------------------
+	|	|	|	|	|	|	|	|	|
+------------------------------------------------------------------------
+						|sendx 为6，当前队列qcount为6个
+	|recvx 为1，当前队列qcount为5	
+</code></pre><p>这样就实现了一个队列的功能了，主题功能的实现看似简单，但是结合<code>goroutine</code>的调度可能就没那么容易了，需要结合当前<code>goroutine</code>已经<code>channel</code>当前的一个特性进行不同逻辑的实现，总体而言，只要有了方向和合理的实现方案，我想那些代码在我们的“疑问&quot;中最终都会得到答案的！</p>
+<h2 id="注意事项">注意事项</h2>
+<ol>
+<li>不要往已经<!-- raw HTML omitted -->关闭<!-- raw HTML omitted -->的<strong>channel</strong>里面放东西</li>
+<li>不要<!-- raw HTML omitted --> 重复关闭<!-- raw HTML omitted --></li>
+<li>在往<strong>channel</strong>写数据的时候不论是阻塞的还是非阻塞的最好用<!-- raw HTML omitted -->select<!-- raw HTML omitted -->来避免阻塞当前<!-- raw HTML omitted -->goroutine<!-- raw HTML omitted --></li>
+</ol>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">-</span> <span style="color:#0086b3">panic</span>(<span style="color:#900;font-weight:bold">plainError</span>(<span style="color:#d14">&#34;send on closed channel&#34;</span>))
+<span style="color:#000;font-weight:bold">-</span> <span style="color:#0086b3">panic</span>(<span style="color:#900;font-weight:bold">plainError</span>(<span style="color:#d14">&#34;close of closed channel&#34;</span>))
+</code></pre></td></tr></table>
+</div>
+</div><blockquote>
+<p>go里面通过channel触发的定时器的实现也是通过select 的default来避免这个问题，我们也可以用context或者定时器来避免阻塞的问题</p>
+</blockquote>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">sendTime</span>(c <span style="color:#000;font-weight:bold">interface</span>{}, seq <span style="color:#458;font-weight:bold">uintptr</span>) {
+	<span style="color:#998;font-style:italic">// Non-blocking send of time on c.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// Used in NewTimer, it cannot block anyway (buffer).
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// Used in NewTicker, dropping sends on the floor is
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// the desired behavior when the reader gets behind,
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// because the sends are periodic.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">select</span> {
+	<span style="color:#000;font-weight:bold">case</span> c.(<span style="color:#000;font-weight:bold">chan</span> Time) <span style="color:#000;font-weight:bold">&lt;-</span> <span style="color:#900;font-weight:bold">Now</span>():
+	<span style="color:#000;font-weight:bold">default</span>:
+	}
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="疑问">疑问</h2>
+<p>通过翻看源代码，似乎理解了他底层的实现有个轮廓上面的认识了。但还是带着一些疑问。</p>
+<p><strong>比方说不同goroutine在共享一块内存用来传递的时候内存的分配原理</strong>
+<strong>多个goroutine在range时唤醒在睡眠和recvq的一个关系</strong>
+<strong>goroutine的调度唤醒原理</strong>  <em>面试官一般会问问这个话题，看面试者是个什么状态</em></p>
+<h2 id="后记">后记</h2>
+<p>发现生成的html看不到对应目录结构图，参考别人的以及看页面的数据，发现所有的标题级别降低以及，还有一个问题字体颜色目前不生效。后续需要解决下页面才更好看</p>
+
+        </div>
+
+        
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/posts/go-download/">go下载不了的问题</a></li>
+        
+        <li><a href="/posts/reason/">起源</a></li>
+        
+        <li><a href="/posts/hugo/"></a></li>
+        
+        <li><a href="/posts/generate-go/"></a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/channel'>channel</a></li>
+                
+                <li><a href='/tags/golang'>golang</a></li>
+                
+                <li><a href='/tags/%E9%98%9F%E5%88%97'>队列</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "your github repo"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2021 <a href="">江湖再见 By 江湖再见</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+    <script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script>
+
+
+
+
+    <script src='/js/douban.js'></script>
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="/posts/gorm/" title="gorm">gorm</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-redis/" title="Go Redis">Go Redis</a>
+    </li>
+    
+    <li>
+        <a href="/posts/gin-martini/" title="web框架">web框架</a>
+    </li>
+    
+    <li>
+        <a href="/posts/map/" title="go map">go map</a>
+    </li>
+    
+    <li>
+        <a href="/posts/slice/" title="go slice">go slice</a>
+    </li>
+    
+    <li>
+        <a href="/archives/" title="文章归档">文章归档</a>
+    </li>
+    
+    <li>
+        <a href="/posts/channel/" title="go channel">go channel</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-download/" title="go下载不了的问题">go下载不了的问题</a>
+    </li>
+    
+    <li>
+        <a href="/posts/reason/" title="起源">起源</a>
+    </li>
+    
+    <li>
+        <a href="/posts/generate-go/" title=""></a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="/categories/go%E5%86%85%E9%83%A8%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">go内部源码浅析 (3)</a></li>
+    
+    <li><a href="/categories/%E5%BC%80%E6%BA%90%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">开源源码浅析 (3)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="/tags/channel/">channel</a>
+    
+    <a href="/tags/gin/">gin</a>
+    
+    <a href="/tags/go-redis/">go-redis</a>
+    
+    <a href="/tags/golang/">golang</a>
+    
+    <a href="/tags/gorm/">gorm</a>
+    
+    <a href="/tags/hash-table/">hash table</a>
+    
+    <a href="/tags/map/">map</a>
+    
+    <a href="/tags/martini/">martini</a>
+    
+    <a href="/tags/redis-client/">redis client</a>
+    
+    <a href="/tags/slice/">slice</a>
+    
+    <a href="/tags/sync-map/">sync map</a>
+    
+    <a href="/tags/%E6%90%9E%E7%82%B9%E4%B8%9C%E8%A5%BF/">搞点东西</a>
+    
+    <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+    
+    <a href="/tags/%E9%98%9F%E5%88%97/">队列</a>
+    
+</div>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="http://tofindme.github.io" title="江湖再见的博客">江湖再见的博客</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

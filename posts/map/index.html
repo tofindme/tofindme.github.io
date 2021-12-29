@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>go map | 江湖再见</title>
+    <meta property="og:title" content="go map - 江湖再见">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2021-12-21T16:14:30&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2021-12-21T16:14:30&#43;08:00'>
+        
+    <meta name="Keywords" content="golang,go语言">
+    <meta name="description" content="go map">
+        
+    <meta name="author" content="江湖再见">
+    <meta property="og:url" content="/posts/map/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="">
+                        江湖再见
+                    </a>
+                
+                <p class="description">这里有Go语言(golang)</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="" href="">首页</a>
+                    
+                    <a  href="/something/" title="test">test</a>
+                    
+                    <a  href="/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#样例">样例</a></li>
+    <li><a href="#不安全map源码赏析">不安全map源码赏析</a>
+      <ul>
+        <li><a href="#map写入">map写入</a></li>
+        <li><a href="#map读取">map读取</a></li>
+      </ul>
+    </li>
+    <li><a href="#安全map源码赏析">安全map源码赏析</a></li>
+    <li><a href="#注意事项">注意事项</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">go map</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2021年12月21日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/go%E5%86%85%E9%83%A8%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90'>go内部源码浅析</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <p>map是一种hash table。map这数据类型在我们开发种用到很频繁，典型的通过一个key关联一个value，value可以是基础类型和复杂的类型struct,map本身。key的话需要可以用来比较，这样才可以从map找到对应的value</p>
+<p>A map is just a hash table. The data is arranged
+into an array of buckets. Each bucket contains up to
+8 key/elem pairs. The low-order bits of the hash are
+used to select a bucket. Each bucket contains a few
+high-order bits of each hash to distinguish the entries
+within a single bucket.</p>
+<p>If more than 8 keys hash to a bucket, we chain on
+extra buckets.</p>
+<p>When the hashtable grows, we allocate a new array
+of buckets twice as big. Buckets are incrementally
+copied from the old bucket array to the new bucket array.</p>
+<p>hash table的实现思路主要是根据key算一个hash,然后在根据这个hash值到对应的bucket里面去找对应的数据，原文翻译的意思大概是hash的低位觉得所在bucket，高位决定value在bucket里面的具体位置。</p>
+<p>这个内置的map不是并发安全的，所以后来标准库里面提供了安全的map来使用，顺便我们看看安全的map的使用</p>
+<h2 id="样例">样例</h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">type</span> MapKey <span style="color:#000;font-weight:bold">struct</span> {
+	Id <span style="color:#458;font-weight:bold">int</span>
+}
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">main</span>() {
+	<span style="color:#000;font-weight:bold">var</span> testMap <span style="color:#000;font-weight:bold">map</span>[MapKey]MapKey
+	testMap = <span style="color:#0086b3">make</span>(<span style="color:#000;font-weight:bold">map</span>[MapKey]MapKey)
+	k1 <span style="color:#000;font-weight:bold">:=</span> MapKey{Id: <span style="color:#099">1</span>}
+	testMap[k1] = k1
+	k2 <span style="color:#000;font-weight:bold">:=</span> MapKey{Id: <span style="color:#099">2</span>} <span style="color:#998;font-style:italic">// 如果是1的话，map里面默认以及存在，会覆盖
+</span><span style="color:#998;font-style:italic"></span>	testMap[k2] = k2
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;%+v\n&#34;</span>, testMap) 
+	<span style="color:#998;font-style:italic">// ouput:
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// map[{Id:1}:{Id:1} {Id:2}:{Id:2}]
+</span><span style="color:#998;font-style:italic"></span>}
+
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="不安全map源码赏析">不安全map源码赏析</h2>
+<h3 id="map写入">map写入</h3>
+<p><!-- raw HTML omitted -->runtime/map.go<!-- raw HTML omitted --></p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">mapassign</span>(t <span style="color:#000;font-weight:bold">*</span>maptype, h <span style="color:#000;font-weight:bold">*</span>hmap, key unsafe.Pointer) unsafe.Pointer {
+	<span style="color:#998;font-style:italic">// ...
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// 算出hash值
+</span><span style="color:#998;font-style:italic"></span>	hash <span style="color:#000;font-weight:bold">:=</span> t.<span style="color:#900;font-weight:bold">hasher</span>(key, <span style="color:#0086b3">uintptr</span>(h.hash0))
+	<span style="color:#998;font-style:italic">// Set hashWriting after calling t.hasher, since t.hasher may panic,
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// in which case we have not actually done a write.
+</span><span style="color:#998;font-style:italic"></span>	h.flags ^= hashWriting
+
+	<span style="color:#000;font-weight:bold">if</span> h.buckets <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+		h.buckets = <span style="color:#900;font-weight:bold">newobject</span>(t.bucket) <span style="color:#998;font-style:italic">// newarray(t.bucket, 1)
+</span><span style="color:#998;font-style:italic"></span>	}
+
+again:
+	<span style="color:#998;font-style:italic">// 找到在哪个bucket
+</span><span style="color:#998;font-style:italic"></span>	bucket <span style="color:#000;font-weight:bold">:=</span> hash <span style="color:#000;font-weight:bold">&amp;</span> <span style="color:#900;font-weight:bold">bucketMask</span>(h.B)
+	<span style="color:#000;font-weight:bold">if</span> h.<span style="color:#900;font-weight:bold">growing</span>() {
+		<span style="color:#900;font-weight:bold">growWork</span>(t, h, bucket)
+	}
+	<span style="color:#998;font-style:italic">// 指针移动找到bucket
+</span><span style="color:#998;font-style:italic"></span>	b <span style="color:#000;font-weight:bold">:=</span> (<span style="color:#000;font-weight:bold">*</span>bmap)(<span style="color:#900;font-weight:bold">add</span>(h.buckets, bucket<span style="color:#000;font-weight:bold">*</span><span style="color:#0086b3">uintptr</span>(t.bucketsize)))
+	top <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">tophash</span>(hash)<span style="color:#998;font-style:italic">// 得到hash的高位，决定bucket所在具体位置
+</span><span style="color:#998;font-style:italic"></span>
+	<span style="color:#000;font-weight:bold">var</span> inserti <span style="color:#000;font-weight:bold">*</span><span style="color:#458;font-weight:bold">uint8</span>
+	<span style="color:#000;font-weight:bold">var</span> insertk unsafe.Pointer
+	<span style="color:#000;font-weight:bold">var</span> elem unsafe.Pointer
+bucketloop:
+	<span style="color:#000;font-weight:bold">for</span> {
+		<span style="color:#000;font-weight:bold">for</span> i <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">uintptr</span>(<span style="color:#099">0</span>); i &lt; bucketCnt; i<span style="color:#000;font-weight:bold">++</span> {
+			<span style="color:#000;font-weight:bold">if</span> b.tophash[i] <span style="color:#000;font-weight:bold">!=</span> top {
+				<span style="color:#000;font-weight:bold">if</span> <span style="color:#900;font-weight:bold">isEmpty</span>(b.tophash[i]) <span style="color:#000;font-weight:bold">&amp;&amp;</span> inserti <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+					inserti = <span style="color:#000;font-weight:bold">&amp;</span>b.tophash[i]
+					insertk = <span style="color:#900;font-weight:bold">add</span>(unsafe.<span style="color:#900;font-weight:bold">Pointer</span>(b), dataOffset<span style="color:#000;font-weight:bold">+</span>i<span style="color:#000;font-weight:bold">*</span><span style="color:#0086b3">uintptr</span>(t.keysize))
+					elem = <span style="color:#900;font-weight:bold">add</span>(unsafe.<span style="color:#900;font-weight:bold">Pointer</span>(b), dataOffset<span style="color:#000;font-weight:bold">+</span>bucketCnt<span style="color:#000;font-weight:bold">*</span><span style="color:#0086b3">uintptr</span>(t.keysize)<span style="color:#000;font-weight:bold">+</span>i<span style="color:#000;font-weight:bold">*</span><span style="color:#0086b3">uintptr</span>(t.elemsize))
+				}
+				<span style="color:#000;font-weight:bold">if</span> b.tophash[i] <span style="color:#000;font-weight:bold">==</span> emptyRest {
+					<span style="color:#000;font-weight:bold">break</span> bucketloop
+				}
+				<span style="color:#000;font-weight:bold">continue</span>
+			}
+			k <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">add</span>(unsafe.<span style="color:#900;font-weight:bold">Pointer</span>(b), dataOffset<span style="color:#000;font-weight:bold">+</span>i<span style="color:#000;font-weight:bold">*</span><span style="color:#0086b3">uintptr</span>(t.keysize))
+			<span style="color:#000;font-weight:bold">if</span> t.<span style="color:#900;font-weight:bold">indirectkey</span>() {
+				k = <span style="color:#000;font-weight:bold">*</span>((<span style="color:#000;font-weight:bold">*</span>unsafe.Pointer)(k))
+			}
+			<span style="color:#000;font-weight:bold">if</span> !t.key.<span style="color:#900;font-weight:bold">equal</span>(key, k) {
+				<span style="color:#000;font-weight:bold">continue</span>
+			}
+			<span style="color:#998;font-style:italic">// already have a mapping for key. Update it.
+</span><span style="color:#998;font-style:italic"></span>			<span style="color:#000;font-weight:bold">if</span> t.<span style="color:#900;font-weight:bold">needkeyupdate</span>() {
+				<span style="color:#900;font-weight:bold">typedmemmove</span>(t.key, k, key)
+			}
+			elem = <span style="color:#900;font-weight:bold">add</span>(unsafe.<span style="color:#900;font-weight:bold">Pointer</span>(b), dataOffset<span style="color:#000;font-weight:bold">+</span>bucketCnt<span style="color:#000;font-weight:bold">*</span><span style="color:#0086b3">uintptr</span>(t.keysize)<span style="color:#000;font-weight:bold">+</span>i<span style="color:#000;font-weight:bold">*</span><span style="color:#0086b3">uintptr</span>(t.elemsize))
+			<span style="color:#000;font-weight:bold">goto</span> done
+		}
+		ovf <span style="color:#000;font-weight:bold">:=</span> b.<span style="color:#900;font-weight:bold">overflow</span>(t)
+		<span style="color:#000;font-weight:bold">if</span> ovf <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#000;font-weight:bold">break</span>
+		}
+		b = ovf
+	}
+
+	<span style="color:#998;font-style:italic">// Did not find mapping for key. Allocate new cell &amp; add entry.
+</span><span style="color:#998;font-style:italic"></span>
+	<span style="color:#998;font-style:italic">// If we hit the max load factor or we have too many overflow buckets,
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// and we&#39;re not already in the middle of growing, start growing.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">if</span> !h.<span style="color:#900;font-weight:bold">growing</span>() <span style="color:#000;font-weight:bold">&amp;&amp;</span> (<span style="color:#900;font-weight:bold">overLoadFactor</span>(h.count<span style="color:#000;font-weight:bold">+</span><span style="color:#099">1</span>, h.B) <span style="color:#000;font-weight:bold">||</span> <span style="color:#900;font-weight:bold">tooManyOverflowBuckets</span>(h.noverflow, h.B)) {
+		<span style="color:#900;font-weight:bold">hashGrow</span>(t, h)
+		<span style="color:#000;font-weight:bold">goto</span> again <span style="color:#998;font-style:italic">// Growing the table invalidates everything, so try again
+</span><span style="color:#998;font-style:italic"></span>	}
+
+	<span style="color:#000;font-weight:bold">if</span> inserti <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#998;font-style:italic">// The current bucket and all the overflow buckets connected to it are full, allocate a new one.
+</span><span style="color:#998;font-style:italic"></span>		newb <span style="color:#000;font-weight:bold">:=</span> h.<span style="color:#900;font-weight:bold">newoverflow</span>(t, b)
+		inserti = <span style="color:#000;font-weight:bold">&amp;</span>newb.tophash[<span style="color:#099">0</span>]
+		insertk = <span style="color:#900;font-weight:bold">add</span>(unsafe.<span style="color:#900;font-weight:bold">Pointer</span>(newb), dataOffset)
+		elem = <span style="color:#900;font-weight:bold">add</span>(insertk, bucketCnt<span style="color:#000;font-weight:bold">*</span><span style="color:#0086b3">uintptr</span>(t.keysize))
+	}
+
+	<span style="color:#998;font-style:italic">// store new key/elem at insert position
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">if</span> t.<span style="color:#900;font-weight:bold">indirectkey</span>() {
+		kmem <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">newobject</span>(t.key)
+		<span style="color:#000;font-weight:bold">*</span>(<span style="color:#000;font-weight:bold">*</span>unsafe.Pointer)(insertk) = kmem
+		insertk = kmem
+	}
+	<span style="color:#000;font-weight:bold">if</span> t.<span style="color:#900;font-weight:bold">indirectelem</span>() {
+		vmem <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">newobject</span>(t.elem)
+		<span style="color:#000;font-weight:bold">*</span>(<span style="color:#000;font-weight:bold">*</span>unsafe.Pointer)(elem) = vmem
+	}
+	<span style="color:#900;font-weight:bold">typedmemmove</span>(t.key, insertk, key)
+	<span style="color:#000;font-weight:bold">*</span>inserti = top
+	h.count<span style="color:#000;font-weight:bold">++</span>
+
+done:
+	<span style="color:#000;font-weight:bold">if</span> h.flags<span style="color:#000;font-weight:bold">&amp;</span>hashWriting <span style="color:#000;font-weight:bold">==</span> <span style="color:#099">0</span> {
+		<span style="color:#900;font-weight:bold">throw</span>(<span style="color:#d14">&#34;concurrent map writes&#34;</span>)
+	}
+	h.flags <span style="color:#000;font-weight:bold">&amp;^=</span> hashWriting
+	<span style="color:#000;font-weight:bold">if</span> t.<span style="color:#900;font-weight:bold">indirectelem</span>() {
+		elem = <span style="color:#000;font-weight:bold">*</span>((<span style="color:#000;font-weight:bold">*</span>unsafe.Pointer)(elem))
+	}
+	<span style="color:#000;font-weight:bold">return</span> elem
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="map读取">map读取</h3>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">mapaccess1</span>(t <span style="color:#000;font-weight:bold">*</span>maptype, h <span style="color:#000;font-weight:bold">*</span>hmap, key unsafe.Pointer) unsafe.Pointer {
+	<span style="color:#998;font-style:italic">// 根据hash函数得到hash值，
+</span><span style="color:#998;font-style:italic"></span>	hash <span style="color:#000;font-weight:bold">:=</span> t.<span style="color:#900;font-weight:bold">hasher</span>(key, <span style="color:#0086b3">uintptr</span>(h.hash0))
+	m <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">bucketMask</span>(h.B)
+	b <span style="color:#000;font-weight:bold">:=</span> (<span style="color:#000;font-weight:bold">*</span>bmap)(<span style="color:#900;font-weight:bold">add</span>(h.buckets, (hash<span style="color:#000;font-weight:bold">&amp;</span>m)<span style="color:#000;font-weight:bold">*</span><span style="color:#0086b3">uintptr</span>(t.bucketsize)))
+	<span style="color:#000;font-weight:bold">if</span> c <span style="color:#000;font-weight:bold">:=</span> h.oldbuckets; c <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		<span style="color:#000;font-weight:bold">if</span> !h.<span style="color:#900;font-weight:bold">sameSizeGrow</span>() {
+			<span style="color:#998;font-style:italic">// There used to be half as many buckets; mask down one more power of two.
+</span><span style="color:#998;font-style:italic"></span>			m <span style="color:#000;font-weight:bold">&gt;&gt;=</span> <span style="color:#099">1</span>
+		}
+		oldb <span style="color:#000;font-weight:bold">:=</span> (<span style="color:#000;font-weight:bold">*</span>bmap)(<span style="color:#900;font-weight:bold">add</span>(c, (hash<span style="color:#000;font-weight:bold">&amp;</span>m)<span style="color:#000;font-weight:bold">*</span><span style="color:#0086b3">uintptr</span>(t.bucketsize)))
+		<span style="color:#000;font-weight:bold">if</span> !<span style="color:#900;font-weight:bold">evacuated</span>(oldb) {
+			b = oldb
+		}
+	}
+	top <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">tophash</span>(hash)
+bucketloop:
+	<span style="color:#000;font-weight:bold">for</span> ; b <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span>; b = b.<span style="color:#900;font-weight:bold">overflow</span>(t) {<span style="color:#998;font-style:italic">// 先找默认的bucket找不到在去额外的bucket找数据
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#000;font-weight:bold">for</span> i <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">uintptr</span>(<span style="color:#099">0</span>); i &lt; bucketCnt; i<span style="color:#000;font-weight:bold">++</span> {
+			<span style="color:#000;font-weight:bold">if</span> b.tophash[i] <span style="color:#000;font-weight:bold">!=</span> top {
+				<span style="color:#000;font-weight:bold">if</span> b.tophash[i] <span style="color:#000;font-weight:bold">==</span> emptyRest {
+					<span style="color:#000;font-weight:bold">break</span> bucketloop
+				}
+				<span style="color:#000;font-weight:bold">continue</span>
+			}
+			k <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">add</span>(unsafe.<span style="color:#900;font-weight:bold">Pointer</span>(b), dataOffset<span style="color:#000;font-weight:bold">+</span>i<span style="color:#000;font-weight:bold">*</span><span style="color:#0086b3">uintptr</span>(t.keysize))
+			<span style="color:#000;font-weight:bold">if</span> t.<span style="color:#900;font-weight:bold">indirectkey</span>() {
+				k = <span style="color:#000;font-weight:bold">*</span>((<span style="color:#000;font-weight:bold">*</span>unsafe.Pointer)(k))
+			}
+			<span style="color:#000;font-weight:bold">if</span> t.key.<span style="color:#900;font-weight:bold">equal</span>(key, k) {
+				e <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">add</span>(unsafe.<span style="color:#900;font-weight:bold">Pointer</span>(b), dataOffset<span style="color:#000;font-weight:bold">+</span>bucketCnt<span style="color:#000;font-weight:bold">*</span><span style="color:#0086b3">uintptr</span>(t.keysize)<span style="color:#000;font-weight:bold">+</span>i<span style="color:#000;font-weight:bold">*</span><span style="color:#0086b3">uintptr</span>(t.elemsize))
+				<span style="color:#000;font-weight:bold">if</span> t.<span style="color:#900;font-weight:bold">indirectelem</span>() {
+					e = <span style="color:#000;font-weight:bold">*</span>((<span style="color:#000;font-weight:bold">*</span>unsafe.Pointer)(e))
+				}
+				<span style="color:#000;font-weight:bold">return</span> e
+			}
+		}
+	}
+	<span style="color:#000;font-weight:bold">return</span> unsafe.<span style="color:#900;font-weight:bold">Pointer</span>(<span style="color:#000;font-weight:bold">&amp;</span>zeroVal[<span style="color:#099">0</span>])
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="安全map源码赏析">安全map源码赏析</h2>
+<p>安全的map是可以允许多个goroutine在同一map上面进行并发读写的，非安全的map如果存在并发读写是会导致整个进程直接死掉，并且这种panic程序是不可以扑捉的。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">83
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#998;font-style:italic">// Map is like a Go map[interface{}]interface{} but is safe for concurrent use
+</span><span style="color:#998;font-style:italic">// by multiple goroutines without additional locking or coordination.
+</span><span style="color:#998;font-style:italic">// Loads, stores, and deletes run in amortized constant time.
+</span><span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic">// The Map type is specialized. Most code should use a plain Go map instead,
+</span><span style="color:#998;font-style:italic">// with separate locking or coordination, for better type safety and to make it
+</span><span style="color:#998;font-style:italic">// easier to maintain other invariants along with the map content.
+</span><span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic">// The Map type is optimized for two common use cases: (1) when the entry for a given
+</span><span style="color:#998;font-style:italic">// key is only ever written once but read many times, as in caches that only grow,
+</span><span style="color:#998;font-style:italic">// or (2) when multiple goroutines read, write, and overwrite entries for disjoint
+</span><span style="color:#998;font-style:italic">// sets of keys. In these two cases, use of a Map may significantly reduce lock
+</span><span style="color:#998;font-style:italic">// contention compared to a Go map paired with a separate Mutex or RWMutex.
+</span><span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic">// The zero Map is empty and ready for use. A Map must not be copied after first use.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> Map <span style="color:#000;font-weight:bold">struct</span> {
+	mu Mutex
+
+	<span style="color:#998;font-style:italic">// read contains the portion of the map&#39;s contents that are safe for
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// concurrent access (with or without mu held).
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// The read field itself is always safe to load, but must only be stored with
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// mu held.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// Entries stored in read may be updated concurrently without mu, but updating
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// a previously-expunged entry requires that the entry be copied to the dirty
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// map and unexpunged with mu held.
+</span><span style="color:#998;font-style:italic"></span>	read atomic.Value <span style="color:#998;font-style:italic">// readOnly
+</span><span style="color:#998;font-style:italic"></span>
+	<span style="color:#998;font-style:italic">// dirty contains the portion of the map&#39;s contents that require mu to be
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// held. To ensure that the dirty map can be promoted to the read map quickly,
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// it also includes all of the non-expunged entries in the read map.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// Expunged entries are not stored in the dirty map. An expunged entry in the
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// clean map must be unexpunged and added to the dirty map before a new value
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// can be stored to it.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// If the dirty map is nil, the next write to the map will initialize it by
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// making a shallow copy of the clean map, omitting stale entries.
+</span><span style="color:#998;font-style:italic"></span>	dirty <span style="color:#000;font-weight:bold">map</span>[<span style="color:#000;font-weight:bold">interface</span>{}]<span style="color:#000;font-weight:bold">*</span>entry
+
+	<span style="color:#998;font-style:italic">// misses counts the number of loads since the read map was last updated that
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// needed to lock mu to determine whether the key was present.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// Once enough misses have occurred to cover the cost of copying the dirty
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// map, the dirty map will be promoted to the read map (in the unamended
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// state) and the next store to the map will make a new dirty copy.
+</span><span style="color:#998;font-style:italic"></span>	misses <span style="color:#458;font-weight:bold">int</span>
+}
+
+<span style="color:#998;font-style:italic">// readOnly is an immutable struct stored atomically in the Map.read field.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> readOnly <span style="color:#000;font-weight:bold">struct</span> {
+	m       <span style="color:#000;font-weight:bold">map</span>[<span style="color:#000;font-weight:bold">interface</span>{}]<span style="color:#000;font-weight:bold">*</span>entry
+	amended <span style="color:#458;font-weight:bold">bool</span> <span style="color:#998;font-style:italic">// true if the dirty map contains some key not in m.
+</span><span style="color:#998;font-style:italic"></span>}
+
+<span style="color:#998;font-style:italic">// expunged is an arbitrary pointer that marks entries which have been deleted
+</span><span style="color:#998;font-style:italic">// from the dirty map.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">var</span> expunged = unsafe.<span style="color:#900;font-weight:bold">Pointer</span>(<span style="color:#0086b3">new</span>(<span style="color:#000;font-weight:bold">interface</span>{}))
+
+<span style="color:#998;font-style:italic">// An entry is a slot in the map corresponding to a particular key.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> entry <span style="color:#000;font-weight:bold">struct</span> {
+	<span style="color:#998;font-style:italic">// p points to the interface{} value stored for the entry.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// If p == nil, the entry has been deleted, and either m.dirty == nil or
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// m.dirty[key] is e.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// If p == expunged, the entry has been deleted, m.dirty != nil, and the entry
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// is missing from m.dirty.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// Otherwise, the entry is valid and recorded in m.read.m[key] and, if m.dirty
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// != nil, in m.dirty[key].
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// An entry can be deleted by atomic replacement with nil: when m.dirty is
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// next created, it will atomically replace nil with expunged and leave
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// m.dirty[key] unset.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// An entry&#39;s associated value can be updated by atomic replacement, provided
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// p != expunged. If p == expunged, an entry&#39;s associated value can be updated
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// only after first setting m.dirty[key] = e so that lookups using the dirty
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// map find the entry.
+</span><span style="color:#998;font-style:italic"></span>	p unsafe.Pointer <span style="color:#998;font-style:italic">// *interface{}
+</span><span style="color:#998;font-style:italic"></span>}
+</code></pre></td></tr></table>
+</div>
+</div><p>如上结构主要是在read，dirty两个成员上面数据的交互达到并发访问的，read这个数据是只读的快照数据，会在指定条件下更新。</p>
+<h2 id="注意事项">注意事项</h2>
+<ol>
+<li>对内置map的并发访问需要加锁做控制，复杂对象里面有map不要作为日志输出。</li>
+<li>内置map使用前需要初始化</li>
+</ol>
+
+        </div>
+
+        
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/posts/slice/">go slice</a></li>
+        
+        <li><a href="/posts/channel/">go channel</a></li>
+        
+        <li><a href="/archives/">文章归档</a></li>
+        
+        <li><a href="/posts/go-download/">go下载不了的问题</a></li>
+        
+        <li><a href="/posts/reason/">起源</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/golang'>golang</a></li>
+                
+                <li><a href='/tags/map'>map</a></li>
+                
+                <li><a href='/tags/hash-table'>hash table</a></li>
+                
+                <li><a href='/tags/sync-map'>sync map</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "your github repo"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2021 <a href="">江湖再见 By 江湖再见</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+    <script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script>
+
+
+
+
+    <script src='/js/douban.js'></script>
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="/posts/gorm/" title="gorm">gorm</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-redis/" title="Go Redis">Go Redis</a>
+    </li>
+    
+    <li>
+        <a href="/posts/gin-martini/" title="web框架">web框架</a>
+    </li>
+    
+    <li>
+        <a href="/posts/map/" title="go map">go map</a>
+    </li>
+    
+    <li>
+        <a href="/posts/slice/" title="go slice">go slice</a>
+    </li>
+    
+    <li>
+        <a href="/archives/" title="文章归档">文章归档</a>
+    </li>
+    
+    <li>
+        <a href="/posts/channel/" title="go channel">go channel</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-download/" title="go下载不了的问题">go下载不了的问题</a>
+    </li>
+    
+    <li>
+        <a href="/posts/reason/" title="起源">起源</a>
+    </li>
+    
+    <li>
+        <a href="/posts/generate-go/" title=""></a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="/categories/go%E5%86%85%E9%83%A8%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">go内部源码浅析 (3)</a></li>
+    
+    <li><a href="/categories/%E5%BC%80%E6%BA%90%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">开源源码浅析 (3)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="/tags/channel/">channel</a>
+    
+    <a href="/tags/gin/">gin</a>
+    
+    <a href="/tags/go-redis/">go-redis</a>
+    
+    <a href="/tags/golang/">golang</a>
+    
+    <a href="/tags/gorm/">gorm</a>
+    
+    <a href="/tags/hash-table/">hash table</a>
+    
+    <a href="/tags/map/">map</a>
+    
+    <a href="/tags/martini/">martini</a>
+    
+    <a href="/tags/redis-client/">redis client</a>
+    
+    <a href="/tags/slice/">slice</a>
+    
+    <a href="/tags/sync-map/">sync map</a>
+    
+    <a href="/tags/%E6%90%9E%E7%82%B9%E4%B8%9C%E8%A5%BF/">搞点东西</a>
+    
+    <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+    
+    <a href="/tags/%E9%98%9F%E5%88%97/">队列</a>
+    
+</div>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="http://tofindme.github.io" title="江湖再见的博客">江湖再见的博客</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,1464 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>web框架 | 江湖再见</title>
+    <meta property="og:title" content="web框架 - 江湖再见">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2021-12-22T10:50:30&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2021-12-22T10:50:30&#43;08:00'>
+        
+    <meta name="Keywords" content="golang,go语言">
+    <meta name="description" content="web框架">
+        
+    <meta name="author" content="江湖再见">
+    <meta property="og:url" content="/posts/gin-martini/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="">
+                        江湖再见
+                    </a>
+                
+                <p class="description">这里有Go语言(golang)</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="" href="">首页</a>
+                    
+                    <a  href="/something/" title="test">test</a>
+                    
+                    <a  href="/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#gin">gin</a>
+      <ul>
+        <li><a href="#样例">样例</a></li>
+        <li><a href="#源码赏析">源码赏析</a></li>
+      </ul>
+    </li>
+    <li><a href="#martini">martini</a>
+      <ul>
+        <li><a href="#样例-1">样例</a></li>
+        <li><a href="#源码赏析-1">源码赏析</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">web框架</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2021年12月22日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/%E5%BC%80%E6%BA%90%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90'>开源源码浅析</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <p>由于自己这个两个框架都使用过，更多的还是在<code>martini</code>的使用上面，近期才接触<code>gin</code>，使用下来，这两个框架思路都差不多，都是基于插件似的实现，用户可以自己添加自己想要的插件。</p>
+<p>但<code>martini</code>在为path注册<code>handler</code>的时候是可以指定请求方法的参数，底层在<code>call</code>时会根据参数类型关联到<code>handler</code>的参数，也可以在<code>handler</code>里面添加自己绑定的一些参数，这个都是通过<code>reflect</code>来实现的，下面我们具体看下实现</p>
+<h2 id="gin">gin</h2>
+<p>相信这个框架很多人会用这个，但martini就很少有人用到了。</p>
+<h3 id="样例">样例</h3>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">package</span> main
+
+<span style="color:#000;font-weight:bold">import</span> (
+	<span style="color:#d14">&#34;github.com/gin-gonic/gin&#34;</span>
+	<span style="color:#d14">&#34;net/http&#34;</span>
+)
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">main</span>() {
+	engin <span style="color:#000;font-weight:bold">:=</span> gin.<span style="color:#900;font-weight:bold">New</span>()
+	engin.<span style="color:#900;font-weight:bold">Use</span>(gin.<span style="color:#900;font-weight:bold">Recovery</span>())
+	engin.<span style="color:#900;font-weight:bold">GET</span>(<span style="color:#d14">&#34;/hello&#34;</span>, <span style="color:#000;font-weight:bold">func</span>(context <span style="color:#000;font-weight:bold">*</span>gin.Context) {
+		context.<span style="color:#900;font-weight:bold">JSON</span>(http.StatusOK, <span style="color:#000;font-weight:bold">map</span>[<span style="color:#458;font-weight:bold">string</span>]<span style="color:#000;font-weight:bold">interface</span>{}{<span style="color:#d14">&#34;key1&#34;</span>: <span style="color:#d14">&#34;value1&#34;</span>, <span style="color:#d14">&#34;key2&#34;</span>: <span style="color:#000;font-weight:bold">struct</span> {
+			Name <span style="color:#458;font-weight:bold">string</span>
+		}{Name: <span style="color:#d14">&#34;aaa&#34;</span>}})
+	})
+	group <span style="color:#000;font-weight:bold">:=</span> engin.<span style="color:#900;font-weight:bold">Group</span>(<span style="color:#d14">&#34;/v1/&#34;</span>, <span style="color:#000;font-weight:bold">func</span>(context <span style="color:#000;font-weight:bold">*</span>gin.Context) {
+		context.<span style="color:#900;font-weight:bold">Next</span>()
+	})
+	<span style="color:#900;font-weight:bold">InitPathForGroupV1</span>(group)
+	engin.<span style="color:#900;font-weight:bold">Run</span>(<span style="color:#d14">&#34;:1789&#34;</span>)
+}
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">InitPathForGroupV1</span>(v1 <span style="color:#000;font-weight:bold">*</span>gin.RouterGroup) {
+	v1.<span style="color:#900;font-weight:bold">GET</span>(<span style="color:#d14">&#34;/path1&#34;</span>, <span style="color:#000;font-weight:bold">func</span>(context <span style="color:#000;font-weight:bold">*</span>gin.Context) {
+		context.<span style="color:#900;font-weight:bold">JSON</span>(http.StatusOK, <span style="color:#d14">&#34;it&#39;s path1&#34;</span>)
+	})
+
+	v1.<span style="color:#900;font-weight:bold">GET</span>(<span style="color:#d14">&#34;/path2&#34;</span>, <span style="color:#000;font-weight:bold">func</span>(context <span style="color:#000;font-weight:bold">*</span>gin.Context) {
+		context.<span style="color:#900;font-weight:bold">JSON</span>(http.StatusOK, <span style="color:#d14">&#34;it&#39;s path2&#34;</span>)
+	})
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>这样一个基于<code>gin</code>的http服务就启动了，可以接收http请求了，看上面代码，不论是调用<code>Use</code>,还是<code>GET/POST</code>还是<code>Group</code>方法要么就是单独的一个<code>type HandlerFunc func(*Context)</code>的函数参数，要么就是在加一个path，我们跟踪底层代码发现，其实每一次调用实际是基于现有<code>HandlerFunc</code>的一个<strong>copy</strong>，如果是<code>Use</code>注册一个<code>HandlerFunc</code>(也成中间件)，实际就是一个<code>HandlerFunc</code>数组，之后每次用<code>GET/POST/Group</code>去注册http处理函数的时候就是<strong>copy</strong>前面已经注册的所有中间件。</p>
+<h3 id="源码赏析">源码赏析</h3>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">type</span> HandlerFunc <span style="color:#000;font-weight:bold">func</span>(<span style="color:#000;font-weight:bold">*</span>Context)
+<span style="color:#998;font-style:italic">// HandlersChain defines a HandlerFunc slice.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> HandlersChain []HandlerFunc
+
+<span style="color:#998;font-style:italic">// Use adds middleware to the group, see example code in GitHub.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (group <span style="color:#000;font-weight:bold">*</span>RouterGroup) <span style="color:#900;font-weight:bold">Use</span>(middleware <span style="color:#000;font-weight:bold">...</span>HandlerFunc) IRoutes {
+	group.Handlers = <span style="color:#0086b3">append</span>(group.Handlers, middleware<span style="color:#000;font-weight:bold">...</span>)
+	<span style="color:#000;font-weight:bold">return</span> group.<span style="color:#900;font-weight:bold">returnObj</span>()
+}
+
+<span style="color:#998;font-style:italic">// Group creates a new router group. You should add all the routes that have common middlewares or the same path prefix.
+</span><span style="color:#998;font-style:italic">// For example, all the routes that use a common middleware for authorization could be grouped.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (group <span style="color:#000;font-weight:bold">*</span>RouterGroup) <span style="color:#900;font-weight:bold">Group</span>(relativePath <span style="color:#458;font-weight:bold">string</span>, handlers <span style="color:#000;font-weight:bold">...</span>HandlerFunc) <span style="color:#000;font-weight:bold">*</span>RouterGroup {
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">&amp;</span>RouterGroup{
+		Handlers: group.<span style="color:#900;font-weight:bold">combineHandlers</span>(handlers),
+		basePath: group.<span style="color:#900;font-weight:bold">calculateAbsolutePath</span>(relativePath),
+		engine:   group.engine,
+	}
+}
+
+<span style="color:#000;font-weight:bold">func</span> (group <span style="color:#000;font-weight:bold">*</span>RouterGroup) <span style="color:#900;font-weight:bold">combineHandlers</span>(handlers HandlersChain) HandlersChain {
+	finalSize <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">len</span>(group.Handlers) <span style="color:#000;font-weight:bold">+</span> <span style="color:#0086b3">len</span>(handlers)
+	<span style="color:#900;font-weight:bold">assert1</span>(finalSize &lt; <span style="color:#0086b3">int</span>(abortIndex), <span style="color:#d14">&#34;too many handlers&#34;</span>)
+	mergedHandlers <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">make</span>(HandlersChain, finalSize)
+	<span style="color:#0086b3">copy</span>(mergedHandlers, group.Handlers)
+	<span style="color:#0086b3">copy</span>(mergedHandlers[<span style="color:#0086b3">len</span>(group.Handlers):], handlers)
+	<span style="color:#000;font-weight:bold">return</span> mergedHandlers
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>接下来我们看下是如何调用<strong>http</strong>的<strong>request</strong>收到到<strong>response</strong>的过程，<code>gin</code>中不同方法对应的<code>handler</code>放在<strong>Engine</strong>的<strong>trees</strong>中。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">type</span> Engine <span style="color:#000;font-weight:bold">struct</span> {
+	RouterGroup
+	<span style="color:#998;font-style:italic">// ...
+</span><span style="color:#998;font-style:italic"></span>	trees            methodTrees
+}
+
+<span style="color:#000;font-weight:bold">type</span> methodTree <span style="color:#000;font-weight:bold">struct</span> {
+	method <span style="color:#458;font-weight:bold">string</span>
+	root   <span style="color:#000;font-weight:bold">*</span>node
+}
+
+<span style="color:#000;font-weight:bold">type</span> methodTrees []methodTree
+
+<span style="color:#000;font-weight:bold">type</span> node <span style="color:#000;font-weight:bold">struct</span> {
+	path      <span style="color:#458;font-weight:bold">string</span>
+	indices   <span style="color:#458;font-weight:bold">string</span>
+	wildChild <span style="color:#458;font-weight:bold">bool</span>
+	nType     nodeType
+	priority  <span style="color:#458;font-weight:bold">uint32</span>
+	children  []<span style="color:#000;font-weight:bold">*</span>node <span style="color:#998;font-style:italic">// child nodes, at most 1 :param style node at the end of the array
+</span><span style="color:#998;font-style:italic"></span>	handlers  HandlersChain
+	fullPath  <span style="color:#458;font-weight:bold">string</span>
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>gin对不同方法的http请求的path都会生成一颗树形的数据结构，并且叶子节点保存对应的handlers,以上面例子为例会生成这样的树形结构。</p>
+<pre tabindex="0"><code class="language-raw" data-lang="raw">/
+	/v1/path
+		1
+		2
+	/hello
+</code></pre><p>接下来我们<code>curl -XGET http://127.0.0.1:1789/v1/path1</code>服务器收到后是如何响应客户端的。</p>
+<p><!-- raw HTML omitted -->net/http/server.go<!-- raw HTML omitted --></p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">func</span> (c <span style="color:#000;font-weight:bold">*</span>conn) <span style="color:#900;font-weight:bold">serve</span>(ctx context.Context) {
+	<span style="color:#998;font-style:italic">// ....
+</span><span style="color:#998;font-style:italic"></span>
+	<span style="color:#998;font-style:italic">// HTTP/1.x from here on.
+</span><span style="color:#998;font-style:italic"></span>
+	ctx, cancelCtx <span style="color:#000;font-weight:bold">:=</span> context.<span style="color:#900;font-weight:bold">WithCancel</span>(ctx)
+	c.cancelCtx = cancelCtx
+	<span style="color:#000;font-weight:bold">defer</span> <span style="color:#900;font-weight:bold">cancelCtx</span>()
+
+	c.r = <span style="color:#000;font-weight:bold">&amp;</span>connReader{conn: c}
+	c.bufr = <span style="color:#900;font-weight:bold">newBufioReader</span>(c.r)
+	c.bufw = <span style="color:#900;font-weight:bold">newBufioWriterSize</span>(checkConnErrorWriter{c}, <span style="color:#099">4</span><span style="color:#000;font-weight:bold">&lt;&lt;</span><span style="color:#099">10</span>)
+
+	<span style="color:#000;font-weight:bold">for</span> {
+		w, err <span style="color:#000;font-weight:bold">:=</span> c.<span style="color:#900;font-weight:bold">readRequest</span>(ctx)
+		<span style="color:#000;font-weight:bold">if</span> c.r.remain <span style="color:#000;font-weight:bold">!=</span> c.server.<span style="color:#900;font-weight:bold">initialReadLimitSize</span>() {
+			<span style="color:#998;font-style:italic">// If we read any bytes off the wire, we&#39;re active.
+</span><span style="color:#998;font-style:italic"></span>			c.<span style="color:#900;font-weight:bold">setState</span>(c.rwc, StateActive, runHooks)
+		}
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#000;font-weight:bold">const</span> errorHeaders = <span style="color:#d14">&#34;\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\n\r\n&#34;</span>
+
+			<span style="color:#000;font-weight:bold">switch</span> {
+			<span style="color:#000;font-weight:bold">case</span> err <span style="color:#000;font-weight:bold">==</span> errTooLarge:
+				<span style="color:#998;font-style:italic">// Their HTTP client may or may not be
+</span><span style="color:#998;font-style:italic"></span>				<span style="color:#998;font-style:italic">// able to read this if we&#39;re
+</span><span style="color:#998;font-style:italic"></span>				<span style="color:#998;font-style:italic">// responding to them and hanging up
+</span><span style="color:#998;font-style:italic"></span>				<span style="color:#998;font-style:italic">// while they&#39;re still writing their
+</span><span style="color:#998;font-style:italic"></span>				<span style="color:#998;font-style:italic">// request. Undefined behavior.
+</span><span style="color:#998;font-style:italic"></span>				<span style="color:#000;font-weight:bold">const</span> publicErr = <span style="color:#d14">&#34;431 Request Header Fields Too Large&#34;</span>
+				fmt.<span style="color:#900;font-weight:bold">Fprintf</span>(c.rwc, <span style="color:#d14">&#34;HTTP/1.1 &#34;</span><span style="color:#000;font-weight:bold">+</span>publicErr<span style="color:#000;font-weight:bold">+</span>errorHeaders<span style="color:#000;font-weight:bold">+</span>publicErr)
+				c.<span style="color:#900;font-weight:bold">closeWriteAndWait</span>()
+				<span style="color:#000;font-weight:bold">return</span>
+
+			<span style="color:#000;font-weight:bold">case</span> <span style="color:#900;font-weight:bold">isUnsupportedTEError</span>(err):
+				<span style="color:#998;font-style:italic">// Respond as per RFC 7230 Section 3.3.1 which says,
+</span><span style="color:#998;font-style:italic"></span>				<span style="color:#998;font-style:italic">//      A server that receives a request message with a
+</span><span style="color:#998;font-style:italic"></span>				<span style="color:#998;font-style:italic">//      transfer coding it does not understand SHOULD
+</span><span style="color:#998;font-style:italic"></span>				<span style="color:#998;font-style:italic">//      respond with 501 (Unimplemented).
+</span><span style="color:#998;font-style:italic"></span>				code <span style="color:#000;font-weight:bold">:=</span> StatusNotImplemented
+
+				<span style="color:#998;font-style:italic">// We purposefully aren&#39;t echoing back the transfer-encoding&#39;s value,
+</span><span style="color:#998;font-style:italic"></span>				<span style="color:#998;font-style:italic">// so as to mitigate the risk of cross side scripting by an attacker.
+</span><span style="color:#998;font-style:italic"></span>				fmt.<span style="color:#900;font-weight:bold">Fprintf</span>(c.rwc, <span style="color:#d14">&#34;HTTP/1.1 %d %s%sUnsupported transfer encoding&#34;</span>, code, <span style="color:#900;font-weight:bold">StatusText</span>(code), errorHeaders)
+				<span style="color:#000;font-weight:bold">return</span>
+
+			<span style="color:#000;font-weight:bold">case</span> <span style="color:#900;font-weight:bold">isCommonNetReadError</span>(err):
+				<span style="color:#000;font-weight:bold">return</span> <span style="color:#998;font-style:italic">// don&#39;t reply
+</span><span style="color:#998;font-style:italic"></span>
+			<span style="color:#000;font-weight:bold">default</span>:
+				<span style="color:#000;font-weight:bold">if</span> v, ok <span style="color:#000;font-weight:bold">:=</span> err.(statusError); ok {
+					fmt.<span style="color:#900;font-weight:bold">Fprintf</span>(c.rwc, <span style="color:#d14">&#34;HTTP/1.1 %d %s: %s%s%d %s: %s&#34;</span>, v.code, <span style="color:#900;font-weight:bold">StatusText</span>(v.code), v.text, errorHeaders, v.code, <span style="color:#900;font-weight:bold">StatusText</span>(v.code), v.text)
+					<span style="color:#000;font-weight:bold">return</span>
+				}
+				publicErr <span style="color:#000;font-weight:bold">:=</span> <span style="color:#d14">&#34;400 Bad Request&#34;</span>
+				fmt.<span style="color:#900;font-weight:bold">Fprintf</span>(c.rwc, <span style="color:#d14">&#34;HTTP/1.1 &#34;</span><span style="color:#000;font-weight:bold">+</span>publicErr<span style="color:#000;font-weight:bold">+</span>errorHeaders<span style="color:#000;font-weight:bold">+</span>publicErr)
+				<span style="color:#000;font-weight:bold">return</span>
+			}
+		}
+
+		<span style="color:#998;font-style:italic">// Expect 100 Continue support
+</span><span style="color:#998;font-style:italic"></span>		req <span style="color:#000;font-weight:bold">:=</span> w.req
+		<span style="color:#000;font-weight:bold">if</span> req.<span style="color:#900;font-weight:bold">expectsContinue</span>() {
+			<span style="color:#000;font-weight:bold">if</span> req.<span style="color:#900;font-weight:bold">ProtoAtLeast</span>(<span style="color:#099">1</span>, <span style="color:#099">1</span>) <span style="color:#000;font-weight:bold">&amp;&amp;</span> req.ContentLength <span style="color:#000;font-weight:bold">!=</span> <span style="color:#099">0</span> {
+				<span style="color:#998;font-style:italic">// Wrap the Body reader with one that replies on the connection
+</span><span style="color:#998;font-style:italic"></span>				req.Body = <span style="color:#000;font-weight:bold">&amp;</span>expectContinueReader{readCloser: req.Body, resp: w}
+				w.canWriteContinue.<span style="color:#900;font-weight:bold">setTrue</span>()
+			}
+		} <span style="color:#000;font-weight:bold">else</span> <span style="color:#000;font-weight:bold">if</span> req.Header.<span style="color:#900;font-weight:bold">get</span>(<span style="color:#d14">&#34;Expect&#34;</span>) <span style="color:#000;font-weight:bold">!=</span> <span style="color:#d14">&#34;&#34;</span> {
+			w.<span style="color:#900;font-weight:bold">sendExpectationFailed</span>()
+			<span style="color:#000;font-weight:bold">return</span>
+		}
+
+		c.curReq.<span style="color:#900;font-weight:bold">Store</span>(w)
+
+		<span style="color:#000;font-weight:bold">if</span> <span style="color:#900;font-weight:bold">requestBodyRemains</span>(req.Body) {
+			<span style="color:#900;font-weight:bold">registerOnHitEOF</span>(req.Body, w.conn.r.startBackgroundRead)
+		} <span style="color:#000;font-weight:bold">else</span> {
+			w.conn.r.<span style="color:#900;font-weight:bold">startBackgroundRead</span>()
+		}
+
+		<span style="color:#998;font-style:italic">// HTTP cannot have multiple simultaneous active requests.[*]
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// Until the server replies to this request, it can&#39;t read another,
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// so we might as well run the handler in this goroutine.
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// [*] Not strictly true: HTTP pipelining. We could let them all process
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// in parallel even if their responses need to be serialized.
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// But we&#39;re not going to implement HTTP pipelining because it
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// was never deployed in the wild and the answer is HTTP/2.
+</span><span style="color:#998;font-style:italic"></span>		serverHandler{c.server}.<span style="color:#900;font-weight:bold">ServeHTTP</span>(w, w.req) <span style="color:#998;font-style:italic">// 处理http请求实现
+</span><span style="color:#998;font-style:italic"></span>		w.<span style="color:#900;font-weight:bold">cancelCtx</span>()
+		<span style="color:#000;font-weight:bold">if</span> c.<span style="color:#900;font-weight:bold">hijacked</span>() {
+			<span style="color:#000;font-weight:bold">return</span>
+		}
+		w.<span style="color:#900;font-weight:bold">finishRequest</span>()<span style="color:#998;font-style:italic">// 在这里把数据返回给client
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#000;font-weight:bold">if</span> !w.<span style="color:#900;font-weight:bold">shouldReuseConnection</span>() {
+			<span style="color:#000;font-weight:bold">if</span> w.requestBodyLimitHit <span style="color:#000;font-weight:bold">||</span> w.<span style="color:#900;font-weight:bold">closedRequestBodyEarly</span>() {
+				c.<span style="color:#900;font-weight:bold">closeWriteAndWait</span>()
+			}
+			<span style="color:#000;font-weight:bold">return</span>
+		}
+		c.<span style="color:#900;font-weight:bold">setState</span>(c.rwc, StateIdle, runHooks)
+		c.curReq.<span style="color:#900;font-weight:bold">Store</span>((<span style="color:#000;font-weight:bold">*</span>response)(<span style="color:#000;font-weight:bold">nil</span>))
+
+		<span style="color:#000;font-weight:bold">if</span> !w.conn.server.<span style="color:#900;font-weight:bold">doKeepAlives</span>() {
+			<span style="color:#998;font-style:italic">// We&#39;re in shutdown mode. We might&#39;ve replied
+</span><span style="color:#998;font-style:italic"></span>			<span style="color:#998;font-style:italic">// to the user without &#34;Connection: close&#34; and
+</span><span style="color:#998;font-style:italic"></span>			<span style="color:#998;font-style:italic">// they might think they can send another
+</span><span style="color:#998;font-style:italic"></span>			<span style="color:#998;font-style:italic">// request, but such is life with HTTP/1.1.
+</span><span style="color:#998;font-style:italic"></span>			<span style="color:#000;font-weight:bold">return</span>
+		}
+
+		<span style="color:#000;font-weight:bold">if</span> d <span style="color:#000;font-weight:bold">:=</span> c.server.<span style="color:#900;font-weight:bold">idleTimeout</span>(); d <span style="color:#000;font-weight:bold">!=</span> <span style="color:#099">0</span> {
+			c.rwc.<span style="color:#900;font-weight:bold">SetReadDeadline</span>(time.<span style="color:#900;font-weight:bold">Now</span>().<span style="color:#900;font-weight:bold">Add</span>(d))
+			<span style="color:#000;font-weight:bold">if</span> _, err <span style="color:#000;font-weight:bold">:=</span> c.bufr.<span style="color:#900;font-weight:bold">Peek</span>(<span style="color:#099">4</span>); err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+				<span style="color:#000;font-weight:bold">return</span>
+			}
+		}
+		c.rwc.<span style="color:#900;font-weight:bold">SetReadDeadline</span>(time.Time{})
+	}
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">69
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#998;font-style:italic">// ServeHTTP conforms to the http.Handler interface.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (engine <span style="color:#000;font-weight:bold">*</span>Engine) <span style="color:#900;font-weight:bold">ServeHTTP</span>(w http.ResponseWriter, req <span style="color:#000;font-weight:bold">*</span>http.Request) {
+	c <span style="color:#000;font-weight:bold">:=</span> engine.pool.<span style="color:#900;font-weight:bold">Get</span>().(<span style="color:#000;font-weight:bold">*</span>Context)
+	c.writermem.<span style="color:#900;font-weight:bold">reset</span>(w)
+	c.Request = req
+	c.<span style="color:#900;font-weight:bold">reset</span>()
+
+	engine.<span style="color:#900;font-weight:bold">handleHTTPRequest</span>(c)
+
+	engine.pool.<span style="color:#900;font-weight:bold">Put</span>(c)
+}
+
+<span style="color:#000;font-weight:bold">func</span> (engine <span style="color:#000;font-weight:bold">*</span>Engine) <span style="color:#900;font-weight:bold">handleHTTPRequest</span>(c <span style="color:#000;font-weight:bold">*</span>Context) {
+	httpMethod <span style="color:#000;font-weight:bold">:=</span> c.Request.Method
+	rPath <span style="color:#000;font-weight:bold">:=</span> c.Request.URL.Path
+	unescape <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">false</span>
+	<span style="color:#000;font-weight:bold">if</span> engine.UseRawPath <span style="color:#000;font-weight:bold">&amp;&amp;</span> <span style="color:#0086b3">len</span>(c.Request.URL.RawPath) &gt; <span style="color:#099">0</span> {
+		rPath = c.Request.URL.RawPath
+		unescape = engine.UnescapePathValues
+	}
+
+	<span style="color:#000;font-weight:bold">if</span> engine.RemoveExtraSlash {
+		rPath = <span style="color:#900;font-weight:bold">cleanPath</span>(rPath)
+	}
+
+	<span style="color:#998;font-style:italic">// Find root of the tree for the given HTTP method
+</span><span style="color:#998;font-style:italic"></span>	t <span style="color:#000;font-weight:bold">:=</span> engine.trees
+	<span style="color:#000;font-weight:bold">for</span> i, tl <span style="color:#000;font-weight:bold">:=</span> <span style="color:#099">0</span>, <span style="color:#0086b3">len</span>(t); i &lt; tl; i<span style="color:#000;font-weight:bold">++</span> {
+		<span style="color:#000;font-weight:bold">if</span> t[i].method <span style="color:#000;font-weight:bold">!=</span> httpMethod {
+			<span style="color:#000;font-weight:bold">continue</span>
+		}
+		root <span style="color:#000;font-weight:bold">:=</span> t[i].root
+		<span style="color:#998;font-style:italic">// Find route in tree
+</span><span style="color:#998;font-style:italic"></span>		value <span style="color:#000;font-weight:bold">:=</span> root.<span style="color:#900;font-weight:bold">getValue</span>(rPath, c.params, c.skippedNodes, unescape)
+		<span style="color:#000;font-weight:bold">if</span> value.params <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			c.Params = <span style="color:#000;font-weight:bold">*</span>value.params
+		}
+		<span style="color:#000;font-weight:bold">if</span> value.handlers <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			c.handlers = value.handlers
+			c.fullPath = value.fullPath
+			c.<span style="color:#900;font-weight:bold">Next</span>()
+			c.writermem.<span style="color:#900;font-weight:bold">WriteHeaderNow</span>()
+			<span style="color:#000;font-weight:bold">return</span>
+		}
+		<span style="color:#000;font-weight:bold">if</span> httpMethod <span style="color:#000;font-weight:bold">!=</span> http.MethodConnect <span style="color:#000;font-weight:bold">&amp;&amp;</span> rPath <span style="color:#000;font-weight:bold">!=</span> <span style="color:#d14">&#34;/&#34;</span> {
+			<span style="color:#000;font-weight:bold">if</span> value.tsr <span style="color:#000;font-weight:bold">&amp;&amp;</span> engine.RedirectTrailingSlash {
+				<span style="color:#900;font-weight:bold">redirectTrailingSlash</span>(c)
+				<span style="color:#000;font-weight:bold">return</span>
+			}
+			<span style="color:#000;font-weight:bold">if</span> engine.RedirectFixedPath <span style="color:#000;font-weight:bold">&amp;&amp;</span> <span style="color:#900;font-weight:bold">redirectFixedPath</span>(c, root, engine.RedirectFixedPath) {
+				<span style="color:#000;font-weight:bold">return</span>
+			}
+		}
+		<span style="color:#000;font-weight:bold">break</span>
+	}
+	<span style="color:#998;font-style:italic">// ...
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#900;font-weight:bold">serveError</span>(c, http.StatusNotFound, default404Body)
+}
+
+<span style="color:#998;font-style:italic">// Next should be used only inside middleware.
+</span><span style="color:#998;font-style:italic">// It executes the pending handlers in the chain inside the calling handler.
+</span><span style="color:#998;font-style:italic">// See example in GitHub.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (c <span style="color:#000;font-weight:bold">*</span>Context) <span style="color:#900;font-weight:bold">Next</span>() {
+	c.index<span style="color:#000;font-weight:bold">++</span> <span style="color:#998;font-style:italic">// c.reset()的时候为-1了，所有这里加一下，也可以手动在handler里面主动调用c.Next()
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">for</span> c.index &lt; <span style="color:#0086b3">int8</span>(<span style="color:#0086b3">len</span>(c.handlers)) {
+		c.handlers[c.index](c)
+		c.index<span style="color:#000;font-weight:bold">++</span>
+	}
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>这样就安handler的注册顺序执行完，整个http请求就结束了，最终在<code>w.finishRequest()</code>把用户写到response里面的数据回给client。</p>
+<h2 id="martini">martini</h2>
+<h3 id="样例-1">样例</h3>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">package</span> main
+
+<span style="color:#000;font-weight:bold">import</span> (
+	<span style="color:#d14">&#34;fmt&#34;</span>
+	<span style="color:#d14">&#34;github.com/go-martini/martini&#34;</span>
+	<span style="color:#d14">&#34;github.com/martini-contrib/binding&#34;</span>
+	<span style="color:#d14">&#34;github.com/martini-contrib/render&#34;</span>
+	<span style="color:#d14">&#34;net/http&#34;</span>
+)
+
+<span style="color:#000;font-weight:bold">type</span> FormTest <span style="color:#000;font-weight:bold">struct</span> {
+	Field1 <span style="color:#458;font-weight:bold">string</span> <span style="color:#d14">`form:&#34;key1&#34;`</span>
+	Field2 <span style="color:#458;font-weight:bold">string</span> <span style="color:#d14">`form:&#34;key2&#34;`</span>
+}
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">main</span>() {
+	web <span style="color:#000;font-weight:bold">:=</span> martini.<span style="color:#900;font-weight:bold">Classic</span>()
+	web.<span style="color:#900;font-weight:bold">Use</span>(render.<span style="color:#900;font-weight:bold">Renderer</span>())<span style="color:#998;font-style:italic">//这里要使用这个中间才可以使用render
+</span><span style="color:#998;font-style:italic"></span>	web.<span style="color:#900;font-weight:bold">Group</span>(<span style="color:#d14">&#34;/v1&#34;</span>, <span style="color:#000;font-weight:bold">func</span>(router martini.Router) {
+		router.<span style="color:#900;font-weight:bold">Get</span>(<span style="color:#d14">&#34;/path1&#34;</span>, <span style="color:#000;font-weight:bold">func</span>(render render.Render, req <span style="color:#000;font-weight:bold">*</span>http.Request, context martini.Context) {
+			render.<span style="color:#900;font-weight:bold">JSON</span>(http.StatusOK, <span style="color:#d14">&#34;thanks&#34;</span>)
+		})
+	})
+
+	web.<span style="color:#900;font-weight:bold">Get</span>(<span style="color:#d14">&#34;/hello,&#34;</span>, <span style="color:#000;font-weight:bold">func</span>(render render.Render) {})
+	web.<span style="color:#900;font-weight:bold">Group</span>(<span style="color:#d14">&#34;/v2&#34;</span>, <span style="color:#000;font-weight:bold">func</span>(router martini.Router) {
+		router.<span style="color:#900;font-weight:bold">Get</span>(<span style="color:#d14">&#34;/path1&#34;</span>, binding.<span style="color:#900;font-weight:bold">Form</span>(FormTest{}), <span style="color:#000;font-weight:bold">func</span>(render render.Render, param FormTest) {
+			render.<span style="color:#900;font-weight:bold">JSON</span>(http.StatusOK, param)
+		})
+	})
+
+	web.<span style="color:#900;font-weight:bold">RunOnAddr</span>(<span style="color:#d14">&#34;:1780&#34;</span>)
+}
+</code></pre></td></tr></table>
+</div>
+</div><p><code>curl -XGET http://127.0.0.1:1780/v2/path1?key1=1234&amp;key2=889aj</code>你就会得到上面给你的反馈，其他接口同样，我们结构上面gin的例子一看，我认为这个web框架还是帮你省了好些事的，比起gin来说，我更钟意<strong>martini</strong>，可以在handler里面任意添加系统已经关联起来的参数类型。下面我们来看看底层是如何服务一个http请求的吧！</p>
+<h3 id="源码赏析-1">源码赏析</h3>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">122
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">123
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">124
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">125
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">126
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">127
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">128
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">129
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">130
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">131
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">132
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">133
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">134
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">135
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">136
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">137
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">138
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">139
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">140
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">141
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">142
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">143
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">144
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">145
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#998;font-style:italic">// ServeHTTP is the HTTP Entry point for a Martini instance. Useful if you want to control your own HTTP server.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (m <span style="color:#000;font-weight:bold">*</span>Martini) <span style="color:#900;font-weight:bold">ServeHTTP</span>(res http.ResponseWriter, req <span style="color:#000;font-weight:bold">*</span>http.Request) {
+	m.<span style="color:#900;font-weight:bold">createContext</span>(res, req).<span style="color:#900;font-weight:bold">run</span>()
+}
+
+<span style="color:#000;font-weight:bold">func</span> (m <span style="color:#000;font-weight:bold">*</span>Martini) <span style="color:#900;font-weight:bold">createContext</span>(res http.ResponseWriter, req <span style="color:#000;font-weight:bold">*</span>http.Request) <span style="color:#000;font-weight:bold">*</span>context {
+	c <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">&amp;</span>context{inject.<span style="color:#900;font-weight:bold">New</span>(), m.handlers, m.action, <span style="color:#900;font-weight:bold">NewResponseWriter</span>(res), <span style="color:#099">0</span>}
+	c.<span style="color:#900;font-weight:bold">SetParent</span>(m)
+	c.<span style="color:#900;font-weight:bold">MapTo</span>(c, (<span style="color:#000;font-weight:bold">*</span>Context)(<span style="color:#000;font-weight:bold">nil</span>))<span style="color:#998;font-style:italic">// 关联指定的interface对象
+</span><span style="color:#998;font-style:italic"></span>	c.<span style="color:#900;font-weight:bold">MapTo</span>(c.rw, (<span style="color:#000;font-weight:bold">*</span>http.ResponseWriter)(<span style="color:#000;font-weight:bold">nil</span>))
+	c.<span style="color:#900;font-weight:bold">Map</span>(req)  <span style="color:#998;font-style:italic">// 关联http.Requst对象
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">return</span> c
+}
+
+<span style="color:#000;font-weight:bold">func</span> (c <span style="color:#000;font-weight:bold">*</span>context) <span style="color:#900;font-weight:bold">run</span>() {
+	<span style="color:#000;font-weight:bold">for</span> c.index <span style="color:#000;font-weight:bold">&lt;=</span> <span style="color:#0086b3">len</span>(c.handlers) {<span style="color:#998;font-style:italic">// 
+</span><span style="color:#998;font-style:italic"></span>		_, err <span style="color:#000;font-weight:bold">:=</span> c.<span style="color:#900;font-weight:bold">Invoke</span>(c.<span style="color:#900;font-weight:bold">handler</span>())
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#0086b3">panic</span>(err)
+		}
+		c.index <span style="color:#000;font-weight:bold">+=</span> <span style="color:#099">1</span>
+
+		<span style="color:#000;font-weight:bold">if</span> c.<span style="color:#900;font-weight:bold">Written</span>() {
+			<span style="color:#000;font-weight:bold">return</span>
+		}
+	}
+}
+
+<span style="color:#000;font-weight:bold">func</span> (c <span style="color:#000;font-weight:bold">*</span>context) <span style="color:#900;font-weight:bold">handler</span>() Handler {
+	<span style="color:#000;font-weight:bold">if</span> c.index &lt; <span style="color:#0086b3">len</span>(c.handlers) {
+		<span style="color:#000;font-weight:bold">return</span> c.handlers[c.index]
+	}
+	<span style="color:#000;font-weight:bold">if</span> c.index <span style="color:#000;font-weight:bold">==</span> <span style="color:#0086b3">len</span>(c.handlers) {
+		<span style="color:#000;font-weight:bold">return</span> c.action
+	}
+	<span style="color:#0086b3">panic</span>(<span style="color:#d14">&#34;invalid index for context handler&#34;</span>)
+}
+
+<span style="color:#998;font-style:italic">// 最后的c.action实际就是下面的Handle函数
+</span><span style="color:#998;font-style:italic">////////////////////////////////////////////////////////////////////////
+</span><span style="color:#998;font-style:italic"></span>
+<span style="color:#000;font-weight:bold">func</span> (r <span style="color:#000;font-weight:bold">*</span>router) <span style="color:#900;font-weight:bold">Handle</span>(res http.ResponseWriter, req <span style="color:#000;font-weight:bold">*</span>http.Request, context Context) {
+	bestMatch <span style="color:#000;font-weight:bold">:=</span> NoMatch
+	<span style="color:#000;font-weight:bold">var</span> bestVals <span style="color:#000;font-weight:bold">map</span>[<span style="color:#458;font-weight:bold">string</span>]<span style="color:#458;font-weight:bold">string</span>
+	<span style="color:#000;font-weight:bold">var</span> bestRoute <span style="color:#000;font-weight:bold">*</span>route
+	<span style="color:#000;font-weight:bold">for</span> _, route <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">range</span> r.<span style="color:#900;font-weight:bold">getRoutes</span>() {
+		match, vals <span style="color:#000;font-weight:bold">:=</span> route.<span style="color:#900;font-weight:bold">Match</span>(req.Method, req.URL.Path)
+		<span style="color:#000;font-weight:bold">if</span> match.<span style="color:#900;font-weight:bold">BetterThan</span>(bestMatch) {
+			bestMatch = match
+			bestVals = vals
+			bestRoute = route
+			<span style="color:#000;font-weight:bold">if</span> match <span style="color:#000;font-weight:bold">==</span> ExactMatch {
+				<span style="color:#000;font-weight:bold">break</span>
+			}
+		}
+	}
+	<span style="color:#000;font-weight:bold">if</span> bestMatch <span style="color:#000;font-weight:bold">!=</span> NoMatch {
+		params <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">Params</span>(bestVals)
+		context.<span style="color:#900;font-weight:bold">Map</span>(params)
+		bestRoute.<span style="color:#900;font-weight:bold">Handle</span>(context, res)
+		<span style="color:#000;font-weight:bold">return</span>
+	}
+
+	<span style="color:#998;font-style:italic">// no routes exist, 404
+</span><span style="color:#998;font-style:italic"></span>	c <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">&amp;</span>routeContext{context, <span style="color:#099">0</span>, r.notFounds}
+	context.<span style="color:#900;font-weight:bold">MapTo</span>(c, (<span style="color:#000;font-weight:bold">*</span>Context)(<span style="color:#000;font-weight:bold">nil</span>))
+	c.<span style="color:#900;font-weight:bold">run</span>()
+}
+
+<span style="color:#998;font-style:italic">// 这里直接通过正则表达式来匹配path的，这肯定是玩正则玩的最6的了^_^ 
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (r route) <span style="color:#900;font-weight:bold">Match</span>(method <span style="color:#458;font-weight:bold">string</span>, path <span style="color:#458;font-weight:bold">string</span>) (RouteMatch, <span style="color:#000;font-weight:bold">map</span>[<span style="color:#458;font-weight:bold">string</span>]<span style="color:#458;font-weight:bold">string</span>) {
+	<span style="color:#998;font-style:italic">// add Any method matching support
+</span><span style="color:#998;font-style:italic"></span>	match <span style="color:#000;font-weight:bold">:=</span> r.<span style="color:#900;font-weight:bold">MatchMethod</span>(method)
+	<span style="color:#000;font-weight:bold">if</span> match <span style="color:#000;font-weight:bold">==</span> NoMatch {
+		<span style="color:#000;font-weight:bold">return</span> match, <span style="color:#000;font-weight:bold">nil</span>
+	}
+
+	matches <span style="color:#000;font-weight:bold">:=</span> r.regex.<span style="color:#900;font-weight:bold">FindStringSubmatch</span>(path)
+	<span style="color:#000;font-weight:bold">if</span> <span style="color:#0086b3">len</span>(matches) &gt; <span style="color:#099">0</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> matches[<span style="color:#099">0</span>] <span style="color:#000;font-weight:bold">==</span> path {
+		params <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">make</span>(<span style="color:#000;font-weight:bold">map</span>[<span style="color:#458;font-weight:bold">string</span>]<span style="color:#458;font-weight:bold">string</span>)
+		<span style="color:#000;font-weight:bold">for</span> i, name <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">range</span> r.regex.<span style="color:#900;font-weight:bold">SubexpNames</span>() {
+			<span style="color:#000;font-weight:bold">if</span> <span style="color:#0086b3">len</span>(name) &gt; <span style="color:#099">0</span> {
+				params[name] = matches[i]
+			}
+		}
+		<span style="color:#000;font-weight:bold">return</span> match, params
+	}
+	<span style="color:#000;font-weight:bold">return</span> NoMatch, <span style="color:#000;font-weight:bold">nil</span>
+}
+
+<span style="color:#000;font-weight:bold">func</span> (r <span style="color:#000;font-weight:bold">*</span>route) <span style="color:#900;font-weight:bold">Handle</span>(c Context, res http.ResponseWriter) {
+	context <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">&amp;</span>routeContext{c, <span style="color:#099">0</span>, r.handlers}
+	c.<span style="color:#900;font-weight:bold">MapTo</span>(context, (<span style="color:#000;font-weight:bold">*</span>Context)(<span style="color:#000;font-weight:bold">nil</span>))
+	c.<span style="color:#900;font-weight:bold">MapTo</span>(r, (<span style="color:#000;font-weight:bold">*</span>Route)(<span style="color:#000;font-weight:bold">nil</span>))
+	context.<span style="color:#900;font-weight:bold">run</span>()
+}
+
+<span style="color:#998;font-style:italic">// 这里执行GET/POST注册对应的所有handler
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (r <span style="color:#000;font-weight:bold">*</span>routeContext) <span style="color:#900;font-weight:bold">run</span>() {
+	<span style="color:#000;font-weight:bold">for</span> r.index &lt; <span style="color:#0086b3">len</span>(r.handlers) {
+		handler <span style="color:#000;font-weight:bold">:=</span> r.handlers[r.index]
+		vals, err <span style="color:#000;font-weight:bold">:=</span> r.<span style="color:#900;font-weight:bold">Invoke</span>(handler)
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#0086b3">panic</span>(err)
+		}
+		r.index <span style="color:#000;font-weight:bold">+=</span> <span style="color:#099">1</span>
+
+		<span style="color:#998;font-style:italic">// if the handler returned something, write it to the http response
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#000;font-weight:bold">if</span> <span style="color:#0086b3">len</span>(vals) &gt; <span style="color:#099">0</span> {
+			ev <span style="color:#000;font-weight:bold">:=</span> r.<span style="color:#900;font-weight:bold">Get</span>(reflect.<span style="color:#900;font-weight:bold">TypeOf</span>(<span style="color:#900;font-weight:bold">ReturnHandler</span>(<span style="color:#000;font-weight:bold">nil</span>)))
+			handleReturn <span style="color:#000;font-weight:bold">:=</span> ev.<span style="color:#900;font-weight:bold">Interface</span>().(ReturnHandler)
+			<span style="color:#900;font-weight:bold">handleReturn</span>(r, vals)
+		}
+
+		<span style="color:#000;font-weight:bold">if</span> r.<span style="color:#900;font-weight:bold">Written</span>() {
+			<span style="color:#000;font-weight:bold">return</span>
+		}
+	}
+}
+
+
+<span style="color:#998;font-style:italic">// 这里是最终通过反射得到对应handler参数并通过反射执行handler
+</span><span style="color:#998;font-style:italic"></span>
+<span style="color:#998;font-style:italic">// Invoke attempts to call the interface{} provided as a function,
+</span><span style="color:#998;font-style:italic">// providing dependencies for function arguments based on Type.
+</span><span style="color:#998;font-style:italic">// Returns a slice of reflect.Value representing the returned values of the function.
+</span><span style="color:#998;font-style:italic">// Returns an error if the injection fails.
+</span><span style="color:#998;font-style:italic">// It panics if f is not a function
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (inj <span style="color:#000;font-weight:bold">*</span>injector) <span style="color:#900;font-weight:bold">Invoke</span>(f <span style="color:#000;font-weight:bold">interface</span>{}) ([]reflect.Value, <span style="color:#458;font-weight:bold">error</span>) {
+	t <span style="color:#000;font-weight:bold">:=</span> reflect.<span style="color:#900;font-weight:bold">TypeOf</span>(f)
+
+	<span style="color:#000;font-weight:bold">var</span> in = <span style="color:#0086b3">make</span>([]reflect.Value, t.<span style="color:#900;font-weight:bold">NumIn</span>()) <span style="color:#998;font-style:italic">//Panic if t is not kind of Func
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">for</span> i <span style="color:#000;font-weight:bold">:=</span> <span style="color:#099">0</span>; i &lt; t.<span style="color:#900;font-weight:bold">NumIn</span>(); i<span style="color:#000;font-weight:bold">++</span> {
+		argType <span style="color:#000;font-weight:bold">:=</span> t.<span style="color:#900;font-weight:bold">In</span>(i)
+		val <span style="color:#000;font-weight:bold">:=</span> inj.<span style="color:#900;font-weight:bold">Get</span>(argType)
+		<span style="color:#000;font-weight:bold">if</span> !val.<span style="color:#900;font-weight:bold">IsValid</span>() {
+			<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">nil</span>, fmt.<span style="color:#900;font-weight:bold">Errorf</span>(<span style="color:#d14">&#34;Value not found for type %v&#34;</span>, argType)
+		}
+
+		in[i] = val
+	}
+
+	<span style="color:#000;font-weight:bold">return</span> reflect.<span style="color:#900;font-weight:bold">ValueOf</span>(f).<span style="color:#900;font-weight:bold">Call</span>(in), <span style="color:#000;font-weight:bold">nil</span>
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><p>martini的路由不是树形结构，就是为每一个path创建了一个<code>route</code>并组成一个数组，然后去匹配的时候就是遍历整个数组通过正则表达式去找到对应的<code>route</code>!</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang">
+<span style="color:#000;font-weight:bold">type</span> router <span style="color:#000;font-weight:bold">struct</span> {
+	routes     []<span style="color:#000;font-weight:bold">*</span>route
+	notFounds  []Handler
+	groups     []group
+	routesLock sync.RWMutex
+}
+
+<span style="color:#000;font-weight:bold">var</span> routeReg1 = regexp.<span style="color:#900;font-weight:bold">MustCompile</span>(<span style="color:#d14">`:[^/#?()\.\\]+`</span>)
+<span style="color:#000;font-weight:bold">var</span> routeReg2 = regexp.<span style="color:#900;font-weight:bold">MustCompile</span>(<span style="color:#d14">`\*\*`</span>)
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">newRoute</span>(method <span style="color:#458;font-weight:bold">string</span>, pattern <span style="color:#458;font-weight:bold">string</span>, handlers []Handler) <span style="color:#000;font-weight:bold">*</span>route {
+	route <span style="color:#000;font-weight:bold">:=</span> route{method, <span style="color:#000;font-weight:bold">nil</span>, handlers, pattern, <span style="color:#d14">&#34;&#34;</span>}
+	pattern = routeReg1.<span style="color:#900;font-weight:bold">ReplaceAllStringFunc</span>(pattern, <span style="color:#000;font-weight:bold">func</span>(m <span style="color:#458;font-weight:bold">string</span>) <span style="color:#458;font-weight:bold">string</span> {
+		<span style="color:#000;font-weight:bold">return</span> fmt.<span style="color:#900;font-weight:bold">Sprintf</span>(<span style="color:#d14">`(?P&lt;%s&gt;[^/#?]+)`</span>, m[<span style="color:#099">1</span>:])
+	})
+	<span style="color:#000;font-weight:bold">var</span> index <span style="color:#458;font-weight:bold">int</span>
+	pattern = routeReg2.<span style="color:#900;font-weight:bold">ReplaceAllStringFunc</span>(pattern, <span style="color:#000;font-weight:bold">func</span>(m <span style="color:#458;font-weight:bold">string</span>) <span style="color:#458;font-weight:bold">string</span> {
+		index<span style="color:#000;font-weight:bold">++</span>
+		<span style="color:#000;font-weight:bold">return</span> fmt.<span style="color:#900;font-weight:bold">Sprintf</span>(<span style="color:#d14">`(?P&lt;_%d&gt;[^#?]*)`</span>, index)
+	})
+	pattern <span style="color:#000;font-weight:bold">+=</span> <span style="color:#d14">`\/?`</span>
+	route.regex = regexp.<span style="color:#900;font-weight:bold">MustCompile</span>(pattern)
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">&amp;</span>route
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="总结">总结</h2>
+<p>个人认为martini的实现要优于gin，代码相对简洁，设计也便于使用，我也更加偏向于选择martini。</p>
+<p>这个两种不同的匹配route的算法我们就不去分析了，一个树形的结构，一个通过正则表达式，相信他们都是经过严格思考才决定使用这套东西的。你会选择哪个作为你的api服务呢？</p>
+
+        </div>
+
+        
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/posts/map/">go map</a></li>
+        
+        <li><a href="/posts/slice/">go slice</a></li>
+        
+        <li><a href="/posts/channel/">go channel</a></li>
+        
+        <li><a href="/archives/">文章归档</a></li>
+        
+        <li><a href="/posts/go-download/">go下载不了的问题</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/golang'>golang</a></li>
+                
+                <li><a href='/tags/gin'>gin</a></li>
+                
+                <li><a href='/tags/martini'>martini</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "your github repo"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2021 <a href="">江湖再见 By 江湖再见</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+    <script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script>
+
+
+
+
+    <script src='/js/douban.js'></script>
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="/posts/gorm/" title="gorm">gorm</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-redis/" title="Go Redis">Go Redis</a>
+    </li>
+    
+    <li>
+        <a href="/posts/gin-martini/" title="web框架">web框架</a>
+    </li>
+    
+    <li>
+        <a href="/posts/map/" title="go map">go map</a>
+    </li>
+    
+    <li>
+        <a href="/posts/slice/" title="go slice">go slice</a>
+    </li>
+    
+    <li>
+        <a href="/archives/" title="文章归档">文章归档</a>
+    </li>
+    
+    <li>
+        <a href="/posts/channel/" title="go channel">go channel</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-download/" title="go下载不了的问题">go下载不了的问题</a>
+    </li>
+    
+    <li>
+        <a href="/posts/reason/" title="起源">起源</a>
+    </li>
+    
+    <li>
+        <a href="/posts/generate-go/" title=""></a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="/categories/go%E5%86%85%E9%83%A8%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">go内部源码浅析 (3)</a></li>
+    
+    <li><a href="/categories/%E5%BC%80%E6%BA%90%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">开源源码浅析 (3)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="/tags/channel/">channel</a>
+    
+    <a href="/tags/gin/">gin</a>
+    
+    <a href="/tags/go-redis/">go-redis</a>
+    
+    <a href="/tags/golang/">golang</a>
+    
+    <a href="/tags/gorm/">gorm</a>
+    
+    <a href="/tags/hash-table/">hash table</a>
+    
+    <a href="/tags/map/">map</a>
+    
+    <a href="/tags/martini/">martini</a>
+    
+    <a href="/tags/redis-client/">redis client</a>
+    
+    <a href="/tags/slice/">slice</a>
+    
+    <a href="/tags/sync-map/">sync map</a>
+    
+    <a href="/tags/%E6%90%9E%E7%82%B9%E4%B8%9C%E8%A5%BF/">搞点东西</a>
+    
+    <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+    
+    <a href="/tags/%E9%98%9F%E5%88%97/">队列</a>
+    
+</div>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="http://tofindme.github.io" title="江湖再见的博客">江湖再见的博客</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

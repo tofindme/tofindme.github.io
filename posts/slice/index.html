@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>go slice | 江湖再见</title>
+    <meta property="og:title" content="go slice - 江湖再见">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2021-12-20T20:30:30&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2021-12-20T20:30:30&#43;08:00'>
+        
+    <meta name="Keywords" content="golang,go语言">
+    <meta name="description" content="go slice">
+        
+    <meta name="author" content="江湖再见">
+    <meta property="og:url" content="/posts/slice/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="">
+                        江湖再见
+                    </a>
+                
+                <p class="description">这里有Go语言(golang)</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="" href="">首页</a>
+                    
+                    <a  href="/something/" title="test">test</a>
+                    
+                    <a  href="/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#样例">样例</a>
+      <ul>
+        <li><a href="#slice下标越界">slice下标越界</a></li>
+        <li><a href="#意外修改">意外修改</a></li>
+        <li><a href="#内存泄漏">内存泄漏</a></li>
+      </ul>
+    </li>
+    <li><a href="#源码赏析">源码赏析</a></li>
+    <li><a href="#注意事项">注意事项</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">go slice</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2021年12月20日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/go%E5%86%85%E9%83%A8%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90'>go内部源码浅析</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <p>slice是区别于固定长度的数组而有的一种可自动扩容的、内置的基础的数据类型。
+slice在使用的时候通常遇到的问题就是下标越界，其他的如果不清除他底层的原理的话可能会带给你一些意想不到的bug，比方说数据被修改，更大的问题的话就是内存泄漏的问题了。</p>
+<h2 id="样例">样例</h2>
+<h3 id="slice下标越界">slice下标越界</h3>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">package</span> main
+<span style="color:#000;font-weight:bold">import</span> <span style="color:#d14">&#34;fmt&#34;</span>
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">main</span>() {
+	slice <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">make</span>([]<span style="color:#458;font-weight:bold">int</span>, <span style="color:#099">0</span>, <span style="color:#099">8</span>)
+	slice[<span style="color:#099">2</span>] = <span style="color:#099">3</span>
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;%v\n&#34;</span>, slice)
+}
+<span style="color:#998;font-style:italic">// output:
+</span><span style="color:#998;font-style:italic">// panic: runtime error: index out of range [2] with length 0
+</span><span style="color:#998;font-style:italic"></span>
+</code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">package</span> main
+<span style="color:#000;font-weight:bold">import</span> <span style="color:#d14">&#34;fmt&#34;</span>
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">main</span>() {
+	slice <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">make</span>([]<span style="color:#458;font-weight:bold">int</span>, <span style="color:#099">0</span>, <span style="color:#099">8</span>)
+	sliceB <span style="color:#000;font-weight:bold">:=</span> slice[:<span style="color:#099">9</span>] <span style="color:#998;font-style:italic">// 这里&lt;=8都是可以的
+</span><span style="color:#998;font-style:italic"></span>	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;%v %v\n&#34;</span>, slice, sliceB)
+}
+<span style="color:#998;font-style:italic">// output:
+</span><span style="color:#998;font-style:italic">// panic: runtime error: slice bounds out of range [:9] with capacity 8
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="意外修改">意外修改</h3>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">package</span> main
+
+<span style="color:#000;font-weight:bold">import</span> (
+	<span style="color:#d14">&#34;fmt&#34;</span>
+	<span style="color:#d14">&#34;math/rand&#34;</span>
+	<span style="color:#d14">&#34;time&#34;</span>
+)
+
+<span style="color:#000;font-weight:bold">var</span> cards = []<span style="color:#458;font-weight:bold">int32</span>{<span style="color:#099">1</span>, <span style="color:#099">2</span>, <span style="color:#099">3</span>, <span style="color:#099">4</span>, <span style="color:#099">5</span>}
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">GetCards</span>() []<span style="color:#458;font-weight:bold">int32</span> {
+	<span style="color:#000;font-weight:bold">var</span> myCards []<span style="color:#458;font-weight:bold">int32</span>
+	myCards = cards
+
+	<span style="color:#000;font-weight:bold">for</span> i <span style="color:#000;font-weight:bold">:=</span> <span style="color:#099">0</span>; i &lt; <span style="color:#0086b3">len</span>(cards); i<span style="color:#000;font-weight:bold">++</span> {
+		exchangePos <span style="color:#000;font-weight:bold">:=</span> rand.<span style="color:#900;font-weight:bold">Intn</span>(<span style="color:#0086b3">len</span>(cards))
+		<span style="color:#000;font-weight:bold">if</span> i <span style="color:#000;font-weight:bold">!=</span> exchangePos {
+			myCards[i], myCards[exchangePos] = myCards[exchangePos], myCards[i]
+		}
+	}
+	<span style="color:#000;font-weight:bold">return</span> myCards
+}
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">main</span>() {
+	rand.<span style="color:#900;font-weight:bold">Seed</span>(time.<span style="color:#900;font-weight:bold">Now</span>().<span style="color:#900;font-weight:bold">UnixNano</span>())
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;cards:		%v\n&#34;</span>, cards)
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;-----------------------\n&#34;</span>)
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;my cards:	%v\n&#34;</span>, <span style="color:#900;font-weight:bold">GetCards</span>())
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;cards:		%v\n&#34;</span>, cards)
+	<span style="color:#998;font-style:italic">/*
+</span><span style="color:#998;font-style:italic">		output:
+</span><span style="color:#998;font-style:italic">			cards:		[1 2 3 4 5]
+</span><span style="color:#998;font-style:italic">			-----------------------
+</span><span style="color:#998;font-style:italic">			my cards:	[1 4 2 5 3]
+</span><span style="color:#998;font-style:italic">			cards:		[1 4 2 5 3]
+</span><span style="color:#998;font-style:italic">	*/</span>
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">package</span> main
+
+<span style="color:#000;font-weight:bold">import</span> (
+	<span style="color:#d14">&#34;fmt&#34;</span>
+	<span style="color:#d14">&#34;math/rand&#34;</span>
+	<span style="color:#d14">&#34;time&#34;</span>
+)
+
+<span style="color:#000;font-weight:bold">var</span> cards = []<span style="color:#458;font-weight:bold">int32</span>{<span style="color:#099">1</span>, <span style="color:#099">2</span>, <span style="color:#099">3</span>, <span style="color:#099">4</span>, <span style="color:#099">5</span>}
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">GetCards</span>() []<span style="color:#458;font-weight:bold">int32</span> {
+	<span style="color:#000;font-weight:bold">var</span> myCards []<span style="color:#458;font-weight:bold">int32</span>
+	myCards = cards[<span style="color:#099">1</span>:]
+	<span style="color:#000;font-weight:bold">return</span> myCards
+}
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">main</span>() {
+	rand.<span style="color:#900;font-weight:bold">Seed</span>(time.<span style="color:#900;font-weight:bold">Now</span>().<span style="color:#900;font-weight:bold">UnixNano</span>())
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;cards:	%v\n&#34;</span>, cards)
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;-----------------------\n&#34;</span>)
+	card2 <span style="color:#000;font-weight:bold">:=</span> <span style="color:#900;font-weight:bold">GetCards</span>()
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;card2:	%v\n&#34;</span>, card2)
+	card2[<span style="color:#099">0</span>] = <span style="color:#099">8</span>
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;-----------------------\n&#34;</span>)
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;cards:	%v\n&#34;</span>, cards)
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;cards2:	%v\n&#34;</span>, card2)
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;cards:%p	cards2:%p\n&#34;</span>, <span style="color:#000;font-weight:bold">&amp;</span>cards[<span style="color:#099">1</span>], <span style="color:#000;font-weight:bold">&amp;</span>card2[<span style="color:#099">0</span>])
+	<span style="color:#998;font-style:italic">/*
+</span><span style="color:#998;font-style:italic">		output:
+</span><span style="color:#998;font-style:italic">			cards:	[1 2 3 4 5]
+</span><span style="color:#998;font-style:italic">			-----------------------
+</span><span style="color:#998;font-style:italic">			card2:	[2 3 4 5]
+</span><span style="color:#998;font-style:italic">			-----------------------
+</span><span style="color:#998;font-style:italic">			cards:	[1 8 3 4 5]
+</span><span style="color:#998;font-style:italic">			cards2:	[8 3 4 5]
+</span><span style="color:#998;font-style:italic">			cards:0x100e884	cards2:0x100e884
+</span><span style="color:#998;font-style:italic">	*/</span>
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><p>上面两个例子都是修改了原始的slice，第一个例子当然很明显，如果业务代码里面隐藏的类似第二种情况的话一开始可能会有些抓脑，这个就是问题的现象，不论是单一的slice对象还是复杂对象里面的slice都有同样的问题。</p>
+<p>以前也写过slice等相关的问题。<a href="https://tofindme.github.io/2017/09/11/go-solutions/">go相关问题集锦</a></p>
+<h3 id="内存泄漏">内存泄漏</h3>
+<p>内存泄漏对于不需要手动管理内存的语言来说基本是用这舒服，大部分情况下面都不用care这个，即使遇到了估计也要程序到了一定量或时间的积累才会把问题暴露出来，重启一下可好？</p>
+<p>内存管理是一个非常大的问题，操作系统也有自己的一套管理内存的方法，这种带GC的也是有自己的一套管理方法，为什么要有呢，就是解放程序员的负担。让你值关系你的业务就好了，大体思路就是预先分配一块内存，然后根据自己的一套方法再来管理这些内存的使用，在GC的时候在扫描所有对象把空闲的内存进行释放掉。后续有心情可以了解下内存分配和调度系统的实现^<em>^，了解一下也可以解解乏,^</em>^！！</p>
+<p>由于内存是go自己先向系统申请，然后自己来管理内存的分配和释放，我们在编写代码的时候在对内存的使用的时候尽可能不要大内存的对象被占用小内存的对象持有并得不到释放。</p>
+<pre tabindex="0"><code>一下是模拟的一块内存，slice类型的a对象一开始拥有这块内存，后面b通过[pos:]指向了同一块内存，后面
+---------------------------------------------------------------------------------------------------------------------------------------------
+	|	|	|	|	|	|	|	|	|	|	|	|	|	|	|	|	|	
+---------------------------------------------------------------------------------------------------------------------------------------------
+a:
+													b:
+</code></pre><p>由于b也指向了之前a内存地址的某一段，所有就会导致有空于的一段不能好的利用，长此以往就会越来越多，所以我们也可以用append(a[pos:],1,3,2,3,4)避免这个问题。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">main</span>() {
+	sliceA <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">make</span>([]<span style="color:#458;font-weight:bold">int</span>, <span style="color:#099">0</span>, <span style="color:#099">8</span>)
+	sliceA = <span style="color:#0086b3">append</span>(sliceA, <span style="color:#099">1</span>, <span style="color:#099">2</span>, <span style="color:#099">3</span>, <span style="color:#099">4</span>, <span style="color:#099">5</span>, <span style="color:#099">6</span>, <span style="color:#099">7</span>, <span style="color:#099">8</span>)
+	sliceB <span style="color:#000;font-weight:bold">:=</span> sliceA[<span style="color:#099">4</span>:]
+	sliceC <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">append</span>(sliceA[<span style="color:#099">4</span>:], <span style="color:#099">9</span>, <span style="color:#099">10</span>)
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;cap(sliceB) %v\n&#34;</span>, <span style="color:#0086b3">cap</span>(sliceB))
+	hb <span style="color:#000;font-weight:bold">:=</span> (<span style="color:#000;font-weight:bold">*</span>reflect.SliceHeader)(unsafe.<span style="color:#900;font-weight:bold">Pointer</span>(<span style="color:#000;font-weight:bold">&amp;</span>sliceB))
+	ha <span style="color:#000;font-weight:bold">:=</span> (<span style="color:#000;font-weight:bold">*</span>reflect.SliceHeader)(unsafe.<span style="color:#900;font-weight:bold">Pointer</span>(<span style="color:#000;font-weight:bold">&amp;</span>sliceA))
+	hc <span style="color:#000;font-weight:bold">:=</span> (<span style="color:#000;font-weight:bold">*</span>reflect.SliceHeader)(unsafe.<span style="color:#900;font-weight:bold">Pointer</span>(<span style="color:#000;font-weight:bold">&amp;</span>sliceC))
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;%+v \n%+v\n%+v\n&#34;</span>, <span style="color:#000;font-weight:bold">*</span>ha, <span style="color:#000;font-weight:bold">*</span>hb, <span style="color:#000;font-weight:bold">*</span>hc)
+}
+<span style="color:#998;font-style:italic">// output:
+</span><span style="color:#998;font-style:italic">// cap(sliceB) 4
+</span><span style="color:#998;font-style:italic">// {Data:824634564288 Len:8 Cap:8} 
+</span><span style="color:#998;font-style:italic">// {Data:824634564320 Len:4 Cap:4}
+</span><span style="color:#998;font-style:italic">// {Data:824634523904 Len:6 Cap:8}
+</span></code></pre></td></tr></table>
+</div>
+</div><h2 id="源码赏析">源码赏析</h2>
+<p><!-- raw HTML omitted -->runtime/slice.go<!-- raw HTML omitted --></p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">type</span> slice <span style="color:#000;font-weight:bold">struct</span> {
+	array unsafe.Pointer
+	len   <span style="color:#458;font-weight:bold">int</span>
+	cap   <span style="color:#458;font-weight:bold">int</span>
+}
+
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">growslice</span>(et <span style="color:#000;font-weight:bold">*</span>_type, old slice, cap <span style="color:#458;font-weight:bold">int</span>) slice {
+	<span style="color:#998;font-style:italic">//.....
+</span><span style="color:#998;font-style:italic"></span>
+	<span style="color:#000;font-weight:bold">if</span> cap &lt; old.cap {
+		<span style="color:#0086b3">panic</span>(<span style="color:#900;font-weight:bold">errorString</span>(<span style="color:#d14">&#34;growslice: cap out of range&#34;</span>))
+	}
+
+	<span style="color:#000;font-weight:bold">if</span> et.size <span style="color:#000;font-weight:bold">==</span> <span style="color:#099">0</span> {
+		<span style="color:#998;font-style:italic">// append should not create a slice with nil pointer but non-zero len.
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// We assume that append doesn&#39;t need to preserve old.array in this case.
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#000;font-weight:bold">return</span> slice{unsafe.<span style="color:#900;font-weight:bold">Pointer</span>(<span style="color:#000;font-weight:bold">&amp;</span>zerobase), old.len, cap}
+	}
+
+	newcap <span style="color:#000;font-weight:bold">:=</span> old.cap
+	doublecap <span style="color:#000;font-weight:bold">:=</span> newcap <span style="color:#000;font-weight:bold">+</span> newcap
+	<span style="color:#000;font-weight:bold">if</span> cap &gt; doublecap {
+		newcap = cap
+	} <span style="color:#000;font-weight:bold">else</span> {
+		<span style="color:#000;font-weight:bold">if</span> old.cap &lt; <span style="color:#099">1024</span> {
+			newcap = doublecap
+		} <span style="color:#000;font-weight:bold">else</span> {
+			<span style="color:#998;font-style:italic">// Check 0 &lt; newcap to detect overflow
+</span><span style="color:#998;font-style:italic"></span>			<span style="color:#998;font-style:italic">// and prevent an infinite loop.
+</span><span style="color:#998;font-style:italic"></span>			<span style="color:#000;font-weight:bold">for</span> <span style="color:#099">0</span> &lt; newcap <span style="color:#000;font-weight:bold">&amp;&amp;</span> newcap &lt; cap {
+				newcap <span style="color:#000;font-weight:bold">+=</span> newcap <span style="color:#000;font-weight:bold">/</span> <span style="color:#099">4</span>
+			}
+			<span style="color:#998;font-style:italic">// Set newcap to the requested cap when
+</span><span style="color:#998;font-style:italic"></span>			<span style="color:#998;font-style:italic">// the newcap calculation overflowed.
+</span><span style="color:#998;font-style:italic"></span>			<span style="color:#000;font-weight:bold">if</span> newcap <span style="color:#000;font-weight:bold">&lt;=</span> <span style="color:#099">0</span> {
+				newcap = cap
+			}
+		}
+	}
+
+	<span style="color:#000;font-weight:bold">var</span> overflow <span style="color:#458;font-weight:bold">bool</span>
+	<span style="color:#000;font-weight:bold">var</span> lenmem, newlenmem, capmem <span style="color:#458;font-weight:bold">uintptr</span>
+	<span style="color:#998;font-style:italic">// Specialize for common values of et.size.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// For 1 we don&#39;t need any division/multiplication.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// For sys.PtrSize, compiler will optimize division/multiplication into a shift by a constant.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// For powers of 2, use a variable shift.
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">switch</span> {
+	<span style="color:#000;font-weight:bold">case</span> et.size <span style="color:#000;font-weight:bold">==</span> <span style="color:#099">1</span>:
+		lenmem = <span style="color:#0086b3">uintptr</span>(old.len)
+		newlenmem = <span style="color:#0086b3">uintptr</span>(cap)
+		capmem = <span style="color:#900;font-weight:bold">roundupsize</span>(<span style="color:#0086b3">uintptr</span>(newcap))
+		overflow = <span style="color:#0086b3">uintptr</span>(newcap) &gt; maxAlloc
+		newcap = <span style="color:#0086b3">int</span>(capmem)
+	<span style="color:#000;font-weight:bold">case</span> et.size <span style="color:#000;font-weight:bold">==</span> sys.PtrSize:
+		lenmem = <span style="color:#0086b3">uintptr</span>(old.len) <span style="color:#000;font-weight:bold">*</span> sys.PtrSize
+		newlenmem = <span style="color:#0086b3">uintptr</span>(cap) <span style="color:#000;font-weight:bold">*</span> sys.PtrSize
+		capmem = <span style="color:#900;font-weight:bold">roundupsize</span>(<span style="color:#0086b3">uintptr</span>(newcap) <span style="color:#000;font-weight:bold">*</span> sys.PtrSize)
+		overflow = <span style="color:#0086b3">uintptr</span>(newcap) &gt; maxAlloc<span style="color:#000;font-weight:bold">/</span>sys.PtrSize
+		newcap = <span style="color:#0086b3">int</span>(capmem <span style="color:#000;font-weight:bold">/</span> sys.PtrSize)
+	<span style="color:#000;font-weight:bold">case</span> <span style="color:#900;font-weight:bold">isPowerOfTwo</span>(et.size):
+		<span style="color:#000;font-weight:bold">var</span> shift <span style="color:#458;font-weight:bold">uintptr</span>
+		<span style="color:#000;font-weight:bold">if</span> sys.PtrSize <span style="color:#000;font-weight:bold">==</span> <span style="color:#099">8</span> {
+			<span style="color:#998;font-style:italic">// Mask shift for better code generation.
+</span><span style="color:#998;font-style:italic"></span>			shift = <span style="color:#0086b3">uintptr</span>(sys.<span style="color:#900;font-weight:bold">Ctz64</span>(<span style="color:#0086b3">uint64</span>(et.size))) <span style="color:#000;font-weight:bold">&amp;</span> <span style="color:#099">63</span>
+		} <span style="color:#000;font-weight:bold">else</span> {
+			shift = <span style="color:#0086b3">uintptr</span>(sys.<span style="color:#900;font-weight:bold">Ctz32</span>(<span style="color:#0086b3">uint32</span>(et.size))) <span style="color:#000;font-weight:bold">&amp;</span> <span style="color:#099">31</span>
+		}
+		lenmem = <span style="color:#0086b3">uintptr</span>(old.len) <span style="color:#000;font-weight:bold">&lt;&lt;</span> shift
+		newlenmem = <span style="color:#0086b3">uintptr</span>(cap) <span style="color:#000;font-weight:bold">&lt;&lt;</span> shift
+		capmem = <span style="color:#900;font-weight:bold">roundupsize</span>(<span style="color:#0086b3">uintptr</span>(newcap) <span style="color:#000;font-weight:bold">&lt;&lt;</span> shift)
+		overflow = <span style="color:#0086b3">uintptr</span>(newcap) &gt; (maxAlloc <span style="color:#000;font-weight:bold">&gt;&gt;</span> shift)
+		newcap = <span style="color:#0086b3">int</span>(capmem <span style="color:#000;font-weight:bold">&gt;&gt;</span> shift)
+	<span style="color:#000;font-weight:bold">default</span>:
+		lenmem = <span style="color:#0086b3">uintptr</span>(old.len) <span style="color:#000;font-weight:bold">*</span> et.size
+		newlenmem = <span style="color:#0086b3">uintptr</span>(cap) <span style="color:#000;font-weight:bold">*</span> et.size
+		capmem, overflow = math.<span style="color:#900;font-weight:bold">MulUintptr</span>(et.size, <span style="color:#0086b3">uintptr</span>(newcap))
+		capmem = <span style="color:#900;font-weight:bold">roundupsize</span>(capmem)
+		newcap = <span style="color:#0086b3">int</span>(capmem <span style="color:#000;font-weight:bold">/</span> et.size)
+	}
+
+	<span style="color:#998;font-style:italic">// The check of overflow in addition to capmem &gt; maxAlloc is needed
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// to prevent an overflow which can be used to trigger a segfault
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// on 32bit architectures with this example program:
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// type T [1&lt;&lt;27 + 1]int64
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// var d T
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// var s []T
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// func main() {
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//   s = append(s, d, d, d, d)
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">//   print(len(s), &#34;\n&#34;)
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// }
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">if</span> overflow <span style="color:#000;font-weight:bold">||</span> capmem &gt; maxAlloc {
+		<span style="color:#0086b3">panic</span>(<span style="color:#900;font-weight:bold">errorString</span>(<span style="color:#d14">&#34;growslice: cap out of range&#34;</span>))
+	}
+
+	<span style="color:#000;font-weight:bold">var</span> p unsafe.Pointer
+	<span style="color:#000;font-weight:bold">if</span> et.ptrdata <span style="color:#000;font-weight:bold">==</span> <span style="color:#099">0</span> {
+		p = <span style="color:#900;font-weight:bold">mallocgc</span>(capmem, <span style="color:#000;font-weight:bold">nil</span>, <span style="color:#000;font-weight:bold">false</span>)
+		<span style="color:#998;font-style:italic">// The append() that calls growslice is going to overwrite from old.len to cap (which will be the new length).
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#998;font-style:italic">// Only clear the part that will not be overwritten.
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#900;font-weight:bold">memclrNoHeapPointers</span>(<span style="color:#900;font-weight:bold">add</span>(p, newlenmem), capmem<span style="color:#000;font-weight:bold">-</span>newlenmem)
+	} <span style="color:#000;font-weight:bold">else</span> {
+		<span style="color:#998;font-style:italic">// Note: can&#39;t use rawmem (which avoids zeroing of memory), because then GC can scan uninitialized memory.
+</span><span style="color:#998;font-style:italic"></span>		p = <span style="color:#900;font-weight:bold">mallocgc</span>(capmem, et, <span style="color:#000;font-weight:bold">true</span>)
+		<span style="color:#000;font-weight:bold">if</span> lenmem &gt; <span style="color:#099">0</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> writeBarrier.enabled {
+			<span style="color:#998;font-style:italic">// Only shade the pointers in old.array since we know the destination slice p
+</span><span style="color:#998;font-style:italic"></span>			<span style="color:#998;font-style:italic">// only contains nil pointers because it has been cleared during alloc.
+</span><span style="color:#998;font-style:italic"></span>			<span style="color:#900;font-weight:bold">bulkBarrierPreWriteSrcOnly</span>(<span style="color:#0086b3">uintptr</span>(p), <span style="color:#0086b3">uintptr</span>(old.array), lenmem<span style="color:#000;font-weight:bold">-</span>et.size<span style="color:#000;font-weight:bold">+</span>et.ptrdata)
+		}
+	}
+	<span style="color:#900;font-weight:bold">memmove</span>(p, old.array, lenmem)
+
+	<span style="color:#000;font-weight:bold">return</span> slice{p, old.len, newcap}
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">package</span> main
+<span style="color:#000;font-weight:bold">import</span> <span style="color:#d14">&#34;fmt&#34;</span>
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">main</span>() {
+	sliceA <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">make</span>([]<span style="color:#458;font-weight:bold">int</span>, <span style="color:#099">0</span>, <span style="color:#099">1</span>)
+	sliceA = <span style="color:#0086b3">append</span>(sliceA, <span style="color:#099">1</span>)
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;addr of sliceA %p\n&#34;</span>, <span style="color:#000;font-weight:bold">&amp;</span>sliceA[<span style="color:#099">0</span>])
+	sliceA = <span style="color:#0086b3">append</span>(sliceA, <span style="color:#099">2</span>)
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;addr of sliceA %p\n&#34;</span>, <span style="color:#000;font-weight:bold">&amp;</span>sliceA[<span style="color:#099">0</span>])
+	<span style="color:#998;font-style:italic">// output:
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// addr of sliceA 0xc00000a098
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// addr of sliceA 0xc00000a0d0
+</span><span style="color:#998;font-style:italic"></span>}
+</code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">package</span> main
+<span style="color:#000;font-weight:bold">import</span> <span style="color:#d14">&#34;fmt&#34;</span>
+<span style="color:#000;font-weight:bold">func</span> <span style="color:#900;font-weight:bold">main</span>() {
+	sliceA <span style="color:#000;font-weight:bold">:=</span> <span style="color:#0086b3">make</span>([]<span style="color:#458;font-weight:bold">int</span>, <span style="color:#099">0</span>, <span style="color:#099">2</span>)
+	sliceA = <span style="color:#0086b3">append</span>(sliceA, <span style="color:#099">1</span>)
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;addr of sliceA %p\n&#34;</span>, <span style="color:#000;font-weight:bold">&amp;</span>sliceA[<span style="color:#099">0</span>])
+	sliceA = <span style="color:#0086b3">append</span>(sliceA, <span style="color:#099">2</span>)
+	fmt.<span style="color:#900;font-weight:bold">Printf</span>(<span style="color:#d14">&#34;addr of sliceA %p\n&#34;</span>, <span style="color:#000;font-weight:bold">&amp;</span>sliceA[<span style="color:#099">0</span>])
+	<span style="color:#998;font-style:italic">// output:
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// addr of sliceA 0xc00000a0b0
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// addr of sliceA 0xc00000a0b0
+</span><span style="color:#998;font-style:italic"></span>}
+</code></pre></td></tr></table>
+</div>
+</div><p>看源码的结构就只有三个成员，存放元素的内存地址<code>array</code>，元素的个数<code>len</code>，以及这个slice的最大容量<code>cap</code>。结合我们的例子，内存的重新分配是在slice容量不够的时候才会去发生的。所有他的原理也比较简单，算出一个新的容量，在分配一块新的内存，然后通过<code>memmove</code>把原有地址上面的东西复制过去，相信写过<code>C</code>的你会很有感觉。</p>
+<h2 id="注意事项">注意事项</h2>
+<ol>
+<li>在使用的时候尽量用<code>append</code>去操作slice</li>
+<li>在编写业务代码的时候结合map和slice成员用指针来使用</li>
+<li>有并发读写的情况下面要使用锁或者其他方式来解决</li>
+</ol>
+
+        </div>
+
+        
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/posts/channel/">go channel</a></li>
+        
+        <li><a href="/archives/">文章归档</a></li>
+        
+        <li><a href="/posts/go-download/">go下载不了的问题</a></li>
+        
+        <li><a href="/posts/reason/">起源</a></li>
+        
+        <li><a href="/posts/hugo/"></a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/slice'>slice</a></li>
+                
+                <li><a href='/tags/golang'>golang</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "your github repo"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2021 <a href="">江湖再见 By 江湖再见</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+    <script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script>
+
+
+
+
+    <script src='/js/douban.js'></script>
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="/posts/gorm/" title="gorm">gorm</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-redis/" title="Go Redis">Go Redis</a>
+    </li>
+    
+    <li>
+        <a href="/posts/gin-martini/" title="web框架">web框架</a>
+    </li>
+    
+    <li>
+        <a href="/posts/map/" title="go map">go map</a>
+    </li>
+    
+    <li>
+        <a href="/posts/slice/" title="go slice">go slice</a>
+    </li>
+    
+    <li>
+        <a href="/archives/" title="文章归档">文章归档</a>
+    </li>
+    
+    <li>
+        <a href="/posts/channel/" title="go channel">go channel</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-download/" title="go下载不了的问题">go下载不了的问题</a>
+    </li>
+    
+    <li>
+        <a href="/posts/reason/" title="起源">起源</a>
+    </li>
+    
+    <li>
+        <a href="/posts/generate-go/" title=""></a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="/categories/go%E5%86%85%E9%83%A8%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">go内部源码浅析 (3)</a></li>
+    
+    <li><a href="/categories/%E5%BC%80%E6%BA%90%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">开源源码浅析 (3)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="/tags/channel/">channel</a>
+    
+    <a href="/tags/gin/">gin</a>
+    
+    <a href="/tags/go-redis/">go-redis</a>
+    
+    <a href="/tags/golang/">golang</a>
+    
+    <a href="/tags/gorm/">gorm</a>
+    
+    <a href="/tags/hash-table/">hash table</a>
+    
+    <a href="/tags/map/">map</a>
+    
+    <a href="/tags/martini/">martini</a>
+    
+    <a href="/tags/redis-client/">redis client</a>
+    
+    <a href="/tags/slice/">slice</a>
+    
+    <a href="/tags/sync-map/">sync map</a>
+    
+    <a href="/tags/%E6%90%9E%E7%82%B9%E4%B8%9C%E8%A5%BF/">搞点东西</a>
+    
+    <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+    
+    <a href="/tags/%E9%98%9F%E5%88%97/">队列</a>
+    
+</div>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="http://tofindme.github.io" title="江湖再见的博客">江湖再见的博客</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

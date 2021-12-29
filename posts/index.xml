@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on 江湖再见</title>
+    <link>/posts/</link>
+    <description>Recent content in Posts on 江湖再见</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Sun, 26 Dec 2021 21:30:09 +0800</lastBuildDate><atom:link href="/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>gorm</title>
+      <link>/posts/gorm/</link>
+      <pubDate>Sun, 26 Dec 2021 21:30:09 +0800</pubDate>
+      
+      <guid>/posts/gorm/</guid>
+      <description>数据库的出现极大的方便的应用程序开发人员，很快的开发出自己的应用。我们在使用mysql的时候通常也会用到一些orm库去操作数据库，虽然可能要去重新学习一个框架的一些api和一些设计理念，但这些orm用好也容易的方便帮助我们构建自己的应用。orm主要是对一些东西的封装，用起来更加方</description>
+    </item>
+    
+    <item>
+      <title>Go Redis</title>
+      <link>/posts/go-redis/</link>
+      <pubDate>Thu, 23 Dec 2021 10:15:30 +0800</pubDate>
+      
+      <guid>/posts/go-redis/</guid>
+      <description>redis是一个C语言开发的基于内存的key-value的缓存服务器，协议用的就是文本，服务器用的是epoll实现的多路复用的单进程的IO实现。它有rdb他aof两种可以落地的方案，默认是rdb方式。 redis是我们做项目种使用比较多的一个第三方依赖，可以根据我们的业务类型存放到</description>
+    </item>
+    
+    <item>
+      <title>web框架</title>
+      <link>/posts/gin-martini/</link>
+      <pubDate>Wed, 22 Dec 2021 10:50:30 +0800</pubDate>
+      
+      <guid>/posts/gin-martini/</guid>
+      <description>由于自己这个两个框架都使用过，更多的还是在martini的使用上面，近期才接触gin，使用下来，这两个框架思路都差不多，都是基于插件似的实现，用户可以自己添加自己想要的插件。 但martini在为path注册handler的时候是可以指定请求方法的参数，底层在call时会根据参数类</description>
+    </item>
+    
+    <item>
+      <title>go map</title>
+      <link>/posts/map/</link>
+      <pubDate>Tue, 21 Dec 2021 16:14:30 +0800</pubDate>
+      
+      <guid>/posts/map/</guid>
+      <description>map是一种hash table。map这数据类型在我们开发种用到很频繁，典型的通过一个key关联一个value，value可以是基础类型和复杂的类型struct,map本身。key的话需要可以用来比较，这样才可以从map找到对应的value A map is just a hash table. The data is arranged into an array of buckets. Each bucket contains up</description>
+    </item>
+    
+    <item>
+      <title>go slice</title>
+      <link>/posts/slice/</link>
+      <pubDate>Mon, 20 Dec 2021 20:30:30 +0800</pubDate>
+      
+      <guid>/posts/slice/</guid>
+      <description>slice是区别于固定长度的数组而有的一种可自动扩容的、内置的基础的数据类型。 slice在使用的时候通常遇到的问题就是下标越界，其他的如果不清除他底层的原理的话可能会带给你一些意想不到的bug，比方说数据被修改，更大的问题的话就是内存泄漏的问题了。 样例 slice下标越界 1 2 3 4 5</description>
+    </item>
+    
+    <item>
+      <title>文章归档</title>
+      <link>/archives/</link>
+      <pubDate>Mon, 20 Dec 2021 17:54:45 +0800</pubDate>
+      
+      <guid>/archives/</guid>
+      <description>历史文章按照年月归档.</description>
+    </item>
+    
+    <item>
+      <title>go channel</title>
+      <link>/posts/channel/</link>
+      <pubDate>Thu, 16 Dec 2021 19:15:30 +0800</pubDate>
+      
+      <guid>/posts/channel/</guid>
+      <description>channel通常理解和把他当成程序内部的队列来使用，根据队列的长度，可以把队列分为有缓冲队列(长度非0),也叫不阻塞队列；无缓冲队列(长度为0)，也叫阻塞队列。 我们在项目实践过程种最多的用到的还是在不同goroutine之间传递数据，可以是一对一或者多对一又或者多对多，这取决于</description>
+    </item>
+    
+    <item>
+      <title>go下载不了的问题</title>
+      <link>/posts/go-download/</link>
+      <pubDate>Wed, 15 Dec 2021 16:53:31 +0800</pubDate>
+      
+      <guid>/posts/go-download/</guid>
+      <description>相信写过golang的同学都遇到过这个问题，我们安装好go开发环境后，需要通过github或者google等不可访问的地址去下载依赖的库的时候往往会出现超时导致下载不成功，有时可能我们临时export GOPROXY只是针对当前会话生效，后面再开启窗口又不行了，以下是永久生效方式。</description>
+    </item>
+    
+    <item>
+      <title>起源</title>
+      <link>/posts/reason/</link>
+      <pubDate>Wed, 15 Dec 2021 15:58:49 +0800</pubDate>
+      
+      <guid>/posts/reason/</guid>
+      <description>本来是想搞个公众号来记录一些自己读过的源码，无赖，之前申请过小程序，不能在申请，因为之前用过hugo,所以还是用这个来生成自己的博客，自己只要些文章，然后发布静态文件到github或自己的域名上就可以了 术业要有专攻，所以打算专门研究一两个自己用过也觉得还不错的开源软件go-red</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>/posts/generate-go/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/generate-go/</guid>
+      <description>我们平常用pb生成go代码的时候用的是protoc-gen-go，可能没有去看这个生成的程序的实现，接下来我们看下是如何生成的 不论是什么语言在用到protobuf去通信的时候就需要生成自己对应开发语言的一些数据结构，你可能用的是protoc-gen-java或者自己实现了一个pr</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>/posts/hugo/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/posts/hugo/</guid>
+      <description>hugo声称是最快的静态网站生成工具，因为是golang写的，闲时可以研究看看 源码赏析 总结</description>
+    </item>
+    
+  </channel>
+</rss>
