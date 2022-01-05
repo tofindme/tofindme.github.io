@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>pitaya | 江湖再见</title>
+    <meta property="og:title" content="pitaya - 江湖再见">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2022-01-03T19:15:30&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2022-01-03T19:15:30&#43;08:00'>
+        
+    <meta name="Keywords" content="golang,go语言">
+    <meta name="description" content="pitaya">
+        
+    <meta name="author" content="江湖再见">
+    <meta property="og:url" content="/posts/pitaya/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="">
+                        江湖再见
+                    </a>
+                
+                <p class="description">这里有Go语言(golang)</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="" href="">首页</a>
+                    
+                    <a  href="/something/" title="test">test</a>
+                    
+                    <a  href="/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#源码赏析">源码赏析</a></li>
+    <li><a href="#协议说明">协议说明</a></li>
+    <li><a href="#用例说明">用例说明</a></li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">pitaya</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2022年1月3日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/%E5%BC%80%E6%BA%90%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90'>开源源码浅析</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <p>pitaya是一个分布式的游戏服框架，用golang开发，这个框架的设计灵感来源于网易的开源分布式框架pomelo。协议就是采用的pomelo的协议格式。
+话说分布式就避免不了服务的发现和调用，所有基本都会依赖服务发现和rpc，服务发现主要用来发现其他服务及他的一些配置(方便用于rcp调用)。
+这个框架默认用的服务发现就是etcd，rpc选用的是nats。nats是可选的，也可选选择用grpc来作为rpc的桥梁。</p>
+<h2 id="源码赏析">源码赏析</h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#998;font-style:italic">// Builder holds dependency instances for a pitaya App
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> Builder <span style="color:#000;font-weight:bold">struct</span> {
+	acceptors        []acceptor.Acceptor  
+	Config           config.BuilderConfig 
+	DieChan          <span style="color:#000;font-weight:bold">chan</span> <span style="color:#458;font-weight:bold">bool</span>
+	PacketDecoder    codec.PacketDecoder
+	PacketEncoder    codec.PacketEncoder
+	MessageEncoder   <span style="color:#000;font-weight:bold">*</span>message.MessagesEncoder
+	Serializer       serialize.Serializer
+	Router           <span style="color:#000;font-weight:bold">*</span>router.Router
+	RPCClient        cluster.RPCClient
+	RPCServer        cluster.RPCServer
+	MetricsReporters []metrics.Reporter
+	Server           <span style="color:#000;font-weight:bold">*</span>cluster.Server
+	ServerMode       ServerMode
+	ServiceDiscovery cluster.ServiceDiscovery
+	Groups           groups.GroupService
+	SessionPool      session.SessionPool
+	Worker           <span style="color:#000;font-weight:bold">*</span>worker.Worker
+	HandlerHooks     <span style="color:#000;font-weight:bold">*</span>pipeline.HandlerHooks
+}
+
+<span style="color:#998;font-style:italic">// ServerMode represents a server mode
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> ServerMode <span style="color:#458;font-weight:bold">byte</span>
+
+<span style="color:#000;font-weight:bold">const</span> (
+	_ ServerMode = <span style="color:#000;font-weight:bold">iota</span>
+	<span style="color:#998;font-style:italic">// Cluster represents a server running with connection to other servers
+</span><span style="color:#998;font-style:italic"></span>	Cluster
+	<span style="color:#998;font-style:italic">// Standalone represents a server running without connection to other servers
+</span><span style="color:#998;font-style:italic"></span>	Standalone
+)
+</code></pre></td></tr></table>
+</div>
+</div><p>我们通过名字结合源码可以看到这些成员的使命，我们主要关注消息的编解码以及内部通信的方式和服务发现相关的东西。</p>
+<p>通过上面的对象可以构建上面两种模式的server。集群就是通过etcd来发现和其他服务通信，另外的就是一个本机的启动模式。</p>
+<p>用Builder构建的server可以是面向前端，也可以只是后台的一个服务。消息的默认的序列化格式是json，也可以自定义的序列化格式。</p>
+<h2 id="协议说明">协议说明</h2>
+<pre tabindex="0"><code>// Encode create a packet.Packet from  the raw bytes slice and then encode to network bytes slice
+// Protocol refs: https://github.com/NetEase/pomelo/wiki/Communication-Protocol
+//
+// -&lt;type&gt;-|--------&lt;length&gt;--------|-&lt;data&gt;-
+// --------|------------------------|--------
+// 1 byte packet type, 3 bytes packet data length(big end), and data segment
+</code></pre><p>底层协议也较简单，四个字节的消息头，第一个byte代表消息的类型，后三个byte代表消息的size，后面就是消息的body了。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang">
+<span style="color:#998;font-style:italic">// Type represents the network packet&#39;s type such as: handshake and so on.
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> Type <span style="color:#458;font-weight:bold">byte</span>
+
+<span style="color:#000;font-weight:bold">const</span> (
+	_ Type = <span style="color:#000;font-weight:bold">iota</span>
+	<span style="color:#998;font-style:italic">// Handshake represents a handshake: request(client) &lt;====&gt; handshake response(server)
+</span><span style="color:#998;font-style:italic"></span>	Handshake = <span style="color:#099">0x01</span>
+
+	<span style="color:#998;font-style:italic">// HandshakeAck represents a handshake ack from client to server
+</span><span style="color:#998;font-style:italic"></span>	HandshakeAck = <span style="color:#099">0x02</span>
+
+	<span style="color:#998;font-style:italic">// Heartbeat represents a heartbeat
+</span><span style="color:#998;font-style:italic"></span>	Heartbeat = <span style="color:#099">0x03</span>
+
+	<span style="color:#998;font-style:italic">// Data represents a common data packet
+</span><span style="color:#998;font-style:italic"></span>	Data = <span style="color:#099">0x04</span>
+
+	<span style="color:#998;font-style:italic">// Kick represents a kick off packet
+</span><span style="color:#998;font-style:italic"></span>	Kick = <span style="color:#099">0x05</span> <span style="color:#998;font-style:italic">// disconnect message from server
+</span><span style="color:#998;font-style:italic"></span>)
+
+<span style="color:#000;font-weight:bold">type</span> Packet <span style="color:#000;font-weight:bold">struct</span> {
+	Type   Type
+	Length <span style="color:#458;font-weight:bold">int</span>
+	Data   []<span style="color:#458;font-weight:bold">byte</span>
+}
+
+<span style="color:#998;font-style:italic">// Message represents a unmarshaled message or a message which to be marshaled
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> Message <span style="color:#000;font-weight:bold">struct</span> {
+	Type       Type   <span style="color:#998;font-style:italic">// message type
+</span><span style="color:#998;font-style:italic"></span>	ID         <span style="color:#458;font-weight:bold">uint</span>   <span style="color:#998;font-style:italic">// unique id, zero while notify mode
+</span><span style="color:#998;font-style:italic"></span>	Route      <span style="color:#458;font-weight:bold">string</span> <span style="color:#998;font-style:italic">// route for locating service
+</span><span style="color:#998;font-style:italic"></span>	Data       []<span style="color:#458;font-weight:bold">byte</span> <span style="color:#998;font-style:italic">// payload
+</span><span style="color:#998;font-style:italic"></span>	compressed <span style="color:#458;font-weight:bold">bool</span>   <span style="color:#998;font-style:italic">// is message compressed
+</span><span style="color:#998;font-style:italic"></span>	Err        <span style="color:#458;font-weight:bold">bool</span>   <span style="color:#998;font-style:italic">// is an error message
+</span><span style="color:#998;font-style:italic"></span>}
+</code></pre></td></tr></table>
+</div>
+</div><p>Packet是从socket读出来的字节流，body就是我们说的Packet的Data部分，Message对象就是我们在piyata这个系统里面流转的消息实体了，根据Route的定义作用的具体的服务对象里面实现具体的功能。</p>
+<h2 id="用例说明">用例说明</h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">122
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">123
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">124
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">125
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">126
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">127
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">128
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">129
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">130
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">131
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">132
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">133
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">134
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">135
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">136
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">137
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">138
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">139
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">140
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">141
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">142
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">143
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">144
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">145
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">146
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">147
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">148
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">149
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">150
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">151
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">152
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">153
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">154
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">155
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">156
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">157
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">158
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">159
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">160
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">161
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">162
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">163
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">164
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">165
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">166
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">167
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">168
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">169
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">170
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">171
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">172
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">173
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">174
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">175
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">176
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">177
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">178
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">179
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">180
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">181
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">182
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">183
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">184
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">185
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">186
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">187
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">188
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">189
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">190
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">191
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">192
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">193
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">194
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">195
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">196
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">197
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">198
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">199
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">200
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">201
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">202
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">203
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">204
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">205
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">206
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">207
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#000;font-weight:bold">func</span> (app <span style="color:#000;font-weight:bold">*</span>App) <span style="color:#900;font-weight:bold">listen</span>() {
+	app.<span style="color:#900;font-weight:bold">startupComponents</span>()
+	<span style="color:#998;font-style:italic">// create global ticker instance, timer precision could be customized
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// by SetTimerPrecision
+</span><span style="color:#998;font-style:italic"></span>	timer.GlobalTicker = time.<span style="color:#900;font-weight:bold">NewTicker</span>(timer.Precision)
+
+	logger.Log.<span style="color:#900;font-weight:bold">Infof</span>(<span style="color:#d14">&#34;starting server %s:%s&#34;</span>, app.server.Type, app.server.ID)
+	<span style="color:#000;font-weight:bold">for</span> i <span style="color:#000;font-weight:bold">:=</span> <span style="color:#099">0</span>; i &lt; app.config.Concurrency.Handler.Dispatch; i<span style="color:#000;font-weight:bold">++</span> {
+		<span style="color:#000;font-weight:bold">go</span> app.handlerService.<span style="color:#900;font-weight:bold">Dispatch</span>(i)
+	}
+	<span style="color:#000;font-weight:bold">for</span> _, acc <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">range</span> app.acceptors {
+		a <span style="color:#000;font-weight:bold">:=</span> acc
+		<span style="color:#000;font-weight:bold">go</span> <span style="color:#000;font-weight:bold">func</span>() {
+			<span style="color:#000;font-weight:bold">for</span> conn <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">range</span> a.<span style="color:#900;font-weight:bold">GetConnChan</span>() {
+				<span style="color:#000;font-weight:bold">go</span> app.handlerService.<span style="color:#900;font-weight:bold">Handle</span>(conn)
+			}
+		}()
+
+		<span style="color:#000;font-weight:bold">go</span> <span style="color:#000;font-weight:bold">func</span>() {
+			a.<span style="color:#900;font-weight:bold">ListenAndServe</span>()
+		}()
+
+		logger.Log.<span style="color:#900;font-weight:bold">Infof</span>(<span style="color:#d14">&#34;listening with acceptor %s on addr %s&#34;</span>, reflect.<span style="color:#900;font-weight:bold">TypeOf</span>(a), a.<span style="color:#900;font-weight:bold">GetAddr</span>())
+	}
+
+	<span style="color:#000;font-weight:bold">if</span> app.serverMode <span style="color:#000;font-weight:bold">==</span> Cluster <span style="color:#000;font-weight:bold">&amp;&amp;</span> app.server.Frontend <span style="color:#000;font-weight:bold">&amp;&amp;</span> app.config.Session.Unique {
+		unique <span style="color:#000;font-weight:bold">:=</span> mods.<span style="color:#900;font-weight:bold">NewUniqueSession</span>(app.server, app.rpcServer, app.rpcClient, app.sessionPool)
+		app.remoteService.<span style="color:#900;font-weight:bold">AddRemoteBindingListener</span>(unique)
+		app.<span style="color:#900;font-weight:bold">RegisterModule</span>(unique, <span style="color:#d14">&#34;uniqueSession&#34;</span>)
+	}
+
+	app.<span style="color:#900;font-weight:bold">startModules</span>()
+
+	logger.Log.<span style="color:#900;font-weight:bold">Info</span>(<span style="color:#d14">&#34;all modules started!&#34;</span>)
+
+	app.running = <span style="color:#000;font-weight:bold">true</span>
+}
+
+<span style="color:#998;font-style:italic">// Handle handles messages from a conn
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (h <span style="color:#000;font-weight:bold">*</span>HandlerService) <span style="color:#900;font-weight:bold">Handle</span>(conn acceptor.PlayerConn) {
+	<span style="color:#998;font-style:italic">// create a client agent and startup write goroutine
+</span><span style="color:#998;font-style:italic"></span>	a <span style="color:#000;font-weight:bold">:=</span> h.agentFactory.<span style="color:#900;font-weight:bold">CreateAgent</span>(conn)
+
+	<span style="color:#998;font-style:italic">// startup agent goroutine
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">go</span> a.<span style="color:#900;font-weight:bold">Handle</span>()
+
+	logger.Log.<span style="color:#900;font-weight:bold">Debugf</span>(<span style="color:#d14">&#34;New session established: %s&#34;</span>, a.<span style="color:#900;font-weight:bold">String</span>())
+
+	<span style="color:#998;font-style:italic">// guarantee agent related resource is destroyed
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">defer</span> <span style="color:#000;font-weight:bold">func</span>() {
+		a.<span style="color:#900;font-weight:bold">GetSession</span>().<span style="color:#900;font-weight:bold">Close</span>()
+		logger.Log.<span style="color:#900;font-weight:bold">Debugf</span>(<span style="color:#d14">&#34;Session read goroutine exit, SessionID=%d, UID=%s&#34;</span>, a.<span style="color:#900;font-weight:bold">GetSession</span>().<span style="color:#900;font-weight:bold">ID</span>(), a.<span style="color:#900;font-weight:bold">GetSession</span>().<span style="color:#900;font-weight:bold">UID</span>())
+	}()
+
+	<span style="color:#000;font-weight:bold">for</span> {
+		msg, err <span style="color:#000;font-weight:bold">:=</span> conn.<span style="color:#900;font-weight:bold">GetNextMessage</span>()
+
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> constants.ErrConnectionClosed {
+				logger.Log.<span style="color:#900;font-weight:bold">Errorf</span>(<span style="color:#d14">&#34;Error reading next available message: %s&#34;</span>, err.<span style="color:#900;font-weight:bold">Error</span>())
+			}
+
+			<span style="color:#000;font-weight:bold">return</span>
+		}
+
+		packets, err <span style="color:#000;font-weight:bold">:=</span> h.decoder.<span style="color:#900;font-weight:bold">Decode</span>(msg)
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			logger.Log.<span style="color:#900;font-weight:bold">Errorf</span>(<span style="color:#d14">&#34;Failed to decode message: %s&#34;</span>, err.<span style="color:#900;font-weight:bold">Error</span>())
+			<span style="color:#000;font-weight:bold">return</span>
+		}
+
+		<span style="color:#000;font-weight:bold">if</span> <span style="color:#0086b3">len</span>(packets) &lt; <span style="color:#099">1</span> {
+			logger.Log.<span style="color:#900;font-weight:bold">Warnf</span>(<span style="color:#d14">&#34;Read no packets, data: %v&#34;</span>, msg)
+			<span style="color:#000;font-weight:bold">continue</span>
+		}
+
+		<span style="color:#998;font-style:italic">// process all packet
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#000;font-weight:bold">for</span> i <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">range</span> packets {
+			<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">:=</span> h.<span style="color:#900;font-weight:bold">processPacket</span>(a, packets[i]); err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+				logger.Log.<span style="color:#900;font-weight:bold">Errorf</span>(<span style="color:#d14">&#34;Failed to process packet: %s&#34;</span>, err.<span style="color:#900;font-weight:bold">Error</span>())
+				<span style="color:#000;font-weight:bold">return</span>
+			}
+		}
+	}
+}
+
+<span style="color:#000;font-weight:bold">func</span> (h <span style="color:#000;font-weight:bold">*</span>HandlerService) <span style="color:#900;font-weight:bold">processPacket</span>(a agent.Agent, p <span style="color:#000;font-weight:bold">*</span>packet.Packet) <span style="color:#458;font-weight:bold">error</span> {
+	<span style="color:#000;font-weight:bold">switch</span> p.Type {
+	<span style="color:#000;font-weight:bold">case</span> packet.Handshake:
+		logger.Log.<span style="color:#900;font-weight:bold">Debug</span>(<span style="color:#d14">&#34;Received handshake packet&#34;</span>)
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">:=</span> a.<span style="color:#900;font-weight:bold">SendHandshakeResponse</span>(); err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			logger.Log.<span style="color:#900;font-weight:bold">Errorf</span>(<span style="color:#d14">&#34;Error sending handshake response: %s&#34;</span>, err.<span style="color:#900;font-weight:bold">Error</span>())
+			<span style="color:#000;font-weight:bold">return</span> err
+		}
+		logger.Log.<span style="color:#900;font-weight:bold">Debugf</span>(<span style="color:#d14">&#34;Session handshake Id=%d, Remote=%s&#34;</span>, a.<span style="color:#900;font-weight:bold">GetSession</span>().<span style="color:#900;font-weight:bold">ID</span>(), a.<span style="color:#900;font-weight:bold">RemoteAddr</span>())
+
+		<span style="color:#998;font-style:italic">// Parse the json sent with the handshake by the client
+</span><span style="color:#998;font-style:italic"></span>		handshakeData <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">&amp;</span>session.HandshakeData{}
+		err <span style="color:#000;font-weight:bold">:=</span> json.<span style="color:#900;font-weight:bold">Unmarshal</span>(p.Data, handshakeData)
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			a.<span style="color:#900;font-weight:bold">SetStatus</span>(constants.StatusClosed)
+			<span style="color:#000;font-weight:bold">return</span> fmt.<span style="color:#900;font-weight:bold">Errorf</span>(<span style="color:#d14">&#34;Invalid handshake data. Id=%d&#34;</span>, a.<span style="color:#900;font-weight:bold">GetSession</span>().<span style="color:#900;font-weight:bold">ID</span>())
+		}
+
+		a.<span style="color:#900;font-weight:bold">GetSession</span>().<span style="color:#900;font-weight:bold">SetHandshakeData</span>(handshakeData)
+		a.<span style="color:#900;font-weight:bold">SetStatus</span>(constants.StatusHandshake)
+		err = a.<span style="color:#900;font-weight:bold">GetSession</span>().<span style="color:#900;font-weight:bold">Set</span>(constants.IPVersionKey, a.<span style="color:#900;font-weight:bold">IPVersion</span>())
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			logger.Log.<span style="color:#900;font-weight:bold">Warnf</span>(<span style="color:#d14">&#34;failed to save ip version on session: %q\n&#34;</span>, err)
+		}
+
+		logger.Log.<span style="color:#900;font-weight:bold">Debug</span>(<span style="color:#d14">&#34;Successfully saved handshake data&#34;</span>)
+
+	<span style="color:#000;font-weight:bold">case</span> packet.HandshakeAck:
+		a.<span style="color:#900;font-weight:bold">SetStatus</span>(constants.StatusWorking)
+		logger.Log.<span style="color:#900;font-weight:bold">Debugf</span>(<span style="color:#d14">&#34;Receive handshake ACK Id=%d, Remote=%s&#34;</span>, a.<span style="color:#900;font-weight:bold">GetSession</span>().<span style="color:#900;font-weight:bold">ID</span>(), a.<span style="color:#900;font-weight:bold">RemoteAddr</span>())
+
+	<span style="color:#000;font-weight:bold">case</span> packet.Data:
+		<span style="color:#000;font-weight:bold">if</span> a.<span style="color:#900;font-weight:bold">GetStatus</span>() &lt; constants.StatusWorking {
+			<span style="color:#000;font-weight:bold">return</span> fmt.<span style="color:#900;font-weight:bold">Errorf</span>(<span style="color:#d14">&#34;receive data on socket which is not yet ACK, session will be closed immediately, remote=%s&#34;</span>,
+				a.<span style="color:#900;font-weight:bold">RemoteAddr</span>().<span style="color:#900;font-weight:bold">String</span>())
+		}
+
+		msg, err <span style="color:#000;font-weight:bold">:=</span> message.<span style="color:#900;font-weight:bold">Decode</span>(p.Data)
+		<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			<span style="color:#000;font-weight:bold">return</span> err
+		}
+		h.<span style="color:#900;font-weight:bold">processMessage</span>(a, msg)
+
+	<span style="color:#000;font-weight:bold">case</span> packet.Heartbeat:
+		<span style="color:#998;font-style:italic">// expected
+</span><span style="color:#998;font-style:italic"></span>	}
+
+	a.<span style="color:#900;font-weight:bold">SetLastAt</span>()
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">nil</span>
+}
+
+<span style="color:#000;font-weight:bold">func</span> (h <span style="color:#000;font-weight:bold">*</span>HandlerService) <span style="color:#900;font-weight:bold">processMessage</span>(a agent.Agent, msg <span style="color:#000;font-weight:bold">*</span>message.Message) {
+	requestID <span style="color:#000;font-weight:bold">:=</span> nuid.<span style="color:#900;font-weight:bold">New</span>()
+	ctx <span style="color:#000;font-weight:bold">:=</span> pcontext.<span style="color:#900;font-weight:bold">AddToPropagateCtx</span>(context.<span style="color:#900;font-weight:bold">Background</span>(), constants.StartTimeKey, time.<span style="color:#900;font-weight:bold">Now</span>().<span style="color:#900;font-weight:bold">UnixNano</span>())
+	ctx = pcontext.<span style="color:#900;font-weight:bold">AddToPropagateCtx</span>(ctx, constants.RouteKey, msg.Route)
+	ctx = pcontext.<span style="color:#900;font-weight:bold">AddToPropagateCtx</span>(ctx, constants.RequestIDKey, requestID)
+	tags <span style="color:#000;font-weight:bold">:=</span> opentracing.Tags{
+		<span style="color:#d14">&#34;local.id&#34;</span>:   h.server.ID,
+		<span style="color:#d14">&#34;span.kind&#34;</span>:  <span style="color:#d14">&#34;server&#34;</span>,
+		<span style="color:#d14">&#34;msg.type&#34;</span>:   strings.<span style="color:#900;font-weight:bold">ToLower</span>(msg.Type.<span style="color:#900;font-weight:bold">String</span>()),
+		<span style="color:#d14">&#34;user.id&#34;</span>:    a.<span style="color:#900;font-weight:bold">GetSession</span>().<span style="color:#900;font-weight:bold">UID</span>(),
+		<span style="color:#d14">&#34;request.id&#34;</span>: requestID,
+	}
+	ctx = tracing.<span style="color:#900;font-weight:bold">StartSpan</span>(ctx, msg.Route, tags)
+	ctx = context.<span style="color:#900;font-weight:bold">WithValue</span>(ctx, constants.SessionCtxKey, a.<span style="color:#900;font-weight:bold">GetSession</span>())
+
+	r, err <span style="color:#000;font-weight:bold">:=</span> route.<span style="color:#900;font-weight:bold">Decode</span>(msg.Route)
+	<span style="color:#000;font-weight:bold">if</span> err <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+		logger.Log.<span style="color:#900;font-weight:bold">Errorf</span>(<span style="color:#d14">&#34;Failed to decode route: %s&#34;</span>, err.<span style="color:#900;font-weight:bold">Error</span>())
+		a.<span style="color:#900;font-weight:bold">AnswerWithError</span>(ctx, msg.ID, e.<span style="color:#900;font-weight:bold">NewError</span>(err, e.ErrBadRequestCode))
+		<span style="color:#000;font-weight:bold">return</span>
+	}
+
+	<span style="color:#000;font-weight:bold">if</span> r.SvType <span style="color:#000;font-weight:bold">==</span> <span style="color:#d14">&#34;&#34;</span> {
+		r.SvType = h.server.Type
+	}
+
+	message <span style="color:#000;font-weight:bold">:=</span> unhandledMessage{
+		ctx:   ctx,
+		agent: a,
+		route: r,
+		msg:   msg,
+	}
+	<span style="color:#000;font-weight:bold">if</span> r.SvType <span style="color:#000;font-weight:bold">==</span> h.server.Type {
+		h.chLocalProcess <span style="color:#000;font-weight:bold">&lt;-</span> message
+	} <span style="color:#000;font-weight:bold">else</span> {
+		<span style="color:#000;font-weight:bold">if</span> h.remoteService <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">nil</span> {
+			h.chRemoteProcess <span style="color:#000;font-weight:bold">&lt;-</span> message
+		} <span style="color:#000;font-weight:bold">else</span> {
+			logger.Log.<span style="color:#900;font-weight:bold">Warnf</span>(<span style="color:#d14">&#34;request made to another server type but no remoteService running&#34;</span>)
+		}
+	}
+}
+
+<span style="color:#998;font-style:italic">// Dispatch message to corresponding logic handler
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">func</span> (h <span style="color:#000;font-weight:bold">*</span>HandlerService) <span style="color:#900;font-weight:bold">Dispatch</span>(thread <span style="color:#458;font-weight:bold">int</span>) {
+	<span style="color:#998;font-style:italic">// TODO: This timer is being stopped multiple times, it probably doesn&#39;t need to be stopped here
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">defer</span> timer.GlobalTicker.<span style="color:#900;font-weight:bold">Stop</span>()
+
+	<span style="color:#000;font-weight:bold">for</span> {
+		<span style="color:#998;font-style:italic">// Calls to remote servers block calls to local server
+</span><span style="color:#998;font-style:italic"></span>		<span style="color:#000;font-weight:bold">select</span> {
+		<span style="color:#000;font-weight:bold">case</span> lm <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">&lt;-</span>h.chLocalProcess:
+			metrics.<span style="color:#900;font-weight:bold">ReportMessageProcessDelayFromCtx</span>(lm.ctx, h.metricsReporters, <span style="color:#d14">&#34;local&#34;</span>)
+			h.<span style="color:#900;font-weight:bold">localProcess</span>(lm.ctx, lm.agent, lm.route, lm.msg)
+
+		<span style="color:#000;font-weight:bold">case</span> rm <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">&lt;-</span>h.chRemoteProcess:
+			metrics.<span style="color:#900;font-weight:bold">ReportMessageProcessDelayFromCtx</span>(rm.ctx, h.metricsReporters, <span style="color:#d14">&#34;remote&#34;</span>)
+			h.remoteService.<span style="color:#900;font-weight:bold">remoteProcess</span>(rm.ctx, <span style="color:#000;font-weight:bold">nil</span>, rm.agent, rm.route, rm.msg)
+
+		<span style="color:#000;font-weight:bold">case</span> <span style="color:#000;font-weight:bold">&lt;-</span>timer.GlobalTicker.C: <span style="color:#998;font-style:italic">// execute cron task
+</span><span style="color:#998;font-style:italic"></span>			timer.<span style="color:#900;font-weight:bold">Cron</span>()
+
+		<span style="color:#000;font-weight:bold">case</span> t <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">&lt;-</span>timer.Manager.ChCreatedTimer: <span style="color:#998;font-style:italic">// new Timers
+</span><span style="color:#998;font-style:italic"></span>			timer.<span style="color:#900;font-weight:bold">AddTimer</span>(t)
+
+		<span style="color:#000;font-weight:bold">case</span> id <span style="color:#000;font-weight:bold">:=</span> <span style="color:#000;font-weight:bold">&lt;-</span>timer.Manager.ChClosingTimer: <span style="color:#998;font-style:italic">// closing Timers
+</span><span style="color:#998;font-style:italic"></span>			timer.<span style="color:#900;font-weight:bold">RemoveTimer</span>(id)
+		}
+	}
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>我们看了上面底层的消息结构，我们再来看下他底层的消息怎么流转的。</p>
+<p>通过上面的代码我们就知道消息是怎么流转的了，HandlerService主要是用来接收消息以及转运的使命，server启动的时候就通过<code>app.config.Concurrency.Handler.Dispatch</code>指定了消息转运的数量，
+然后根据<code>h.server.Type</code>(server启动的时候指定)来决定消息派往何处。</p>
+<p>我们看下项目README.md里面的用例,代码位于<code>examples/demo/cluster_grpc/main.go</code></p>
+<p>Here&rsquo;s one example of running Pitaya:</p>
+<p>Start etcd (This command requires docker-compose and will run an etcd container locally. An etcd may be run without docker if prefered.)</p>
+<pre tabindex="0"><code>cd ./examples/testing &amp;&amp; docker-compose up -d etcd
+</code></pre><p>run the connector frontend server from cluster_grpc example</p>
+<pre tabindex="0"><code>make run-cluster-grpc-example-connector
+</code></pre><p>run the room backend server from the cluster_grpc example</p>
+<pre tabindex="0"><code>make run-cluster-grpc-example-room
+</code></pre><p>Now there should be 2 pitaya servers running, a frontend connector and a backend room. To send requests, use a REPL client for pitaya <a href="https://github.com/topfreegames/pitaya-cli">pitaya-cli</a>.</p>
+<pre tabindex="0"><code>$ pitaya-cli
+Pitaya REPL Client
+&gt;&gt;&gt; connect localhost:3250
+connected!
+&gt;&gt;&gt; request room.room.entry
+&gt;&gt;&gt; sv-&gt; {&quot;code&quot;:0,&quot;result&quot;:&quot;ok&quot;}
+</code></pre><p>这个例子启动了一个用于面向客户端连接的server和一个房间的server，下面<code>request room.room.entry</code>会调到房间的server对应的函数,后面字符串被解析出来对应下面的数据结构。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-golang" data-lang="golang"><span style="color:#998;font-style:italic">// Route struct
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> Route <span style="color:#000;font-weight:bold">struct</span> {
+	SvType  <span style="color:#458;font-weight:bold">string</span>
+	Service <span style="color:#458;font-weight:bold">string</span>
+	Method  <span style="color:#458;font-weight:bold">string</span>
+}
+</code></pre></td></tr></table>
+</div>
+</div><blockquote>
+<p>更多文档可以在<code>pitaya\docs</code>目录阅读</p>
+</blockquote>
+<h2 id="总结">总结</h2>
+<p>这个和许多微服务有很多相似的地方，都是基于etcd做服务发现，然后通过rpc或者一些中间件来实现rpc来实现跨服务调用。
+之前项目用mqant和go-micro的项目大体设计思路也是这样。无论是自己写还是基于他人的写，稳定都是我们追求的目的。好多技术基本都相通。大同小异</p>
+
+        </div>
+
+        
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/posts/gorm/">gorm</a></li>
+        
+        <li><a href="/posts/go-redis/">Go Redis</a></li>
+        
+        <li><a href="/posts/gin-martini/">web框架</a></li>
+        
+        <li><a href="/posts/map/">go map</a></li>
+        
+        <li><a href="/posts/slice/">go slice</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/pitaya'>pitaya</a></li>
+                
+                <li><a href='/tags/pomeol'>pomeol</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "your github repo"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2022 <a href="">江湖再见 By 江湖再见</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+    <script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script>
+
+
+
+
+    <script src='/js/douban.js'></script>
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="/posts/pitaya/" title="pitaya">pitaya</a>
+    </li>
+    
+    <li>
+        <a href="/posts/gorm/" title="gorm">gorm</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-redis/" title="Go Redis">Go Redis</a>
+    </li>
+    
+    <li>
+        <a href="/posts/gin-martini/" title="web框架">web框架</a>
+    </li>
+    
+    <li>
+        <a href="/posts/map/" title="go map">go map</a>
+    </li>
+    
+    <li>
+        <a href="/posts/slice/" title="go slice">go slice</a>
+    </li>
+    
+    <li>
+        <a href="/archives/" title="文章归档">文章归档</a>
+    </li>
+    
+    <li>
+        <a href="/posts/channel/" title="go channel">go channel</a>
+    </li>
+    
+    <li>
+        <a href="/posts/go-download/" title="go下载不了的问题">go下载不了的问题</a>
+    </li>
+    
+    <li>
+        <a href="/posts/reason/" title="起源">起源</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="/categories/go%E5%86%85%E9%83%A8%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">go内部源码浅析 (3)</a></li>
+    
+    <li><a href="/categories/%E5%BC%80%E6%BA%90%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">开源源码浅析 (4)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="/tags/channel/">channel</a>
+    
+    <a href="/tags/gin/">gin</a>
+    
+    <a href="/tags/go-redis/">go-redis</a>
+    
+    <a href="/tags/golang/">golang</a>
+    
+    <a href="/tags/gorm/">gorm</a>
+    
+    <a href="/tags/hash-table/">hash table</a>
+    
+    <a href="/tags/map/">map</a>
+    
+    <a href="/tags/martini/">martini</a>
+    
+    <a href="/tags/pitaya/">pitaya</a>
+    
+    <a href="/tags/pomeol/">pomeol</a>
+    
+    <a href="/tags/redis-client/">redis client</a>
+    
+    <a href="/tags/slice/">slice</a>
+    
+    <a href="/tags/sync-map/">sync map</a>
+    
+    <a href="/tags/%E6%90%9E%E7%82%B9%E4%B8%9C%E8%A5%BF/">搞点东西</a>
+    
+    <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+    
+    <a href="/tags/%E9%98%9F%E5%88%97/">队列</a>
+    
+</div>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="http://tofindme.github.io" title="江湖再见的博客">江湖再见的博客</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
